@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+
+	functioncall "aurora-agent/function-call"
 )
 
 const (
@@ -47,7 +49,7 @@ func (glm *GLM) ChatWithGLMInStream() {
 		},
 		{
 			Role:    "user",
-			Content: "简单回答我一下，前端现在还有前途吗, ai能力现在这么强",
+			Content: "上海天气怎么样？",
 		},
 	}
 
@@ -60,6 +62,8 @@ func (glm *GLM) ChatWithGLMInStream() {
 		"thinking": map[string]interface{}{
 			"type": "disabled",
 		},
+		"tools":       functioncall.WeatherTools,
+		"tool_stream": true,
 	}
 
 	body, _ := json.Marshal(requestBody)
@@ -98,13 +102,13 @@ func (glm *GLM) ChatWithGLMInStream() {
 			break
 		}
 
+		log.Printf("segment: %s\n", string(segment))
+
 		var streamResponse StreamResponse
 		if err := json.Unmarshal(segment, &streamResponse); err != nil {
 			log.Fatalf("不支持json的字段: %s", segment)
 			break
 		}
-
-		// fmt.Print(streamResponse.Choices[0].Delta.Content)
 	}
 }
 
