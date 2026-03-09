@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 )
@@ -105,7 +104,7 @@ func (glm *GLM) ChatWithGLMInStream() {
 			break
 		}
 
-		fmt.Print(streamResponse.Choices[0].Delta.Content)
+		// fmt.Print(streamResponse.Choices[0].Delta.Content)
 	}
 }
 
