@@ -1,10 +1,10 @@
 package llm
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 )
@@ -48,7 +48,7 @@ func (glm *GLM) ChatWithGLMInStream() {
 		},
 		{
 			Role:    "user",
-			Content: "我想知道明朝皇帝最有名的一位是谁",
+			Content: "简单回答我一下，前端现在还有前途吗, ai能力现在这么强",
 		},
 	}
 
@@ -84,42 +84,67 @@ func (glm *GLM) ChatWithGLMInStream() {
 		resp.Body.Close()
 	}()
 
-	buffer := make([]byte, 2048)
+	scanner := bufio.NewScanner(resp.Body)
 
-	for {
-		n, err := resp.Body.Read(buffer)
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		line = bytes.TrimSpace(line)
+		if len(line) == 0 {
+			continue
+		}
 
-		if err == io.EOF {
+		segment := line[6:]
+
+		if string(segment) == "[DONE]" {
 			break
 		}
 
-		var conversationId string = ""
-
-		for _, segment := range bytes.Split(buffer[:n], []byte("data: ")) {
-			segment = bytes.TrimSpace(segment)
-			streamResponse := StreamResponse{}
-			if len(segment) == 0 {
-				continue
-			}
-
-			if string(segment) == "[DONE]" {
-				fmt.Printf("conversationId: %s\n", conversationId)
-				break
-			}
-
-			err = json.Unmarshal(segment, &streamResponse)
-			if err != nil {
-				log.Printf("不能序列化的数据: %s\n", string(segment))
-				break
-			}
-
-			if conversationId == "" {
-				conversationId = streamResponse.Id
-			}
-
-			fmt.Print(streamResponse.Choices[0].Delta.Content)
-
+		var streamResponse StreamResponse
+		if err := json.Unmarshal(segment, &streamResponse); err != nil {
+			log.Fatalf("不支持json的字段: %s", segment)
+			break
 		}
-	}
 
+		fmt.Print(streamResponse.Choices[0].Delta.Content)
+	}
 }
+
+// buffer := make([]byte, 2048)
+
+// 	for {
+// 		n, err := resp.Body.Read(buffer)
+
+// 		if err == io.EOF {
+// 			break
+// 		}
+
+// 		var conversationId string = ""
+
+// 		for _, segment := range bytes.Split(buffer[:n], []byte("data: ")) {
+// 			segment = bytes.TrimSpace(segment)
+// 			log.Printf("segment: %s\n", string(segment))
+// 			streamResponse := StreamResponse{}
+// 			if len(segment) == 0 {
+// 				continue
+// 			}
+
+// 			if string(segment) == "[DONE]" {
+// 				fmt.Printf("conversationId: %s\n", conversationId)
+// 				break
+// 			}
+
+// 			err = json.Unmarshal(segment, &streamResponse)
+// 			if err != nil {
+// 				// log.Printf("不能序列化的数据: %s\n", string(segment))
+// 				break
+// 			}
+
+// 			if conversationId == "" {
+// 				conversationId = streamResponse.Id
+// 			}
+
+// 			// fmt.Print(streamResponse.Choices[0].Delta.Content)
+
+// 		}
+
+// 	}
