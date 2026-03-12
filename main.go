@@ -2,13 +2,17 @@ package main
 
 import (
 	"aurora-agent/router"
-	"log"
+	"aurora-agent/utils"
+
+	"go.uber.org/zap"
 )
 
 func main() {
+	logger := utils.InitZap("./log/zap")
 	r := router.SetupRouter()
+	logger.Info("Server started on port 1119")
 	err := r.Run(":1119")
 	if err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+		logger.Error("Failed to start server", zap.Error(err))
 	}
 }
