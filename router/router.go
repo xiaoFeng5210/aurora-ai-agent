@@ -9,5 +9,7 @@ func SetupRouter() *gin.Engine {
 		c.JSON(200, gin.H{"message": "pong"})
 	})
 
+	// apiv1 := r.Group("/api/v1")
+
 	return r
 }

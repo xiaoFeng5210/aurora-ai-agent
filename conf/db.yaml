@@ -1,0 +1,6 @@
+postgres:
+  host: localhost
+  port: 5432
+  user: zhangqingfeng
+  password: 12345678
+  dbname: aurora-ai-agent
