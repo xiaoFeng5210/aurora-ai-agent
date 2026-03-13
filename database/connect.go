@@ -12,6 +12,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"gorm.io/gorm/schema"
 )
 
 var (
@@ -20,7 +21,7 @@ var (
 )
 
 func DBConnect() (*gorm.DB, error) {
-	zapLogger := utils.InitZap("log/db")
+	zapLogger := utils.InitZap("log/zap")
 	dbOnce.Do(func() {
 		// 从环境变量获取数据库配置
 		conf := utils.InitViper("conf", "db", "yaml")
@@ -35,8 +36,11 @@ func DBConnect() (*gorm.DB, error) {
 		dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
 			host, user, password, dbname, port, "disable", "Asia/Shanghai")
 
-		logFile, _ := os.OpenFile("log/db", os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModePerm)
+		logFile, _ := os.OpenFile("log/db.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModePerm)
 		dbCopy, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+			NamingStrategy: schema.NamingStrategy{ //覆盖默认的NamingStrategy来更改命名约定
+				SingularTable: true, //表名映射时不加复数，仅是驼峰-->蛇形
+			},
 			Logger: logger.New(
 				log.New(logFile, "\r\n", log.LstdFlags),
 				logger.Config{

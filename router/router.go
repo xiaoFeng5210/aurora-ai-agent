@@ -1,6 +1,10 @@
 package router
 
-import "github.com/gin-gonic/gin"
+import (
+	"aurora-agent/handler"
+
+	"github.com/gin-gonic/gin"
+)
 
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
@@ -9,7 +13,10 @@ func SetupRouter() *gin.Engine {
 		c.JSON(200, gin.H{"message": "pong"})
 	})
 
-	// apiv1 := r.Group("/api/v1")
+	apiv1 := r.Group("/api/v1")
+	{
+		apiv1.GET("/users", handler.GetAllUsers)
+	}
 
 	return r
 }
