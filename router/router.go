@@ -15,6 +15,8 @@ func SetupRouter() *gin.Engine {
 
 	apiv1 := r.Group("/api/v1")
 	{
+		apiv1.POST("/register", handler.CreateUser)
+
 		apiv1.POST("/login", handler.Login)
 
 		apiv1.GET("/users", handler.GetAllUsers)

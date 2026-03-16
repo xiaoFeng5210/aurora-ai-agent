@@ -6,6 +6,7 @@ import (
 	"aurora-agent/handler/model/user"
 	"aurora-agent/utils"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -28,16 +29,26 @@ func CreateUser(ctx *gin.Context) {
 		return
 	}
 
+	t, err := time.Parse("2006-01-02", userBody.Birthday)
+	if err != nil {
+		logger.Error("parse birthday failed", zap.Error(err))
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"code":    -1,
+			"message": err.Error(),
+		})
+		return
+	}
+
 	userDTO := model.User{
 		Username:   userBody.Username,
 		Password:   userBody.Password,
 		Email:      userBody.Email,
 		Phone:      userBody.Phone,
-		Birthday:   userBody.Birthday,
+		Birthday:   t,
 		UserPrompt: userBody.UserPrompt,
 	}
 
-	err := database.CreateUser(userDTO)
+	err = database.CreateUser(userDTO)
 	if err != nil {
 		logger.Error("create user failed", zap.Error(err))
 		ctx.JSON(http.StatusInternalServerError, gin.H{
