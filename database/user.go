@@ -9,6 +9,14 @@ func init() {
 	db, _ = DBConnect()
 }
 
+func CreateUser(user model.User) error {
+	result := db.Model(&model.User{}).Create(&user)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
 func GetAllUsers() ([]model.User, error) {
 	var users []model.User
 	result := db.Model(&model.User{}).Find(&users).Error
