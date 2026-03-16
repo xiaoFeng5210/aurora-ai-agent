@@ -47,10 +47,14 @@ func GetUidFromJwt(token string) int {
 func Auth(ctx *gin.Context) {
 	loginUid := GetLoginUid(ctx)
 	if loginUid <= 0 {
-		// ctx.String(http.StatusForbidden, "auth failed") //返回403
-		ctx.Redirect(http.StatusTemporaryRedirect, "/login") //重定向到登录页面
-		ctx.Abort()                                          //中断。通过Abort()使中间件后面的handler不再执行，但是本handler还是会继续执行。所以下一行代码需要显式return
+		ctx.JSON(http.StatusForbidden, gin.H{
+			"code":    403,
+			"message": "forbidden",
+		})
+		ctx.Abort() //中断。通过Abort()使中间件后面的handler不再执行，但是本handler还是会继续执行。所以下一行代码需要显式return
+		return
 	} else {
 		ctx.Set(UID_IN_CTX, loginUid) //把登录的uid放入ctx中
+		ctx.Next()
 	}
 }
