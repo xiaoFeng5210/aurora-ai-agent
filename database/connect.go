@@ -71,5 +71,4 @@ func DBConnect() (*gorm.DB, error) {
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
 	return db, nil
-
 }
