@@ -3,6 +3,7 @@ package handler
 import (
 	"aurora-agent/database"
 	"aurora-agent/database/model"
+	"aurora-agent/middleware"
 	"aurora-agent/utils"
 	"net/http"
 	"strconv"
@@ -50,7 +51,7 @@ func Login(ctx *gin.Context) {
 			UserDefined: map[string]any{"user_id": strconv.Itoa(queryUser.Id), "user_name": queryUser.Username},
 		}
 
-		token, err := utils.GenJWT(header, payload, KeyConfig.GetString("secret"))
+		token, err := utils.GenJWT(header, payload, utils.InitViper("conf", "jwt", "yaml").GetString("secret"))
 		if err != nil {
 			logger.Error("generate token failed", zap.Error(err))
 			ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -61,7 +62,7 @@ func Login(ctx *gin.Context) {
 		}
 
 		ctx.SetCookie(
-			COOKIE_NAME,
+			middleware.COOKIE_NAME,
 			token,
 			0,
 			"/",
