@@ -46,7 +46,7 @@ func Login(ctx *gin.Context) {
 		payload := utils.JwtPayload{
 			Issue:       "dual_token",
 			IssueAt:     time.Now().Unix(),
-			Expiration:  0, //永不过期
+			Expiration:  time.Now().Add(3 * 24 * time.Hour).Unix(), //3天过期
 			UserDefined: map[string]any{"user_id": strconv.Itoa(queryUser.Id), "user_name": queryUser.Username},
 		}
 
@@ -63,7 +63,7 @@ func Login(ctx *gin.Context) {
 		ctx.SetCookie(
 			COOKIE_NAME,
 			token,
-			int(3*24*time.Hour/time.Second),
+			0,
 			"/",
 			"localhost",
 			false,
