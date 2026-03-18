@@ -3,6 +3,8 @@ package router
 import (
 	"aurora-agent/handler"
 
+	"aurora-agent/middleware"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,7 +23,7 @@ func SetupRouter() *gin.Engine {
 
 		apiv1.GET("/users", handler.GetAllUsers)
 
-		apiv1.GET("/test_jwt", handler.Auth, func(c *gin.Context) {
+		apiv1.GET("/test_jwt", middleware.Auth, func(c *gin.Context) {
 			c.JSON(200, gin.H{"message": "test jwt success"})
 		})
 	}

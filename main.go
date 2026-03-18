@@ -16,7 +16,6 @@ func init() {
 }
 
 func main() {
-
 	r := router.SetupRouter()
 	logger.Info("Server started on port 1119")
 	err := r.Run(":1119")
