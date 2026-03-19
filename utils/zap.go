@@ -14,7 +14,7 @@ func InitZap(logFile string) *zap.Logger {
 		logFile+".%Y%m%d%H.log",                   //指定日志文件的路径和名称，路径不存在时会创建
 		rotatelogs.WithLinkName(logFile+".log"),   //为最新的一份日志创建软链接
 		rotatelogs.WithRotationTime(24*time.Hour), //每隔24小时生成一份新的日志文件
-		rotatelogs.WithMaxAge(7*24*time.Hour),     //只留最近7天的日志，或使用WithRotationCount只保留最近的几份日志
+		rotatelogs.WithMaxAge(2*24*time.Hour),     //只留最近7天的日志，或使用WithRotationCount只保留最近的几份日志
 	)
 	if err != nil {
 		panic(err)

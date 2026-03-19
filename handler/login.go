@@ -64,7 +64,7 @@ func Login(ctx *gin.Context) {
 		ctx.SetCookie(
 			middleware.COOKIE_NAME,
 			token,
-			0,
+			int(3*24*time.Hour/time.Second),
 			"/",
 			"localhost",
 			false,

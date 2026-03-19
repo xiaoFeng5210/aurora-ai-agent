@@ -24,18 +24,6 @@ func init() {
 	logger = utils.InitZap("log/zap")
 }
 
-// 从cookie里取出jwt，从而取出uid
-func GetLoginUid(ctx *gin.Context) int {
-	//依靠浏览器自动回传的cookie，提取出jwt token
-	token := ""
-	for _, cookie := range ctx.Request.Cookies() {
-		if cookie.Name == COOKIE_NAME {
-			token = cookie.Value
-		}
-	}
-	return GetUidFromJwt(token)
-}
-
 // 从jwt里取出uid
 func GetUidFromJwt(token string) int {
 	_, payload, err := utils.VerifyJwt(token, KeyConfig.GetString("secret"))
@@ -61,6 +49,18 @@ func GetUidFromJwt(token string) int {
 		}
 	}
 	return 0
+}
+
+// 从cookie里取出jwt，从而取出uid
+func GetLoginUid(ctx *gin.Context) int {
+	//依靠浏览器自动回传的cookie，提取出jwt token
+	token := ""
+	for _, cookie := range ctx.Request.Cookies() {
+		if cookie.Name == COOKIE_NAME {
+			token = cookie.Value
+		}
+	}
+	return GetUidFromJwt(token)
 }
 
 // 身份认证中间件，先确保是登录状态
