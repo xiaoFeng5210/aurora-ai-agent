@@ -3,19 +3,26 @@ package middleware
 import (
 	"aurora-agent/utils"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 const (
-	UID_IN_TOKEN = "uid"
+	UID_IN_TOKEN = "user_id"
 	UID_IN_CTX   = "uid"
 	COOKIE_NAME  = "jwt"
 )
 
 var (
 	KeyConfig = utils.InitViper("conf", "jwt", "yaml")
+	logger    *zap.Logger
 )
+
+func init() {
+	logger = utils.InitZap("log/zap")
+}
 
 // 从cookie里取出jwt，从而取出uid
 func GetLoginUid(ctx *gin.Context) int {
@@ -33,11 +40,25 @@ func GetLoginUid(ctx *gin.Context) int {
 func GetUidFromJwt(token string) int {
 	_, payload, err := utils.VerifyJwt(token, KeyConfig.GetString("secret"))
 	if err != nil {
+		logger.Error("verify jwt failed", zap.Error(err))
 		return 0
 	}
 	for k, v := range payload.UserDefined {
 		if k == UID_IN_TOKEN {
-			return int(v.(float64))
+			switch vt := v.(type) {
+			case string:
+				uid, err := strconv.Atoi(vt)
+				if err != nil {
+					logger.Error("convert string to int failed", zap.Error(err))
+					return 0
+				}
+				return uid
+			case int:
+				return vt
+			case float64:
+				return int(vt)
+			}
+
 		}
 	}
 	return 0
