@@ -58,7 +58,6 @@ func GetUidFromJwt(token string) int {
 			case float64:
 				return int(vt)
 			}
-
 		}
 	}
 	return 0
