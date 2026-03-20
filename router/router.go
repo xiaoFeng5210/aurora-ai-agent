@@ -32,6 +32,7 @@ func SetupRouter() *gin.Engine {
 	{
 		userGroup.GET("", middleware.Auth, handler.GetAllUsers)
 		userGroup.GET("/:id", middleware.Auth, handler.GetUserById)
+		userGroup.POST("/query", middleware.Auth, handler.QueryUser)
 	}
 
 	return r

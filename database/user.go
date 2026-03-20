@@ -2,6 +2,7 @@ package database
 
 import (
 	"aurora-agent/database/model"
+	"aurora-agent/handler/dto"
 	"errors"
 	"time"
 )
@@ -85,6 +86,38 @@ func GetUsersByBirthdayMoreThanAge(birthday time.Time, queryAge int) ([]model.Us
 
 	var users []model.User
 	result := db.Model(&model.User{}).Where("birthday >= ?", queryBirthday).Find(&users)
+	if result.Error != nil {
+		return users, result.Error
+	}
+	return users, nil
+}
+
+func QueryUser(filter dto.QueryUserDTO) ([]model.User, error) {
+	queryDB := db.Model(&model.User{})
+	if filter.Email != "" {
+		queryDB = queryDB.Where("email = ?", filter.Email)
+	}
+
+	if filter.Username != "" {
+		queryDB = queryDB.Where("username = ?", filter.Username)
+	}
+
+	if filter.Phone != "" {
+		queryDB = queryDB.Where("phone = ?", filter.Phone)
+	}
+
+	if !filter.Birthday.IsZero() {
+		queryDB = queryDB.Where("birthday = ?", filter.Birthday)
+	}
+
+	if filter.Page > 0 && filter.PageSize > 0 {
+		queryDB = queryDB.Offset((filter.Page - 1) * filter.PageSize).Limit(filter.PageSize)
+	} else {
+		queryDB = queryDB.Limit(10)
+	}
+
+	var users []model.User
+	result := queryDB.Find(&users)
 	if result.Error != nil {
 		return users, result.Error
 	}

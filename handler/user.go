@@ -3,6 +3,7 @@ package handler
 import (
 	"aurora-agent/database"
 	"aurora-agent/database/model"
+	"aurora-agent/handler/dto"
 	"aurora-agent/handler/model/user"
 	"aurora-agent/utils"
 	"net/http"
@@ -98,5 +99,29 @@ func GetUserById(ctx *gin.Context) {
 		"code":    0,
 		"message": "success",
 		"data":    user,
+	})
+}
+
+func QueryUser(ctx *gin.Context) {
+	var filter dto.QueryUserDTO
+	if err := ctx.ShouldBindJSON(&filter); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"code":    -1,
+			"message": err.Error(),
+		})
+		return
+	}
+	users, err := database.QueryUser(filter)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"code":    -1,
+			"message": err.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "success",
+		"data":    users,
 	})
 }
