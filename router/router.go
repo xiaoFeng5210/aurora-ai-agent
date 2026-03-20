@@ -24,7 +24,6 @@ func SetupRouter() *gin.Engine {
 		apiv1.GET("/test_jwt", middleware.Auth, func(c *gin.Context) {
 			c.JSON(200, gin.H{"message": "test jwt success"})
 		})
-
 	}
 
 
