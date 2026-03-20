@@ -21,12 +21,17 @@ func SetupRouter() *gin.Engine {
 
 		apiv1.POST("/login", handler.Login)
 
-		apiv1.GET("/users", handler.GetAllUsers)
-
 		apiv1.GET("/test_jwt", middleware.Auth, func(c *gin.Context) {
 			c.JSON(200, gin.H{"message": "test jwt success"})
 		})
 
+	}
+
+
+	userGroup := apiv1.Group("/users")
+	{
+		userGroup.GET("", middleware.Auth, handler.GetAllUsers)
+		userGroup.GET("/:id", middleware.Auth, handler.GetUserById)
 	}
 
 	return r

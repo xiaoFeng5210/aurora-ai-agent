@@ -6,6 +6,7 @@ import (
 	"aurora-agent/handler/model/user"
 	"aurora-agent/utils"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -78,5 +79,24 @@ func GetAllUsers(ctx *gin.Context) {
 		"code":    0,
 		"message": "success",
 		"data":    r,
+	})
+}
+
+// 根据ID获取用户信息
+func GetUserById(ctx *gin.Context) {
+	id := ctx.Param("id")
+	idInt, _ := strconv.Atoi(id)
+	user, err := database.GetUserById(idInt)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"code":    -1,
+			"message": err.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "success",
+		"data":    user,
 	})
 }
