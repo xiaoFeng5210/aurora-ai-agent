@@ -2,97 +2,47 @@ package database
 
 import (
 	"aurora-agent/database/model"
-	"aurora-agent/handler/dto"
-	"errors"
 	"time"
+
+	"gorm.io/gorm"
 )
+
+type UserQueryFilter struct {
+	Email    string
+	Username string
+	Phone    string
+	Birthday *time.Time
+	Page     int
+	PageSize int
+}
 
 func init() {
 	db, _ = DBConnect()
 }
 
 func CreateUser(user model.User) error {
-	result := db.Model(&model.User{}).Create(&user)
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
+	return db.Model(&model.User{}).Create(&user).Error
 }
 
 func GetAllUsers() ([]model.User, error) {
 	var users []model.User
-	result := db.Model(&model.User{}).Find(&users).Error
-	return users, result
+	err := db.Model(&model.User{}).Order("id ASC").Find(&users).Error
+	return users, err
 }
 
 func GetUserByEmail(email string) (model.User, error) {
 	var user model.User
-	result := db.Model(&model.User{}).Where("email = ?", email).First(&user)
-	if result.Error != nil {
-		return user, result.Error
-	}
-	if result.RowsAffected == 0 {
-		return user, errors.New("user not found")
-	}
-	return user, nil
+	err := db.Model(&model.User{}).Where("email = ?", email).First(&user).Error
+	return user, err
 }
 
-// 根据ID获取用户信息
 func GetUserById(id int) (model.User, error) {
 	var user model.User
-	result := db.Model(&model.User{}).Where("id = ?", id).First(&user)
-	if result.Error != nil {
-		return user, result.Error
-	}
-	if result.RowsAffected == 0 {
-		return user, errors.New("user not found")
-	}
-	return user, nil
+	err := db.Model(&model.User{}).Where("id = ?", id).First(&user).Error
+	return user, err
 }
 
-// 根据Username获取用户信息
-func GetUserByUsername(username string) (model.User, error) {
-	var user model.User
-	result := db.Model(&model.User{}).Where("username = ?", username).First(&user)
-	if result.Error != nil {
-		return user, result.Error
-	}
-	if result.RowsAffected == 0 {
-		return user, errors.New("user not found")
-	}
-	return user, nil
-}
-
-// 根据用户名模糊查询
-func GetUsersByUsername(username string) ([]model.User, error) {
-	var users []model.User
-	result := db.Model(&model.User{}).Where("username LIKE ?", "%"+username+"%").Find(&users)
-	if result.Error != nil {
-		return users, result.Error
-	}
-	return users, nil
-}
-
-// 筛选年龄大于多少岁的用户
-func GetUsersByBirthdayMoreThanAge(birthday time.Time, queryAge int) ([]model.User, error) {
-	// 先把年龄计算出来根据生日
-	trueAge := time.Now().Year() - birthday.Year()
-
-	if trueAge > queryAge {
-		return nil, errors.New("age is too young")
-	}
-
-	queryBirthday := time.Now().AddDate(-queryAge, 0, 0)
-
-	var users []model.User
-	result := db.Model(&model.User{}).Where("birthday >= ?", queryBirthday).Find(&users)
-	if result.Error != nil {
-		return users, result.Error
-	}
-	return users, nil
-}
-
-func QueryUser(filter dto.QueryUserDTO) ([]model.User, error) {
+func QueryUsers(filter UserQueryFilter) ([]model.User, error) {
 	queryDB := db.Model(&model.User{})
 	if filter.Email != "" {
 		queryDB = queryDB.Where("email = ?", filter.Email)
@@ -106,20 +56,65 @@ func QueryUser(filter dto.QueryUserDTO) ([]model.User, error) {
 		queryDB = queryDB.Where("phone = ?", filter.Phone)
 	}
 
-	if !filter.Birthday.IsZero() {
-		queryDB = queryDB.Where("birthday = ?", filter.Birthday)
+	if filter.Birthday != nil {
+		queryDB = queryDB.Where("birthday = ?", *filter.Birthday)
 	}
 
 	if filter.Page > 0 && filter.PageSize > 0 {
 		queryDB = queryDB.Offset((filter.Page - 1) * filter.PageSize).Limit(filter.PageSize)
-	} else {
-		queryDB = queryDB.Limit(10)
+	} else if filter.PageSize > 0 {
+		queryDB = queryDB.Limit(filter.PageSize)
 	}
 
 	var users []model.User
-	result := queryDB.Find(&users)
-	if result.Error != nil {
-		return users, result.Error
+	err := queryDB.Order("id ASC").Find(&users).Error
+	return users, err
+}
+
+func UsernameExists(username string, excludeID int) (bool, error) {
+	var count int64
+	queryDB := db.Model(&model.User{}).Where("username = ?", username)
+	if excludeID > 0 {
+		queryDB = queryDB.Where("id <> ?", excludeID)
 	}
-	return users, nil
+
+	if err := queryDB.Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func EmailExists(email string, excludeID int) (bool, error) {
+	var count int64
+	queryDB := db.Model(&model.User{}).Where("email = ?", email)
+	if excludeID > 0 {
+		queryDB = queryDB.Where("id <> ?", excludeID)
+	}
+
+	if err := queryDB.Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func UpdateUserByID(id int, updates map[string]any) error {
+	result := db.Model(&model.User{}).Where("id = ?", id).Updates(updates)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+func SoftDeleteUser(id int) error {
+	result := db.Where("id = ?", id).Delete(&model.User{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }

@@ -26,10 +26,13 @@ func SetupRouter() *gin.Engine {
 		})
 	}
 
-
 	userGroup := apiv1.Group("/users")
 	{
 		userGroup.GET("", middleware.Auth, handler.GetAllUsers)
+		userGroup.GET("/me", middleware.Auth, handler.GetCurrentUser)
+		userGroup.PUT("/me", middleware.Auth, handler.UpdateCurrentUser)
+		userGroup.PUT("/me/password", middleware.Auth, handler.ChangeCurrentUserPassword)
+		userGroup.DELETE("/me", middleware.Auth, handler.DeleteCurrentUser)
 		userGroup.GET("/:id", middleware.Auth, handler.GetUserById)
 		userGroup.POST("/query", middleware.Auth, handler.QueryUser)
 	}

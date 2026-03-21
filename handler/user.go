@@ -1,17 +1,17 @@
 package handler
 
 import (
-	"aurora-agent/database"
-	"aurora-agent/database/model"
 	"aurora-agent/handler/dto"
-	"aurora-agent/handler/model/user"
+	"aurora-agent/middleware"
+	"aurora-agent/service"
 	"aurora-agent/utils"
+	"errors"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 var logger *zap.Logger
@@ -21,42 +21,16 @@ func init() {
 }
 
 func CreateUser(ctx *gin.Context) {
-	var userBody user.UserDTO
-	if err := ctx.ShouldBindJSON(&userBody); err != nil {
-		logger.Error("bind user body failed", zap.Error(err))
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code":    -1,
-			"message": err.Error(),
-		})
+	var req dto.CreateUserRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		logger.Error("bind create user request failed", zap.Error(err))
+		respondError(ctx, http.StatusBadRequest, err)
 		return
 	}
 
-	t, err := time.Parse("2006-01-02", userBody.Birthday)
-	if err != nil {
-		logger.Error("parse birthday failed", zap.Error(err))
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code":    -1,
-			"message": err.Error(),
-		})
-		return
-	}
-
-	userDTO := model.User{
-		Username:   userBody.Username,
-		Password:   userBody.Password,
-		Email:      userBody.Email,
-		Phone:      userBody.Phone,
-		Birthday:   t,
-		UserPrompt: userBody.UserPrompt,
-	}
-
-	err = database.CreateUser(userDTO)
-	if err != nil {
+	if err := service.CreateUser(req); err != nil {
 		logger.Error("create user failed", zap.Error(err))
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"code":    -1,
-			"message": err.Error(),
-		})
+		respondWithServiceError(ctx, err)
 		return
 	}
 
@@ -67,34 +41,34 @@ func CreateUser(ctx *gin.Context) {
 }
 
 func GetAllUsers(ctx *gin.Context) {
-	r, err := database.GetAllUsers()
+	users, err := service.GetAllUsers()
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"code":    -1,
-			"message": err.Error(),
-		})
+		logger.Error("get all users failed", zap.Error(err))
+		respondError(ctx, http.StatusInternalServerError, err)
 		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"code":    0,
 		"message": "success",
-		"data":    r,
+		"data":    users,
 	})
 }
 
-// 根据ID获取用户信息
 func GetUserById(ctx *gin.Context) {
-	id := ctx.Param("id")
-	idInt, _ := strconv.Atoi(id)
-	user, err := database.GetUserById(idInt)
+	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"code":    -1,
-			"message": err.Error(),
-		})
+		respondError(ctx, http.StatusBadRequest, err)
 		return
 	}
+
+	user, err := service.GetUserByID(id)
+	if err != nil {
+		logger.Error("get user by id failed", zap.Error(err))
+		respondWithServiceError(ctx, err)
+		return
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"code":    0,
 		"message": "success",
@@ -105,23 +79,124 @@ func GetUserById(ctx *gin.Context) {
 func QueryUser(ctx *gin.Context) {
 	var filter dto.QueryUserDTO
 	if err := ctx.ShouldBindJSON(&filter); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"code":    -1,
-			"message": err.Error(),
-		})
+		respondError(ctx, http.StatusBadRequest, err)
 		return
 	}
-	users, err := database.QueryUser(filter)
+
+	users, err := service.QueryUsers(filter)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"code":    -1,
-			"message": err.Error(),
-		})
+		logger.Error("query user failed", zap.Error(err))
+		respondWithServiceError(ctx, err)
 		return
 	}
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"code":    0,
 		"message": "success",
 		"data":    users,
+	})
+}
+
+func GetCurrentUser(ctx *gin.Context) {
+	user, err := service.GetCurrentUser(ctx.GetInt(middleware.UID_IN_CTX))
+	if err != nil {
+		logger.Error("get current user failed", zap.Error(err))
+		respondWithServiceError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "success",
+		"data":    user,
+	})
+}
+
+func UpdateCurrentUser(ctx *gin.Context) {
+	var req dto.UpdateCurrentUserRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		respondError(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	user, err := service.UpdateCurrentUser(ctx.GetInt(middleware.UID_IN_CTX), req)
+	if err != nil {
+		logger.Error("update current user failed", zap.Error(err))
+		respondWithServiceError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "success",
+		"data":    user,
+	})
+}
+
+func ChangeCurrentUserPassword(ctx *gin.Context) {
+	var req dto.ChangePasswordRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		respondError(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := service.ChangeCurrentUserPassword(ctx.GetInt(middleware.UID_IN_CTX), req); err != nil {
+		logger.Error("change current user password failed", zap.Error(err))
+		respondWithServiceError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "success",
+	})
+}
+
+func DeleteCurrentUser(ctx *gin.Context) {
+	if err := service.DeleteCurrentUser(ctx.GetInt(middleware.UID_IN_CTX)); err != nil {
+		logger.Error("delete current user failed", zap.Error(err))
+		respondWithServiceError(ctx, err)
+		return
+	}
+
+	ctx.SetCookie(
+		middleware.COOKIE_NAME,
+		"",
+		-1,
+		"/",
+		"localhost",
+		false,
+		true,
+	)
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "success",
+	})
+}
+
+func respondWithServiceError(ctx *gin.Context, err error) {
+	status := http.StatusInternalServerError
+	switch {
+	case errors.Is(err, service.ErrUserNotFound):
+		status = http.StatusNotFound
+	case errors.Is(err, service.ErrUsernameExists),
+		errors.Is(err, service.ErrEmailExists),
+		errors.Is(err, service.ErrInvalidCredentials),
+		errors.Is(err, service.ErrOldPasswordIncorrect),
+		errors.Is(err, service.ErrPasswordTooShort),
+		errors.Is(err, service.ErrBirthdayFormat),
+		errors.Is(err, service.ErrNoFieldsToUpdate),
+		errors.Is(err, gorm.ErrInvalidData):
+		status = http.StatusBadRequest
+	}
+
+	respondError(ctx, status, err)
+}
+
+func respondError(ctx *gin.Context, status int, err error) {
+	ctx.JSON(status, gin.H{
+		"code":    -1,
+		"message": err.Error(),
 	})
 }
