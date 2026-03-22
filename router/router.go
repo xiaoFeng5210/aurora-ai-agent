@@ -36,5 +36,13 @@ func SetupRouter() *gin.Engine {
 	userGroup.PUT("/me/password", handler.ChangeCurrentUserPassword)
 	userGroup.DELETE("/me", handler.DeleteCurrentUser)
 
+	documentGroup := apiv1.Group("/documents")
+	documentGroup.Use(middleware.Auth)
+	documentGroup.POST("", handler.CreateDocument)
+	documentGroup.GET("/:id", handler.GetDocumentById)
+	documentGroup.POST("/query", handler.QueryDocument)
+	documentGroup.PUT("/:id", handler.UpdateDocument)
+	documentGroup.DELETE("/:id", handler.DeleteDocument)
+
 	return r
 }

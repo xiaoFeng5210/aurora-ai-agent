@@ -180,12 +180,15 @@ func respondWithServiceError(ctx *gin.Context, err error) {
 	switch {
 	case errors.Is(err, service.ErrUserNotFound):
 		status = http.StatusNotFound
+	case errors.Is(err, service.ErrDocumentNotFound):
+		status = http.StatusNotFound
 	case errors.Is(err, service.ErrUsernameExists),
 		errors.Is(err, service.ErrEmailExists),
 		errors.Is(err, service.ErrInvalidCredentials),
 		errors.Is(err, service.ErrOldPasswordIncorrect),
 		errors.Is(err, service.ErrPasswordTooShort),
 		errors.Is(err, service.ErrBirthdayFormat),
+		errors.Is(err, service.ErrDocumentDisplayNameRequired),
 		errors.Is(err, service.ErrNoFieldsToUpdate),
 		errors.Is(err, gorm.ErrInvalidData):
 		status = http.StatusBadRequest

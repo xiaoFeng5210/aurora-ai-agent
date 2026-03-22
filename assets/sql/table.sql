@@ -41,3 +41,25 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE TRIGGER trg_user_update_time
 BEFORE UPDATE ON "user"
 FOR EACH ROW EXECUTE FUNCTION set_update_time();
+
+-- Aurora AI Agent - Document（对话侧后续可单独建表关联本表 id）
+CREATE TABLE IF NOT EXISTS document (
+    id          SERIAL          PRIMARY KEY,
+    user_id     INT             NOT NULL,
+    display_name        VARCHAR(255)    NOT NULL,
+    file_name   VARCHAR(512),
+    create_time TIMESTAMPTZ     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMPTZ     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at  TIMESTAMPTZ,
+
+    CONSTRAINT document_display_name_not_empty CHECK (display_name <> ''),
+    CONSTRAINT document_file_name_not_empty CHECK (file_name <> '')
+);
+
+CREATE INDEX IF NOT EXISTS idx_document_deleted_at ON document (deleted_at);
+CREATE INDEX IF NOT EXISTS idx_document_user_id ON document (user_id);
+CREATE INDEX IF NOT EXISTS idx_document_create_time ON document (create_time DESC);
+
+CREATE OR REPLACE TRIGGER trg_document_update_time
+BEFORE UPDATE ON document
+FOR EACH ROW EXECUTE FUNCTION set_update_time();
