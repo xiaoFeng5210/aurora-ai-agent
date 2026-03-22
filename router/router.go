@@ -38,6 +38,7 @@ func SetupRouter() *gin.Engine {
 
 	documentGroup := apiv1.Group("/documents")
 	documentGroup.Use(middleware.Auth)
+	documentGroup.GET("", handler.GetAllDocuments)
 	documentGroup.POST("", handler.CreateDocument)
 	documentGroup.GET("/:id", handler.GetDocumentById)
 	documentGroup.POST("/query", handler.QueryDocument)

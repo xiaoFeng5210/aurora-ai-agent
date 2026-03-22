@@ -72,3 +72,12 @@ func SoftDeleteDocumentByIDAndUserID(id int, userID int) error {
 	}
 	return nil
 }
+
+func GetAllDocumentsByUserID(userID int) ([]model.Document, error) {
+	var documents []model.Document
+	result := db.Model(&model.Document{}).Where("user_id = ?", userID).Find(&documents)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return documents, nil
+}

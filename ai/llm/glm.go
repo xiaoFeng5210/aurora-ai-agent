@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/http"
 
-	functioncall "aurora-agent/function-call"
+	functioncall "aurora-agent/ai/llm/function-call"
 )
 
 const (

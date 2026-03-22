@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"aurora-agent/database"
 	"aurora-agent/handler/dto"
 	"aurora-agent/middleware"
 	"aurora-agent/service"
@@ -117,5 +118,20 @@ func DeleteDocument(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"code":    0,
 		"message": "success",
+	})
+}
+
+func GetAllDocuments(ctx *gin.Context) {
+	documents, err := database.GetAllDocumentsByUserID(ctx.GetInt(middleware.UID_IN_CTX))
+	if err != nil {
+		logger.Error("get all documents failed", zap.Error(err))
+		respondWithServiceError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "success",
+		"data":    documents,
 	})
 }
