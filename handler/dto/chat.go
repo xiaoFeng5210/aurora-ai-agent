@@ -1,24 +1,24 @@
 package dto
 
 type ChatRequest struct {
-	Model       string              `json:"model" binding:"required"`
-	ModelId     int                 `json:"modelId" binding:"required"`
-	Stream      bool                `json:"stream"`
+	// Model       string              `json:"model" binding:"required"`
+	// Stream      bool                `json:"stream"`
 	Thinking    ChatThinkingRequest `json:"thinking" binding:"required"`
-	MaxTokens   int                 `json:"max_tokens" binding:"required"`
-	Temperature float64             `json:"temperature"`
-	TopP        float64             `json:"top_p"`
-	Tools       []ChatToolRequest   `json:"tools"`
-	Prompt      []ChatPromptRequest `json:"prompt" binding:"required"`
+	MaxTokens   int                 `json:"max_tokens" binding:"required"`   // 最大token数
+	Temperature float64             `json:"temperature"`                     // 温度
+	TopP        float64             `json:"top_p"`                           // top_p
+	Tools       []ChatToolRequest   `json:"tools"`                           // 工具
+	Prompt      []ChatPromptRequest `json:"prompt" binding:"required"`        // 提示
 }
 
 type ChatThinkingRequest struct {
+	// type: disabled, enabled
 	Type string `json:"type" binding:"required"`
 }
 
 type ChatToolRequest struct {
 	Type      string               `json:"type" binding:"required"`
-	WebSearch ChatWebSearchRequest `json:"web_search" binding:"required"`
+	WebSearch ChatWebSearchRequest `json:"web_search"`
 }
 
 type ChatWebSearchRequest struct {
@@ -30,6 +30,10 @@ type ChatWebSearchRequest struct {
 	ContentSize         string `json:"content_size" binding:"required"`
 }
 
+
+// role: user, assistant, system
+// content: 内容
+// fileContentList: 文件内容列表
 type ChatPromptRequest struct {
 	Role            string `json:"role" binding:"required"`
 	Content         string `json:"content" binding:"required"`
