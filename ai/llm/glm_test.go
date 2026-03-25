@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	err := godotenv.Load("../.env")
+	err := godotenv.Load("../../.env")
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
@@ -22,12 +22,8 @@ func TestGLM(t *testing.T) {
 		log.Fatalf("GLM_API_KEY is not set")
 	}
 
-	glm := &GLM{
-		APIKey:   apiKey,
-		Model:    "glm-4.7",
-		MaxToken: 65536,
-		Stream:   true,
-	}
+	glm := InitModel("glm-4.7")
+	glm.SendUserPrompt("你好，今天上海天气怎么样？")
 
 	glm.ChatWithGLMInStream()
 
