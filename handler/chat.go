@@ -33,6 +33,8 @@ func StreamChatWithGLM(ctx *gin.Context) {
 
 		writeErr = writeSSEEvent(ctx, event.Event, event.Data)
 	})
+
+
 	if err != nil {
 		logger.Error("stream chat with glm failed", zap.Error(err))
 		return

@@ -5,11 +5,13 @@ import (
 	"aurora-agent/router"
 	utils "aurora-agent/utils"
 
+	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
 
 
 func init() {
+	godotenv.Load()
 	database.DBConnect()
 }
 
