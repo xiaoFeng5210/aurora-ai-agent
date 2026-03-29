@@ -12,6 +12,7 @@ import (
 
 	"aurora-agent/ai"
 	functioncall "aurora-agent/ai/llm/function-call"
+	utils "aurora-agent/utils"
 )
 
 const (
@@ -60,12 +61,13 @@ type GLM struct {
 }
 
 var (
-
+	logger = utils.Logger
 )
 
 func InitModel() *GLM {
+	apiKey := os.Getenv("GLM_API_KEY")
 	glm := &GLM{
-		APIKey:   os.Getenv("GLM_API_KEY"),
+		APIKey:   apiKey,
 		Model:    "glm-4.7",
 		MaxToken: 65536,
 		Stream:   true,
@@ -87,6 +89,7 @@ func (glm *GLM) ChatWithGLMInStream(messages []ai.Message) (bool, []ToolCall, er
 	}
 
 	body, _ := json.Marshal(requestBody)
+	fmt.Printf("requestBody: %s\n", string(body))
 
 	request, _ := http.NewRequest("POST", GLM_MODEL_BASE_URL, bytes.NewBuffer(body))
 	request.Header.Set("Authorization", "Bearer "+glm.APIKey)
@@ -128,7 +131,7 @@ func (glm *GLM) AIStreamResponseHandler(body io.Reader) (bool, []ToolCall, error
 
 
 		segment := line[6:] // 去掉data: 
-
+    
 		log.Println(string(segment))
 		log.Println("--------------------------------")
 

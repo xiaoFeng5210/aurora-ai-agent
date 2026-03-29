@@ -57,14 +57,16 @@ func (a *Agent) RunAgent(userPrompt string) (AgentResult, error) {
 	for {
 		a.CurrentLoop++
 
-		sendMessages := make([]ai.Message, len(a.History) + 1)
+		sendMessages := []ai.Message{}
 		sendMessages = append(sendMessages, a.History...)
 		sendMessages = append(sendMessages, ai.Message{ Role:    "user", Content: userPrompt })
+
 		needToolCall, toolCalls, err := a.Llm.ChatWithGLMInStream(sendMessages)
 		if err != nil {
 			logger.Error("ChatWithGLMInStream failed", zap.Error(err))
 			return AgentResult{Result: AgentResultTypeError, message: err.Error()}, err
 		}
+
 
 		if !needToolCall {
 			return AgentResult{Result: AgentResultTypeSuccess, message: "success"}, nil
@@ -93,7 +95,7 @@ func (a *Agent) RunAgent(userPrompt string) (AgentResult, error) {
 				a.History = append(a.History, ai.Message{
 					Role:    "assistant",
 					Content: string(resultStr),
-					ToolCallId: toolCall.Id,
+					ToolCallId: &toolCall.Id,
 				})
 
 			default:
