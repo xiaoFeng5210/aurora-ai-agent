@@ -21,6 +21,6 @@ func TestAgent(t *testing.T) {
 	result, err := agent.RunAgent("你好，今天上海天气怎么样？")
 	if err != nil {
 		t.Fatalf("RunAgent failed: %v", err)
-	}
+	} 
 	t.Logf("result: %v", result.content)
 }
