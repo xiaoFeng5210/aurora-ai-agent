@@ -4,7 +4,6 @@ import (
 	"aurora-agent/ai"
 	"aurora-agent/ai/llm"
 	functioncall "aurora-agent/ai/llm/function-call"
-	"encoding/json"
 	"fmt"
 
 	utils "aurora-agent/utils"
@@ -86,15 +85,10 @@ func (a *Agent) RunAgent(userPrompt string) (AgentResult, error) {
 					logger.Error("RunToolFunction failed", zap.Error(err))
 					return AgentResult{Result: AgentResultTypeError, message: err.Error()}, err
 				}
-				resultStr, err := json.Marshal(result)
-				if err != nil {
-					logger.Error("functioncall result json.Marshal failed", zap.Error(err))
-					return AgentResult{Result: AgentResultTypeError, message: err.Error()}, err
-				}
 				// 添加工具调用结果到历史记录
 				a.History = append(a.History, ai.Message{
-					Role:    "assistant",
-					Content: string(resultStr),
+					Role:    "tool",
+					Content: string(result),
 					ToolCallId: &toolCall.Id,
 				})
 

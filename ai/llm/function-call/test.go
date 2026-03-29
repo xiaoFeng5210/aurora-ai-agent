@@ -22,7 +22,7 @@ var WeatherTools = []map[string]interface{}{
 	},
 }
 
-func GetWeather(city string) string {
+func GetWeather(city string) []byte {
 	weather_data := map[string]string{
 		"city":        city,
 		"temperature": "22°C",
@@ -33,8 +33,8 @@ func GetWeather(city string) string {
 
 	jsonData, err := json.Marshal(weather_data)
 	if err != nil {
-		return ""
+		return nil
 	}
 
-	return string(jsonData)
+	return jsonData
 }

@@ -27,13 +27,13 @@ const (
 
 type Function struct {
 	Name        string `json:"name"`
-	Arguments  map[string]any `json:"arguments"`
+	Arguments   string `json:"arguments"`
 }
 
 type ToolCall struct {
 	Id        string `json:"id"`
 	Index     int `json:"index"`
-	Type      ToolCallType `json:"type"`
+	Type      string `json:"type"`
 	Function  Function `json:"function"`
 
 }
@@ -160,8 +160,6 @@ func (glm *GLM) AIStreamResponseHandler(body io.Reader) (bool, []ToolCall, error
 				toolCalls = append(toolCalls, toolCall)
 			}
 			needToolCall = true
-		} else {
-			needToolCall = false
 		}
 	}
 	return needToolCall, toolCalls, nil
