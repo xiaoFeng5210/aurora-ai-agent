@@ -58,50 +58,50 @@ func (a *Agent) NewAgentWithOptions(opts llm.ChatOptions) {
 	}
 }
 
-func (a *Agent) RunAgent(userPrompt string) (AgentResult, error) {
-	for {
-		a.CurrentLoop++
+// func (a *Agent) RunAgent(userPrompt string) (AgentResult, error) {
+// 	for {
+// 		a.CurrentLoop++
 
-		sendMessages := append([]ai.Message{}, a.History...)
-		sendMessages = append(sendMessages, ai.Message{Role: "user", Content: userPrompt})
+// 		sendMessages := append([]ai.Message{}, a.History...)
+// 		sendMessages = append(sendMessages, ai.Message{Role: "user", Content: userPrompt})
 
-		needToolCall, toolCalls, content, err := a.Llm.ChatWithGLMInStream(sendMessages)
-		if err != nil {
-			logger.Error("ChatWithGLMInStream failed", zap.Error(err))
-			return AgentResult{Result: AgentResultTypeError, message: err.Error()}, err
-		}
+// 		needToolCall, toolCalls, content, err := a.Llm.ChatWithGLMInStream(sendMessages)
+// 		if err != nil {
+// 			logger.Error("ChatWithGLMInStream failed", zap.Error(err))
+// 			return AgentResult{Result: AgentResultTypeError, message: err.Error()}, err
+// 		}
 
-		if !needToolCall {
-			return AgentResult{Result: AgentResultTypeSuccess, message: "success", content: content}, nil
-		}
+// 		if !needToolCall {
+// 			return AgentResult{Result: AgentResultTypeSuccess, message: "success", content: content}, nil
+// 		}
 
-		if a.CurrentLoop >= a.MaxLoop {
-			return AgentResult{Result: AgentResultTypeTerminate, content: "", message: "max loop reached"}, fmt.Errorf("max loop reached")
-		}
+// 		if a.CurrentLoop >= a.MaxLoop {
+// 			return AgentResult{Result: AgentResultTypeTerminate, content: "", message: "max loop reached"}, fmt.Errorf("max loop reached")
+// 		}
 
-		for _, toolCall := range toolCalls {
-			switch toolCall.Type {
-			case "function":
-				functionName := toolCall.Function.Name
-				functionArguments := toolCall.Function.Arguments
-				result, err := functioncall.RunToolFunction(functionName, functionArguments)
-				if err != nil {
-					logger.Error("RunToolFunction failed", zap.Error(err))
-					return AgentResult{Result: AgentResultTypeError, message: err.Error()}, err
-				}
-				a.History = append(a.History, ai.Message{
-					Role:       "tool",
-					Content:    string(result),
-					ToolCallId: &toolCall.Id,
-				})
-			default:
-				logger.Error("unknown tool call type", zap.String("type", toolCall.Type))
-			}
-		}
-	}
-}
+// 		for _, toolCall := range toolCalls {
+// 			switch toolCall.Type {
+// 			case "function":
+// 				functionName := toolCall.Function.Name
+// 				functionArguments := toolCall.Function.Arguments
+// 				result, err := functioncall.RunToolFunction(functionName, functionArguments)
+// 				if err != nil {
+// 					logger.Error("RunToolFunction failed", zap.Error(err))
+// 					return AgentResult{Result: AgentResultTypeError, message: err.Error()}, err
+// 				}
+// 				a.History = append(a.History, ai.Message{
+// 					Role:       "tool",
+// 					Content:    string(result),
+// 					ToolCallId: &toolCall.Id,
+// 				})
+// 			default:
+// 				logger.Error("unknown tool call type", zap.String("type", toolCall.Type))
+// 			}
+// 		}
+// 	}
+// }
 
-func (a *Agent) RunAgentWithMessages(messages []ai.Message, onEvent llm.StreamEventHandler) (AgentResult, error) {
+func (a *Agent) RunAgent(messages []ai.Message, onEvent llm.StreamEventHandler) (AgentResult, error) {
 	if a.Llm == nil {
 		a.NewAgent()
 	}

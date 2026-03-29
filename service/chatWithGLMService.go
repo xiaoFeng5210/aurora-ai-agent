@@ -22,7 +22,7 @@ func ChatWithGLMStream(req dto.ChatRequest, onSSEEvent func(ChatStreamEvent)) er
 		ThinkingType: req.Thinking.Type,
 	})
 
-	_, err := chatAgent.RunAgentWithMessages(messages, func(event string, data any) {
+	_, err := chatAgent.RunAgent(messages, func(event string, data any) {
 		if onSSEEvent == nil {
 			return
 		}
