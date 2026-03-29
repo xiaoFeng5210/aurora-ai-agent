@@ -20,11 +20,32 @@ const (
 type MessageRequest struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
+	ToolCallId *string `json:"tool_call_id"`
+}
+
+type ToolCallType string
+
+const (
+	ToolCallTypeFunction ToolCallType = "function"
+)
+
+type Function struct {
+	Name        string `json:"name"`
+	Arguments  map[string]any `json:"arguments"`
+}
+
+type ToolCall struct {
+	Id        string `json:"id"`
+	Index     int `json:"index"`
+	Type      ToolCallType `json:"type"`
+	Function  Function `json:"function"`
+
 }
 
 type Delta struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
+	ToolCalls  *[]ToolCall `json:"tool_calls"`
 }
 
 type Choice struct {
@@ -65,10 +86,10 @@ func InitModel(model string) *GLM {
 	return glm
 }
 
-func (glm *GLM) ChatWithGLMInStream() {
+func (glm *GLM) ChatWithGLMInStream(messages []MessageRequest) (bool, []ToolCall, error) {
 	requestBody := map[string]interface{}{
 		"model":       glm.Model,
-		"messages":    glm.messages,
+		"messages":    messages,
 		"max_tokens":  glm.MaxToken,
 		"stream":      true,
 		"temperature": 1.0,
@@ -76,7 +97,6 @@ func (glm *GLM) ChatWithGLMInStream() {
 			"type": "disabled",
 		},
 		"tools":       functioncall.WeatherTools,
-		// "tool_stream": true,
 	}
 
 	body, _ := json.Marshal(requestBody)
@@ -89,7 +109,7 @@ func (glm *GLM) ChatWithGLMInStream() {
 	resp, err := client.Do(request)
 	if err != nil {
 		log.Printf("Failed to send request: %v", err)
-		return
+		return false, nil, err
 	}
 
 	defer func() {
@@ -100,14 +120,16 @@ func (glm *GLM) ChatWithGLMInStream() {
 		resp.Body.Close()
 	}()
 
-	glm.AIStreamResponseHandler(resp.Body)
+	return glm.AIStreamResponseHandler(resp.Body)
 }
 
 // ai流式回答处理
-func (glm *GLM) AIStreamResponseHandler(body io.Reader) {
+func (glm *GLM) AIStreamResponseHandler(body io.Reader) (bool, []ToolCall, error) {
 	scanner := bufio.NewScanner(body)
 	content := ""
-	// tool_calls := []map[string]interface{}{}
+	toolCalls := []ToolCall{}
+
+	needToolCall := false  // 是否需要工具调用
 
 
 	for scanner.Scan() {
@@ -134,14 +156,25 @@ func (glm *GLM) AIStreamResponseHandler(body io.Reader) {
 		var streamResponse StreamResponse
 		if err := json.Unmarshal(segment, &streamResponse); err != nil {
 			log.Fatalf("不支持json的字段: %s", segment)
-			break
+			return false, nil, err
 		}
 
 		// 除了发送，我们自己也要组装content内容
 		if streamResponse.Choices[0].Delta.Role == "assistant" {
 			content += streamResponse.Choices[0].Delta.Content
 		}
+
+		if streamResponse.Choices[0].Delta.ToolCalls != nil {
+			resToolCalls := streamResponse.Choices[0].Delta.ToolCalls
+			for _, toolCall := range *resToolCalls {
+				toolCalls = append(toolCalls, toolCall)
+			}
+			needToolCall = true
+		} else {
+			needToolCall = false
+		}
 	}
+	return needToolCall, toolCalls, nil
 }
 
 

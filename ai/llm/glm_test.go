@@ -25,6 +25,11 @@ func TestGLM(t *testing.T) {
 	glm := InitModel("glm-4.7")
 	glm.SendUserPrompt("你好，今天上海天气怎么样？")
 
-	glm.ChatWithGLMInStream()
+	glm.ChatWithGLMInStream([]MessageRequest{
+		{
+			Role:    "user",
+			Content: "你好，今天上海天气怎么样？",
+		},
+	})
 
 }
