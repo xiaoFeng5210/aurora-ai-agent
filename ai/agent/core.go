@@ -20,53 +20,56 @@ func init() {
 }
 
 type Agent struct {
-	Llm *llm.GLM
-	History []ai.Message
-	MaxLoop int
+	Llm         *llm.GLM
+	History     []ai.Message
+	MaxLoop     int
 	CurrentLoop int
 }
 
 type AgentResultType string
+
 const (
-	AgentResultTypeSuccess AgentResultType = "success"
-	AgentResultTypeError AgentResultType = "failure"
-	// 终止
+	AgentResultTypeSuccess   AgentResultType = "success"
+	AgentResultTypeError     AgentResultType = "failure"
 	AgentResultTypeTerminate AgentResultType = "terminate"
 )
 
 type AgentResult struct {
-	Result AgentResultType
+	Result  AgentResultType
 	message string
 	content string
 }
 
 func (a *Agent) NewAgent() {
+	a.NewAgentWithOptions(llm.ChatOptions{})
+}
+
+func (a *Agent) NewAgentWithOptions(opts llm.ChatOptions) {
 	a.CurrentLoop = 0
 	a.MaxLoop = 6
 	a.Llm = llm.InitModel()
+	a.Llm.SetOptions(opts)
 
-	a.History = []ai.Message{}
-	a.History = append(a.History, ai.Message{
-		Role:    "system",
-		Content: SYSTEM_BASE_PROMPT,
-	})
+	a.History = []ai.Message{
+		{
+			Role:    "system",
+			Content: SYSTEM_BASE_PROMPT,
+		},
+	}
 }
-
 
 func (a *Agent) RunAgent(userPrompt string) (AgentResult, error) {
 	for {
 		a.CurrentLoop++
 
-		sendMessages := []ai.Message{}
-		sendMessages = append(sendMessages, a.History...)
-		sendMessages = append(sendMessages, ai.Message{ Role:    "user", Content: userPrompt })
+		sendMessages := append([]ai.Message{}, a.History...)
+		sendMessages = append(sendMessages, ai.Message{Role: "user", Content: userPrompt})
 
 		needToolCall, toolCalls, content, err := a.Llm.ChatWithGLMInStream(sendMessages)
 		if err != nil {
 			logger.Error("ChatWithGLMInStream failed", zap.Error(err))
 			return AgentResult{Result: AgentResultTypeError, message: err.Error()}, err
 		}
-
 
 		if !needToolCall {
 			return AgentResult{Result: AgentResultTypeSuccess, message: "success", content: content}, nil
@@ -86,16 +89,103 @@ func (a *Agent) RunAgent(userPrompt string) (AgentResult, error) {
 					logger.Error("RunToolFunction failed", zap.Error(err))
 					return AgentResult{Result: AgentResultTypeError, message: err.Error()}, err
 				}
-				// 添加工具调用结果到历史记录
 				a.History = append(a.History, ai.Message{
-					Role:    "tool",
-					Content: string(result),
+					Role:       "tool",
+					Content:    string(result),
 					ToolCallId: &toolCall.Id,
 				})
-
 			default:
-				logger.Error("unknown tool call type", zap.String("type", string(toolCall.Type)))
+				logger.Error("unknown tool call type", zap.String("type", toolCall.Type))
 			}
 		}
 	}
+}
+
+func (a *Agent) RunAgentWithMessages(messages []ai.Message, onEvent llm.StreamEventHandler) (AgentResult, error) {
+	if a.Llm == nil {
+		a.NewAgent()
+	}
+	if a.MaxLoop <= 0 {
+		a.MaxLoop = 6
+	}
+
+	a.CurrentLoop = 0
+	conversation := append([]ai.Message{}, messages...)
+
+	for {
+		a.CurrentLoop++
+		emitAgentEvent(onEvent, "start", map[string]any{
+			"model": a.Llm.Model,
+		})
+
+		needToolCall, toolCalls, content, err := a.Llm.ChatWithGLMInStreamWithEvents(conversation, llm.ChatOptions{}, onEvent)
+		if err != nil {
+			logger.Error("ChatWithGLMInStreamWithEvents failed", zap.Error(err))
+			emitAgentEvent(onEvent, "error", map[string]any{
+				"message": err.Error(),
+			})
+			return AgentResult{Result: AgentResultTypeError, message: err.Error()}, err
+		}
+
+		if !needToolCall {
+			emitAgentEvent(onEvent, "done", map[string]any{
+				"content":       content,
+				"finish_reason": "stop",
+			})
+			return AgentResult{Result: AgentResultTypeSuccess, message: "success", content: content}, nil
+		}
+
+		if a.CurrentLoop >= a.MaxLoop {
+			err = fmt.Errorf("max loop reached")
+			emitAgentEvent(onEvent, "error", map[string]any{
+				"message": err.Error(),
+			})
+			return AgentResult{Result: AgentResultTypeTerminate, message: err.Error()}, err
+		}
+
+		conversation = append(conversation, ai.Message{
+			Role:      "assistant",
+			Content:   content,
+			ToolCalls: toolCalls,
+		})
+
+		for _, toolCall := range toolCalls {
+			switch toolCall.Type {
+			case "function":
+				result, runErr := functioncall.RunToolFunction(toolCall.Function.Name, toolCall.Function.Arguments)
+				if runErr != nil {
+					logger.Error("RunToolFunction failed", zap.Error(runErr))
+					emitAgentEvent(onEvent, "error", map[string]any{
+						"message": runErr.Error(),
+					})
+					return AgentResult{Result: AgentResultTypeError, message: runErr.Error()}, runErr
+				}
+
+				resultContent := string(result)
+				conversation = append(conversation, ai.Message{
+					Role:       "tool",
+					Content:    resultContent,
+					ToolCallId: &toolCall.Id,
+				})
+				emitAgentEvent(onEvent, "tool_result", map[string]any{
+					"tool_call_id": toolCall.Id,
+					"name":         toolCall.Function.Name,
+					"content":      resultContent,
+				})
+			default:
+				err = fmt.Errorf("unknown tool call type: %s", toolCall.Type)
+				emitAgentEvent(onEvent, "error", map[string]any{
+					"message": err.Error(),
+				})
+				return AgentResult{Result: AgentResultTypeError, message: err.Error()}, err
+			}
+		}
+	}
+}
+
+func emitAgentEvent(onEvent llm.StreamEventHandler, event string, data any) {
+	if onEvent == nil {
+		return
+	}
+	onEvent(event, data)
 }
