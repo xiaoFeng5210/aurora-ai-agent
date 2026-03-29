@@ -42,6 +42,7 @@ func StreamChatWithGLM(ctx *gin.Context) {
 	}
 }
 
+
 func writeSSEEvent(ctx *gin.Context, event string, data any) error {
 	payload, err := json.Marshal(data)
 	if err != nil {
@@ -54,6 +55,8 @@ func writeSSEEvent(ctx *gin.Context, event string, data any) error {
 	if _, err = fmt.Fprintf(ctx.Writer, "data: %s\n\n", payload); err != nil {
 		return err
 	}
+
+	// 刷新缓冲区
 	ctx.Writer.Flush()
 	return nil
 }

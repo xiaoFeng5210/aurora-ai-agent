@@ -12,7 +12,7 @@ type ChatStreamEvent struct {
 	Data  any    `json:"data"`
 }
 
-func ChatWithGLMStream(req dto.ChatRequest, onEvent func(ChatStreamEvent)) error {
+func ChatWithGLMStream(req dto.ChatRequest, onSSEEvent func(ChatStreamEvent)) error {
 	messages := buildChatMessages(req)
 	chatAgent := agent.Agent{}
 	chatAgent.NewAgentWithOptions(llm.ChatOptions{
@@ -23,10 +23,10 @@ func ChatWithGLMStream(req dto.ChatRequest, onEvent func(ChatStreamEvent)) error
 	})
 
 	_, err := chatAgent.RunAgentWithMessages(messages, func(event string, data any) {
-		if onEvent == nil {
+		if onSSEEvent == nil {
 			return
 		}
-		onEvent(ChatStreamEvent{
+		onSSEEvent(ChatStreamEvent{
 			Event: event,
 			Data:  data,
 		})
