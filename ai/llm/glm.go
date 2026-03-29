@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -75,7 +74,7 @@ func InitModel() *GLM {
 	return glm
 }
 
-func (glm *GLM) ChatWithGLMInStream(messages []ai.Message) (bool, []ToolCall, error) {
+func (glm *GLM) ChatWithGLMInStream(messages []ai.Message) (bool, []ToolCall, string, error) {
 	requestBody := map[string]interface{}{
 		"model":       glm.Model,
 		"messages":    messages,
@@ -89,7 +88,7 @@ func (glm *GLM) ChatWithGLMInStream(messages []ai.Message) (bool, []ToolCall, er
 	}
 
 	body, _ := json.Marshal(requestBody)
-	fmt.Printf("requestBody: %s\n", string(body))
+	// fmt.Printf("requestBody: %s\n", string(body))
 
 	request, _ := http.NewRequest("POST", GLM_MODEL_BASE_URL, bytes.NewBuffer(body))
 	request.Header.Set("Authorization", "Bearer "+glm.APIKey)
@@ -99,7 +98,7 @@ func (glm *GLM) ChatWithGLMInStream(messages []ai.Message) (bool, []ToolCall, er
 	resp, err := client.Do(request)
 	if err != nil {
 		log.Printf("Failed to send request: %v", err)
-		return false, nil, err
+		return false, nil, "", err
 	}
 
 	defer func() {
@@ -114,7 +113,7 @@ func (glm *GLM) ChatWithGLMInStream(messages []ai.Message) (bool, []ToolCall, er
 }
 
 // ai流式回答处理
-func (glm *GLM) AIStreamResponseHandler(body io.Reader) (bool, []ToolCall, error) {
+func (glm *GLM) AIStreamResponseHandler(body io.Reader) (bool, []ToolCall, string, error) {
 	scanner := bufio.NewScanner(body)
 	content := ""
 	toolCalls := []ToolCall{}
@@ -132,13 +131,8 @@ func (glm *GLM) AIStreamResponseHandler(body io.Reader) (bool, []ToolCall, error
 
 		segment := line[6:] // 去掉data: 
     
-		log.Println(string(segment))
-		log.Println("--------------------------------")
-
 
 		if string(segment) == "[DONE]" {
-			fmt.Printf("content: %s\n", content)
-			// TODO: 这里需要处理content内容
 			break
 		}
 		
@@ -146,7 +140,7 @@ func (glm *GLM) AIStreamResponseHandler(body io.Reader) (bool, []ToolCall, error
 		var streamResponse StreamResponse
 		if err := json.Unmarshal(segment, &streamResponse); err != nil {
 			log.Fatalf("不支持json的字段: %s", segment)
-			return false, nil, err
+			return false, nil, "", err
 		}
 
 		// 除了发送，我们自己也要组装content内容
@@ -162,6 +156,6 @@ func (glm *GLM) AIStreamResponseHandler(body io.Reader) (bool, []ToolCall, error
 			needToolCall = true
 		}
 	}
-	return needToolCall, toolCalls, nil
+	return needToolCall, toolCalls, content, nil
 }
 

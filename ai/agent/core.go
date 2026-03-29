@@ -37,6 +37,7 @@ const (
 type AgentResult struct {
 	Result AgentResultType
 	message string
+	content string
 }
 
 func (a *Agent) NewAgent() {
@@ -60,7 +61,7 @@ func (a *Agent) RunAgent(userPrompt string) (AgentResult, error) {
 		sendMessages = append(sendMessages, a.History...)
 		sendMessages = append(sendMessages, ai.Message{ Role:    "user", Content: userPrompt })
 
-		needToolCall, toolCalls, err := a.Llm.ChatWithGLMInStream(sendMessages)
+		needToolCall, toolCalls, content, err := a.Llm.ChatWithGLMInStream(sendMessages)
 		if err != nil {
 			logger.Error("ChatWithGLMInStream failed", zap.Error(err))
 			return AgentResult{Result: AgentResultTypeError, message: err.Error()}, err
@@ -68,11 +69,11 @@ func (a *Agent) RunAgent(userPrompt string) (AgentResult, error) {
 
 
 		if !needToolCall {
-			return AgentResult{Result: AgentResultTypeSuccess, message: "success"}, nil
+			return AgentResult{Result: AgentResultTypeSuccess, message: "success", content: content}, nil
 		}
 
 		if a.CurrentLoop >= a.MaxLoop {
-			return AgentResult{Result: AgentResultTypeTerminate}, fmt.Errorf("max loop reached")
+			return AgentResult{Result: AgentResultTypeTerminate, content: "", message: "max loop reached"}, fmt.Errorf("max loop reached")
 		}
 
 		for _, toolCall := range toolCalls {
