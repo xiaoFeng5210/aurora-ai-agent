@@ -9,6 +9,12 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+var Logger *zap.Logger
+
+func init() {
+	Logger = InitZap("log/zap")
+}
+
 func InitZap(logFile string) *zap.Logger {
 	rotateOut, err := rotatelogs.New(
 		logFile+".%Y%m%d%H.log",                   //指定日志文件的路径和名称，路径不存在时会创建

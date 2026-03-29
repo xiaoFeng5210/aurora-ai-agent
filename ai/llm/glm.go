@@ -10,18 +10,13 @@ import (
 	"net/http"
 	"os"
 
+	"aurora-agent/ai"
 	functioncall "aurora-agent/ai/llm/function-call"
 )
 
 const (
 	GLM_MODEL_BASE_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
 )
-
-type MessageRequest struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-	ToolCallId *string `json:"tool_call_id"`
-}
 
 type ToolCallType string
 
@@ -62,31 +57,23 @@ type GLM struct {
 	Model    string
 	MaxToken int
 	Stream   bool
-	messages []MessageRequest
 }
 
 var (
-	GLM_SYSTEM_BASE_PROMPT = []MessageRequest{
-		{
-			Role:    "system",
-			Content: "你是一个知识库助手，你可以根据用户的问题，从知识库中查询相关信息，并返回给用户。",
-		},
-	}
+
 )
 
-func InitModel(model string) *GLM {
+func InitModel() *GLM {
 	glm := &GLM{
 		APIKey:   os.Getenv("GLM_API_KEY"),
 		Model:    "glm-4.7",
 		MaxToken: 65536,
 		Stream:   true,
 	}
-	// 初始化时候我们先设置基础提示词
-	glm.messages = GLM_SYSTEM_BASE_PROMPT
 	return glm
 }
 
-func (glm *GLM) ChatWithGLMInStream(messages []MessageRequest) (bool, []ToolCall, error) {
+func (glm *GLM) ChatWithGLMInStream(messages []ai.Message) (bool, []ToolCall, error) {
 	requestBody := map[string]interface{}{
 		"model":       glm.Model,
 		"messages":    messages,
@@ -175,14 +162,5 @@ func (glm *GLM) AIStreamResponseHandler(body io.Reader) (bool, []ToolCall, error
 		}
 	}
 	return needToolCall, toolCalls, nil
-}
-
-
-// 发送当前用户的提示词
-func (glm *GLM) SendUserPrompt(prompt string) {
-	glm.messages = append(glm.messages, MessageRequest{
-		Role:    "user",
-		Content: prompt,
-	})
 }
 

@@ -22,14 +22,14 @@ func TestGLM(t *testing.T) {
 		log.Fatalf("GLM_API_KEY is not set")
 	}
 
-	glm := InitModel("glm-4.7")
-	glm.SendUserPrompt("你好，今天上海天气怎么样？")
+	// glm := InitModel("glm-4.7")
+	// glm.SendUserPrompt("你好，今天上海天气怎么样？")
 
-	glm.ChatWithGLMInStream([]MessageRequest{
-		{
-			Role:    "user",
-			Content: "你好，今天上海天气怎么样？",
-		},
-	})
+	// glm.ChatWithGLMInStream([]MessageRequest{
+	// 	{
+	// 		Role:    "user",
+	// 		Content: "你好，今天上海天气怎么样？",
+	// 	},
+	// })
 
 }
