@@ -8,6 +8,7 @@ import (
 
 	utils "aurora-agent/utils"
 
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -20,6 +21,7 @@ func init() {
 }
 
 type Agent struct {
+	Id         string     // agent的唯一标识
 	Llm         *llm.GLM
 	History     []ai.Message
 	MaxLoop     int
@@ -45,6 +47,9 @@ func (a *Agent) NewAgent() {
 }
 
 func (a *Agent) NewAgentWithOptions(opts llm.ChatOptions) {
+	// 生成一个随机字符串作为agent的唯一标识
+	a.Id = uuid.New().String()
+	fmt.Println("agent id: ", a.Id)
 	a.CurrentLoop = 0
 	a.MaxLoop = 6
 	a.Llm = llm.InitModel()
