@@ -5,6 +5,7 @@ import (
 	"aurora-agent/ai/llm"
 	functioncall "aurora-agent/ai/llm/function-call"
 	"fmt"
+	"strings"
 
 	utils "aurora-agent/utils"
 
@@ -33,7 +34,7 @@ type AgentResultType string
 const (
 	AgentResultTypeSuccess   AgentResultType = "success"
 	AgentResultTypeError     AgentResultType = "failure"
-	AgentResultTypeTerminate AgentResultType = "terminate"
+	AgentResultTypeTerminate AgentResultType = "terminate"  // 中断
 )
 
 type AgentResult struct {
@@ -48,7 +49,7 @@ func (a *Agent) NewAgent() {
 
 func (a *Agent) NewAgentWithOptions(opts llm.ChatOptions) {
 	// 生成一个随机字符串作为agent的唯一标识
-	a.Id = uuid.New().String()
+	a.Id = strings.Join(strings.Split(uuid.New().String(), "-"), "")
 	fmt.Println("agent id: ", a.Id)
 	a.CurrentLoop = 0
 	a.MaxLoop = 6
