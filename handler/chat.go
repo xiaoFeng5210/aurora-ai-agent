@@ -11,7 +11,10 @@ import (
 	"go.uber.org/zap"
 )
 
+
+
 func StreamChatWithGLM(ctx *gin.Context) {
+	sseCh := make(chan string, 2)
 	var req dto.ChatRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		respondError(ctx, http.StatusBadRequest, err)
@@ -30,18 +33,17 @@ func StreamChatWithGLM(ctx *gin.Context) {
 		if writeErr != nil || ctx.Request.Context().Err() != nil {
 			return
 		}
-
 		writeErr = writeSSEEvent(ctx, event.Event, event.Data)
 	})
 
 
 	if err != nil {
 		logger.Error("stream chat with glm failed", zap.Error(err))
-		return
 	}
 	if writeErr != nil {
 		logger.Error("write sse event failed", zap.Error(writeErr))
 	}
+	sseCh <- "disconnect"
 }
 
 
@@ -59,6 +61,6 @@ func writeSSEEvent(ctx *gin.Context, event string, data any) error {
 	}
 
 	// 刷新缓冲区
-	ctx.Writer.Flush()
+	ctx.Writer.Flush()	
 	return nil
 }
