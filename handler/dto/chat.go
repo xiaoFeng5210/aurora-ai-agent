@@ -1,8 +1,6 @@
 package dto
 
 type ChatRequest struct {
-	// Model       string              `json:"model" binding:"required"`
-	// Stream      bool                `json:"stream"`
 	Thinking    ChatThinkingRequest `json:"thinking" binding:"required"`
 	MaxTokens   int                 `json:"max_tokens" binding:"required"`   // 最大token数
 	Temperature float64             `json:"temperature"`                     // 温度

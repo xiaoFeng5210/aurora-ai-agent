@@ -13,8 +13,13 @@ import (
 
 
 
-func StreamChatWithGLM(ctx *gin.Context) {
+func StreamChatWithGLMController(ctx *gin.Context) {
 	sseCh := make(chan string, 2)
+
+	defer func() {
+		close(sseCh)
+	}()
+
 	var req dto.ChatRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		respondError(ctx, http.StatusBadRequest, err)
@@ -30,7 +35,7 @@ func StreamChatWithGLM(ctx *gin.Context) {
 
 	var writeErr error
 	err := service.ChatWithGLMStream(req, func(event service.ChatStreamEvent) {
-		if writeErr != nil || ctx.Request.Context().Err() != nil {
+		if ctx.Request.Context().Err() != nil {
 			return
 		}
 		writeErr = writeSSEEvent(ctx, event.Event, event.Data)
@@ -41,9 +46,12 @@ func StreamChatWithGLM(ctx *gin.Context) {
 		logger.Error("stream chat with glm failed", zap.Error(err))
 	}
 	if writeErr != nil {
-		logger.Error("write sse event failed", zap.Error(writeErr))
+		logger.Error("sse connection failed", zap.Error(writeErr))
 	}
-	sseCh <- "disconnect"
+
+	// 这个位置可以检测到SSE连接是否断开，主动和被动的都算
+	// sseCh <- "disconnect"
+	fmt.Println("SSE connection disconnected")
 }
 
 
