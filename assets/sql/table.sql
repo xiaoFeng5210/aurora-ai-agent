@@ -63,3 +63,36 @@ CREATE INDEX IF NOT EXISTS idx_document_create_time ON document (create_time DES
 CREATE OR REPLACE TRIGGER trg_document_update_time
 BEFORE UPDATE ON document
 FOR EACH ROW EXECUTE FUNCTION set_update_time();
+
+-- Aurora AI Agent - Messages
+CREATE TABLE IF NOT EXISTS messages (
+    id           SERIAL PRIMARY KEY,
+    message_id   VARCHAR(128) NOT NULL,
+    document_id  INT NOT NULL,
+    role         VARCHAR(32) NOT NULL,
+    content      TEXT NOT NULL DEFAULT '',
+    tool_calls   JSONB NOT NULL DEFAULT '[]'::jsonb,
+    create_time  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at   TIMESTAMPTZ,
+
+    CONSTRAINT messages_message_id_not_empty CHECK (message_id <> ''),
+    CONSTRAINT messages_role_valid CHECK (role IN ('user', 'assistant', 'system', 'tool')),
+    CONSTRAINT messages_tool_calls_is_array CHECK (jsonb_typeof(tool_calls) = 'array')
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_document_message_id
+    ON messages (document_id, message_id);
+
+CREATE INDEX IF NOT EXISTS idx_messages_document_create_time
+    ON messages (document_id, create_time DESC, id DESC);
+
+CREATE INDEX IF NOT EXISTS idx_messages_document_role
+    ON messages (document_id, role);
+
+CREATE INDEX IF NOT EXISTS idx_messages_deleted_at
+    ON messages (deleted_at);
+
+CREATE OR REPLACE TRIGGER trg_messages_update_time
+BEFORE UPDATE ON messages
+FOR EACH ROW EXECUTE FUNCTION set_update_time();
