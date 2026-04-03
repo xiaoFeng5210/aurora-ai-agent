@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -14,6 +15,11 @@ import (
 
 
 func StreamChatWithGLMController(ctx *gin.Context) {
+	documentID, err := strconv.Atoi(ctx.Param("document_id"))
+	if err != nil {
+		respondError(ctx, http.StatusBadRequest, err)
+		return
+	}
 	sseCh := make(chan string, 2)
 
 	defer func() {
@@ -34,7 +40,7 @@ func StreamChatWithGLMController(ctx *gin.Context) {
 	ctx.Writer.Flush()
 
 	var writeErr error
-	err := service.ChatWithGLMStream(req, func(event service.ChatStreamEvent) {
+	err = service.ChatWithGLMStream(documentID, req, func(event service.ChatStreamEvent) {
 		if ctx.Request.Context().Err() != nil {
 			return
 		}
@@ -43,15 +49,12 @@ func StreamChatWithGLMController(ctx *gin.Context) {
 
 
 	if err != nil {
-		logger.Error("stream chat with glm failed", zap.Error(err))
+		logger.Error("chat with glm agent failed", zap.Error(err))
+		fmt.Println("chat with glm agent failed", err)
 	}
 	if writeErr != nil {
 		logger.Error("sse connection failed", zap.Error(writeErr))
 	}
-
-	// 这个位置可以检测到SSE连接是否断开，主动和被动的都算
-	// sseCh <- "disconnect"
-	fmt.Println("SSE connection disconnected")
 }
 
 

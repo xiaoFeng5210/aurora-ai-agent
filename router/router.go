@@ -20,7 +20,7 @@ func SetupRouter() *gin.Engine {
 		apiv1.POST("/register", handler.CreateUser)
 
 		apiv1.POST("/login", handler.Login)
-		apiv1.POST("/chat/glm/stream", handler.StreamChatWithGLMController)
+		apiv1.POST("/chat/glm/stream/:document_id", handler.StreamChatWithGLMController)
 
 		apiv1.GET("/test_jwt", middleware.Auth, func(c *gin.Context) {
 			c.JSON(200, gin.H{"message": "test jwt success"})

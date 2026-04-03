@@ -27,6 +27,7 @@ type Agent struct {
 	History     []ai.Message
 	MaxLoop     int
 	CurrentLoop int
+	ToolCalls   []ai.ToolCall
 }
 
 type AgentResultType string
@@ -50,7 +51,6 @@ func (a *Agent) NewAgent() {
 func (a *Agent) NewAgentWithOptions(opts llm.ChatOptions) {
 	// 生成一个随机字符串作为agent的唯一标识
 	a.Id = strings.Join(strings.Split(uuid.New().String(), "-"), "")
-	fmt.Println("agent id: ", a.Id)
 	a.CurrentLoop = 0
 	a.MaxLoop = 6
 	a.Llm = llm.InitModel()
@@ -76,13 +76,14 @@ func (a *Agent) RunAgent(messages []ai.Message, onEvent llm.StreamEventHandler) 
 
 	a.CurrentLoop = 0
 	conversation := append([]ai.Message{}, messages...)
+	emitAgentEvent(onEvent, "start", map[string]any{
+		"model": a.Llm.Model,
+	})
+	a.History = append(a.History, messages...)
+	a.ToolCalls = []ai.ToolCall{}
 
 	for {
 		a.CurrentLoop++
-		emitAgentEvent(onEvent, "start", map[string]any{
-			"model": a.Llm.Model,
-		})
-
 		needToolCall, toolCalls, content, err := a.Llm.ChatWithGLMInStreamWithEvents(conversation, llm.ChatOptions{}, onEvent)
 		if err != nil {
 			logger.Error("ChatWithGLMInStreamWithEvents failed", zap.Error(err))
@@ -92,7 +93,17 @@ func (a *Agent) RunAgent(messages []ai.Message, onEvent llm.StreamEventHandler) 
 			return AgentResult{Result: AgentResultTypeError, message: err.Error()}, err
 		}
 
+		conversation = append(conversation, ai.Message{
+			Role:      "assistant",
+			Content:   content,
+			ToolCalls: toolCalls,
+		})
+
 		if !needToolCall {
+			a.History = append(a.History, ai.Message{
+				Role:      "assistant",
+				Content:   content,    // 最后的回答内容
+			})
 			emitAgentEvent(onEvent, "done", map[string]any{
 				"content":       content,
 				"finish_reason": "stop",
@@ -107,12 +118,6 @@ func (a *Agent) RunAgent(messages []ai.Message, onEvent llm.StreamEventHandler) 
 			})
 			return AgentResult{Result: AgentResultTypeTerminate, message: err.Error()}, err
 		}
-
-		conversation = append(conversation, ai.Message{
-			Role:      "assistant",
-			Content:   content,
-			ToolCalls: toolCalls,
-		})
 
 		for _, toolCall := range toolCalls {
 			switch toolCall.Type {
@@ -132,6 +137,7 @@ func (a *Agent) RunAgent(messages []ai.Message, onEvent llm.StreamEventHandler) 
 					Content:    resultContent,
 					ToolCallId: &toolCall.Id,
 				})
+				a.ToolCalls = append(a.ToolCalls, toolCall)
 				emitAgentEvent(onEvent, "tool_result", map[string]any{
 					"tool_call_id": toolCall.Id,
 					"name":         toolCall.Function.Name,

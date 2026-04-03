@@ -4,7 +4,12 @@ import (
 	"aurora-agent/ai"
 	"aurora-agent/ai/agent"
 	"aurora-agent/ai/llm"
+	"aurora-agent/database"
+	"aurora-agent/database/model"
 	"aurora-agent/handler/dto"
+	"strings"
+
+	"github.com/google/uuid"
 )
 
 type ChatStreamEvent struct {
@@ -12,7 +17,7 @@ type ChatStreamEvent struct {
 	Data  any    `json:"data"`
 }
 
-func ChatWithGLMStream(req dto.ChatRequest, onSSEEvent func(ChatStreamEvent)) error {
+func ChatWithGLMStream(documentID int, req dto.ChatRequest, onSSEEvent func(ChatStreamEvent)) error {
 	messages := buildChatMessages(req)
 	chatAgent := agent.Agent{}
 	chatAgent.NewAgentWithOptions(llm.ChatOptions{
@@ -32,7 +37,48 @@ func ChatWithGLMStream(req dto.ChatRequest, onSSEEvent func(ChatStreamEvent)) er
 		})
 	})
 
+	err = saveChatHistory(documentID, &chatAgent)
+	if err != nil {
+		return err
+	}
 	return err
+}
+
+
+// 将聊天记录保存到数据库
+func saveChatHistory(documentID int, chatAgent *agent.Agent) error {
+	var filterMessages []ai.Message
+	var toolCalls []ai.ToolCall
+	for _, toolCall := range chatAgent.ToolCalls {
+		toolCalls = append(toolCalls, toolCall)
+	}
+	for _, message := range chatAgent.History {
+		if message.Role == "assistant" {
+			copy(message.ToolCalls, toolCalls)
+		}
+		if message.Role == "assistant" || message.Role == "user" {
+			filterMessages = append(filterMessages, message)
+		}
+	}
+	
+
+	var submitDBMessages []model.Message
+	for _, message := range filterMessages {
+		currentMessageId := strings.Join(strings.Split(uuid.New().String(), "-"), "")
+		submitDBMessages = append(submitDBMessages, model.Message{
+			MessageId: currentMessageId,
+			DocumentId: documentID,
+			Role: message.Role,
+			Content: message.Content,
+			ToolCalls: message.ToolCalls,
+		})
+	}
+
+	err := database.BatchCreateMessages(submitDBMessages)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func buildChatMessages(req dto.ChatRequest) []ai.Message {
