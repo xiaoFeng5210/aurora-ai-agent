@@ -27,7 +27,7 @@ func ChatWithGLMStream(documentID int, req dto.ChatRequest, onSSEEvent func(Chat
 		ThinkingType: req.Thinking.Type,
 	})
 
-	_, err := chatAgent.RunAgent(messages, func(event string, data any) {
+	agentResult, err := chatAgent.RunAgent(messages, func(event string, data any) {
 		if onSSEEvent == nil {
 			return
 		}
@@ -37,7 +37,7 @@ func ChatWithGLMStream(documentID int, req dto.ChatRequest, onSSEEvent func(Chat
 		})
 	})
 
-	err = saveChatHistory(documentID, &chatAgent)
+	err = saveChatHistory(documentID, &chatAgent, agentResult)
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,8 @@ func ChatWithGLMStream(documentID int, req dto.ChatRequest, onSSEEvent func(Chat
 
 
 // 将聊天记录保存到数据库
-func saveChatHistory(documentID int, chatAgent *agent.Agent) error {
+func saveChatHistory(documentID int, chatAgent *agent.Agent, agentResult agent.AgentResult) error {
+	var userMessages []ai.Message
 	var filterMessages []ai.Message
 	var toolCalls []ai.ToolCall
 	for _, toolCall := range chatAgent.ToolCalls {
@@ -55,6 +56,9 @@ func saveChatHistory(documentID int, chatAgent *agent.Agent) error {
 	for _, message := range chatAgent.History {
 		if message.Role == "assistant" {
 			message.ToolCalls = toolCalls
+		}
+		if message.Role == "user" {
+			userMessages = append(userMessages, message)
 		}
 		if message.Role == "assistant" || message.Role == "user" {
 			filterMessages = append(filterMessages, message)
@@ -74,11 +78,36 @@ func saveChatHistory(documentID int, chatAgent *agent.Agent) error {
 		})
 	}
 
-	err := database.BatchCreateMessages(submitDBMessages)
-	if err != nil {
-		return err
+	var userMessagesDB []model.Message
+	for _, message := range userMessages {
+		userMessagesDB = append(userMessagesDB, model.Message{
+			MessageId: strings.Join(strings.Split(uuid.New().String(), "-"), ""),
+			DocumentId: documentID,
+			Role: message.Role,
+			Content: message.Content,
+		})
 	}
-	return nil
+
+	switch agentResult.Result {
+		case agent.AgentResultTypeSuccess:
+			err := database.BatchCreateMessages(submitDBMessages)
+			if err != nil {
+		    return err
+			}
+			return nil
+		case agent.AgentResultTypeTerminate:
+			err := database.BatchCreateMessages(userMessagesDB)
+			if err != nil {
+				return err
+			}
+			return nil
+		default:
+			err := database.BatchCreateMessages(submitDBMessages)
+			if err != nil {
+				return err
+			}
+			return nil
+	}
 }
 
 func buildChatMessages(req dto.ChatRequest) []ai.Message {
