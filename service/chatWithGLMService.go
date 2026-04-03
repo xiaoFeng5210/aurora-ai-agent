@@ -54,7 +54,7 @@ func saveChatHistory(documentID int, chatAgent *agent.Agent) error {
 	}
 	for _, message := range chatAgent.History {
 		if message.Role == "assistant" {
-			copy(message.ToolCalls, toolCalls)
+			message.ToolCalls = toolCalls
 		}
 		if message.Role == "assistant" || message.Role == "user" {
 			filterMessages = append(filterMessages, message)
