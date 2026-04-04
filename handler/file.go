@@ -8,6 +8,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func GetBaiduNetworkdiskCapacity(ctx *gin.Context) {
+	resp, err := service.GetBaiduNetworkdiskCapacity()
+	if err != nil {
+		vo.RespondError(ctx, http.StatusInternalServerError, err)
+		return
+	}
+	vo.RespondSuccess(ctx, resp)
+}
+
 func GetBaiduNetworkdiskToken(ctx *gin.Context) {
 	resp, err := service.GetBaiduNetworkdiskToken()
 	if err != nil {
