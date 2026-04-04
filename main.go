@@ -9,7 +9,6 @@ import (
 	"go.uber.org/zap"
 )
 
-
 func init() {
 	godotenv.Load()
 	database.DBConnect()

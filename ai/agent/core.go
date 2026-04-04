@@ -22,7 +22,7 @@ func init() {
 }
 
 type Agent struct {
-	Id         string     // agent的唯一标识
+	Id          string // agent的唯一标识
 	Llm         *llm.GLM
 	History     []ai.Message
 	MaxLoop     int
@@ -35,7 +35,7 @@ type AgentResultType string
 const (
 	AgentResultTypeSuccess   AgentResultType = "success"
 	AgentResultTypeError     AgentResultType = "failure"
-	AgentResultTypeTerminate AgentResultType = "terminate"  // 中断
+	AgentResultTypeTerminate AgentResultType = "terminate" // 中断
 )
 
 type AgentResult struct {
@@ -63,8 +63,6 @@ func (a *Agent) NewAgentWithOptions(opts llm.ChatOptions) {
 		},
 	}
 }
-
-
 
 func (a *Agent) RunAgent(messages []ai.Message, onEvent llm.StreamEventHandler) (AgentResult, error) {
 	if a.Llm == nil {
@@ -101,8 +99,8 @@ func (a *Agent) RunAgent(messages []ai.Message, onEvent llm.StreamEventHandler) 
 
 		if !needToolCall {
 			a.History = append(a.History, ai.Message{
-				Role:      "assistant",
-				Content:   content,    // 最后的回答内容
+				Role:    "assistant",
+				Content: content, // 最后的回答内容
 			})
 			emitAgentEvent(onEvent, "done", map[string]any{
 				"content":       content,
@@ -160,10 +158,6 @@ func emitAgentEvent(onEvent llm.StreamEventHandler, event string, data any) {
 	}
 	onEvent(event, data)
 }
-
-
-
-
 
 func (a *Agent) RunAgentWithPormpt(userPrompt string) (AgentResult, error) {
 	for {

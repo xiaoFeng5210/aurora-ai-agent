@@ -12,8 +12,6 @@ import (
 	"go.uber.org/zap"
 )
 
-
-
 func StreamChatWithGLMController(ctx *gin.Context) {
 	documentID, err := strconv.Atoi(ctx.Param("document_id"))
 	if err != nil {
@@ -47,7 +45,6 @@ func StreamChatWithGLMController(ctx *gin.Context) {
 		writeErr = writeSSEEvent(ctx, event.Event, event.Data)
 	})
 
-
 	if err != nil {
 		logger.Error("chat with glm agent failed", zap.Error(err))
 		fmt.Println("chat with glm agent failed", err)
@@ -56,7 +53,6 @@ func StreamChatWithGLMController(ctx *gin.Context) {
 		logger.Error("sse connection failed", zap.Error(writeErr))
 	}
 }
-
 
 func writeSSEEvent(ctx *gin.Context, event string, data any) error {
 	payload, err := json.Marshal(data)
@@ -72,6 +68,6 @@ func writeSSEEvent(ctx *gin.Context, event string, data any) error {
 	}
 
 	// 刷新缓冲区
-	ctx.Writer.Flush()	
+	ctx.Writer.Flush()
 	return nil
 }

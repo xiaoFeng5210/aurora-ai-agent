@@ -46,5 +46,9 @@ func SetupRouter() *gin.Engine {
 	documentGroup.PUT("/:id", handler.UpdateDocument)
 	documentGroup.DELETE("/:id", handler.DeleteDocument)
 
+
+	baiduNetworkdiskGroup := apiv1.Group("/file")
+	baiduNetworkdiskGroup.GET("/baidu_networkdisk/token", handler.GetBaiduNetworkdiskToken)
+
 	return r
 }

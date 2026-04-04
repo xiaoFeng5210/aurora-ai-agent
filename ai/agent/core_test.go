@@ -27,6 +27,6 @@ func TestAgent(t *testing.T) {
 	}, nil)
 	if err != nil {
 		t.Fatalf("RunAgent failed: %v", err)
-	} 
+	}
 	t.Logf("result: %v", result.content)
 }

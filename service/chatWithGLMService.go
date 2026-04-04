@@ -44,7 +44,6 @@ func ChatWithGLMStream(documentID int, req dto.ChatRequest, onSSEEvent func(Chat
 	return err
 }
 
-
 // 将聊天记录保存到数据库
 func saveChatHistory(documentID int, chatAgent *agent.Agent, agentResult agent.AgentResult) error {
 	var userMessages []ai.Message
@@ -64,49 +63,48 @@ func saveChatHistory(documentID int, chatAgent *agent.Agent, agentResult agent.A
 			filterMessages = append(filterMessages, message)
 		}
 	}
-	
 
 	var submitDBMessages []model.Message
 	for _, message := range filterMessages {
 		currentMessageId := strings.Join(strings.Split(uuid.New().String(), "-"), "")
 		submitDBMessages = append(submitDBMessages, model.Message{
-			MessageId: currentMessageId,
+			MessageId:  currentMessageId,
 			DocumentId: documentID,
-			Role: message.Role,
-			Content: message.Content,
-			ToolCalls: message.ToolCalls,
+			Role:       message.Role,
+			Content:    message.Content,
+			ToolCalls:  message.ToolCalls,
 		})
 	}
 
 	var userMessagesDB []model.Message
 	for _, message := range userMessages {
 		userMessagesDB = append(userMessagesDB, model.Message{
-			MessageId: strings.Join(strings.Split(uuid.New().String(), "-"), ""),
+			MessageId:  strings.Join(strings.Split(uuid.New().String(), "-"), ""),
 			DocumentId: documentID,
-			Role: message.Role,
-			Content: message.Content,
+			Role:       message.Role,
+			Content:    message.Content,
 		})
 	}
 
 	switch agentResult.Result {
-		case agent.AgentResultTypeSuccess:
-			err := database.BatchCreateMessages(submitDBMessages)
-			if err != nil {
-		    return err
-			}
-			return nil
-		case agent.AgentResultTypeTerminate:
-			err := database.BatchCreateMessages(userMessagesDB)
-			if err != nil {
-				return err
-			}
-			return nil
-		default:
-			err := database.BatchCreateMessages(submitDBMessages)
-			if err != nil {
-				return err
-			}
-			return nil
+	case agent.AgentResultTypeSuccess:
+		err := database.BatchCreateMessages(submitDBMessages)
+		if err != nil {
+			return err
+		}
+		return nil
+	case agent.AgentResultTypeTerminate:
+		err := database.BatchCreateMessages(userMessagesDB)
+		if err != nil {
+			return err
+		}
+		return nil
+	default:
+		err := database.BatchCreateMessages(submitDBMessages)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 }
 
