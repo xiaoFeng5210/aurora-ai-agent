@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"aurora-agent/handler/vo"
 	"aurora-agent/service"
 	"net/http"
 
@@ -10,7 +11,7 @@ import (
 func GetBaiduNetworkdiskToken(ctx *gin.Context) {
 	resp, err := service.GetBaiduNetworkdiskToken()
 	if err != nil {
-		respondError(ctx, http.StatusInternalServerError, err)
+		vo.RespondError(ctx, http.StatusInternalServerError, err)
 		return
 	}
 

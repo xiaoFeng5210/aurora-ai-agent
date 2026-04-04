@@ -1,6 +1,9 @@
 package service
 
-import "testing"
+import (
+	"aurora-agent/handler/vo"
+	"testing"
+)
 
 func TestParseBirthday(t *testing.T) {
 	t.Run("empty birthday", func(t *testing.T) {
@@ -28,8 +31,8 @@ func TestParseBirthday(t *testing.T) {
 
 	t.Run("invalid birthday", func(t *testing.T) {
 		_, err := parseBirthday("2024/10/01")
-		if err != ErrBirthdayFormat {
-			t.Fatalf("expected %v, got %v", ErrBirthdayFormat, err)
+		if err != vo.ErrBirthdayFormat {
+			t.Fatalf("expected %v, got %v", vo.ErrBirthdayFormat, err)
 		}
 	})
 }
@@ -56,8 +59,8 @@ func TestHashAndVerifyPassword(t *testing.T) {
 }
 
 func TestValidatePassword(t *testing.T) {
-	if err := validatePassword("12345"); err != ErrPasswordTooShort {
-		t.Fatalf("expected %v, got %v", ErrPasswordTooShort, err)
+	if err := validatePassword("12345"); err != vo.ErrPasswordTooShort {
+		t.Fatalf("expected %v, got %v", vo.ErrPasswordTooShort, err)
 	}
 
 	if err := validatePassword("123456"); err != nil {

@@ -4,6 +4,7 @@ import (
 	"aurora-agent/database"
 	"aurora-agent/database/model"
 	"aurora-agent/handler/dto"
+	"aurora-agent/handler/vo"
 	"errors"
 	"net/mail"
 	"strings"
@@ -20,16 +21,7 @@ const (
 	birthdayLayout    = "2006-01-02"
 )
 
-var (
-	ErrUserNotFound         = errors.New("user not found")
-	ErrUsernameExists       = errors.New("username already exists")
-	ErrEmailExists          = errors.New("email already exists")
-	ErrInvalidCredentials   = errors.New("invalid email or password")
-	ErrOldPasswordIncorrect = errors.New("old password is incorrect")
-	ErrPasswordTooShort     = errors.New("password must be at least 6 characters")
-	ErrBirthdayFormat       = errors.New("birthday must be in YYYY-MM-DD format")
-	ErrNoFieldsToUpdate     = errors.New("no fields to update")
-)
+
 
 func CreateUser(req dto.CreateUserRequest) error {
 	username := strings.TrimSpace(req.Username)
@@ -56,7 +48,7 @@ func CreateUser(req dto.CreateUserRequest) error {
 		return err
 	}
 	if exists {
-		return ErrUsernameExists
+		return vo.ErrUsernameExists
 	}
 
 	exists, err = database.EmailExists(email, 0)
@@ -64,7 +56,7 @@ func CreateUser(req dto.CreateUserRequest) error {
 		return err
 	}
 	if exists {
-		return ErrEmailExists
+		return vo.ErrEmailExists
 	}
 
 	hashedPassword, err := hashPassword(req.Password)
@@ -89,13 +81,13 @@ func AuthenticateUser(req dto.LoginRequest) (model.User, error) {
 	user, err := database.GetUserByEmail(email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return model.User{}, ErrInvalidCredentials
+			return model.User{}, vo.ErrInvalidCredentials
 		}
 		return model.User{}, err
 	}
 
 	if err := verifyPassword(user.Password, req.Password); err != nil {
-		return model.User{}, ErrInvalidCredentials
+		return model.User{}, vo.ErrInvalidCredentials
 	}
 
 	return user, nil
@@ -113,7 +105,7 @@ func GetUserByID(id int) (dto.UserResponse, error) {
 	user, err := database.GetUserById(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return dto.UserResponse{}, ErrUserNotFound
+			return dto.UserResponse{}, vo.ErrUserNotFound
 		}
 		return dto.UserResponse{}, err
 	}
@@ -171,7 +163,7 @@ func UpdateCurrentUser(uid int, req dto.UpdateCurrentUserRequest) (dto.UserRespo
 			return dto.UserResponse{}, err
 		}
 		if exists {
-			return dto.UserResponse{}, ErrUsernameExists
+			return dto.UserResponse{}, vo.ErrUsernameExists
 		}
 		updates["username"] = username
 	}
@@ -189,7 +181,7 @@ func UpdateCurrentUser(uid int, req dto.UpdateCurrentUserRequest) (dto.UserRespo
 			return dto.UserResponse{}, err
 		}
 		if exists {
-			return dto.UserResponse{}, ErrEmailExists
+			return dto.UserResponse{}, vo.ErrEmailExists
 		}
 		updates["email"] = email
 	}
@@ -211,12 +203,12 @@ func UpdateCurrentUser(uid int, req dto.UpdateCurrentUserRequest) (dto.UserRespo
 	}
 
 	if len(updates) == 0 {
-		return dto.UserResponse{}, ErrNoFieldsToUpdate
+		return dto.UserResponse{}, vo.ErrNoFieldsToUpdate
 	}
 
 	if err := database.UpdateUserByID(uid, updates); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return dto.UserResponse{}, ErrUserNotFound
+			return dto.UserResponse{}, vo.ErrUserNotFound
 		}
 		return dto.UserResponse{}, err
 	}
@@ -232,13 +224,13 @@ func ChangeCurrentUserPassword(uid int, req dto.ChangePasswordRequest) error {
 	user, err := database.GetUserById(uid)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ErrUserNotFound
+			return vo.ErrUserNotFound
 		}
 		return err
 	}
 
 	if err := verifyPassword(user.Password, req.OldPassword); err != nil {
-		return ErrOldPasswordIncorrect
+		return vo.ErrOldPasswordIncorrect
 	}
 
 	hashedPassword, err := hashPassword(req.NewPassword)
@@ -248,7 +240,7 @@ func ChangeCurrentUserPassword(uid int, req dto.ChangePasswordRequest) error {
 
 	if err := database.UpdateUserByID(uid, map[string]any{"password": hashedPassword}); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ErrUserNotFound
+			return vo.ErrUserNotFound
 		}
 		return err
 	}
@@ -259,7 +251,7 @@ func ChangeCurrentUserPassword(uid int, req dto.ChangePasswordRequest) error {
 func DeleteCurrentUser(uid int) error {
 	if err := database.SoftDeleteUser(uid); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ErrUserNotFound
+			return vo.ErrUserNotFound
 		}
 		return err
 	}
@@ -274,7 +266,7 @@ func parseBirthday(value string) (*time.Time, error) {
 
 	birthday, err := time.Parse(birthdayLayout, value)
 	if err != nil {
-		return nil, ErrBirthdayFormat
+		return nil, vo.ErrBirthdayFormat
 	}
 
 	return &birthday, nil
@@ -282,7 +274,7 @@ func parseBirthday(value string) (*time.Time, error) {
 
 func validatePassword(password string) error {
 	if len(password) < minPasswordLength {
-		return ErrPasswordTooShort
+		return vo.ErrPasswordTooShort
 	}
 	return nil
 }

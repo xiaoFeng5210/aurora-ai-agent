@@ -4,6 +4,7 @@ import (
 	"aurora-agent/database"
 	"aurora-agent/database/model"
 	"aurora-agent/handler/dto"
+	"aurora-agent/handler/vo"
 	"errors"
 	"strings"
 
@@ -140,7 +141,7 @@ func buildDocumentUpdates(req dto.UpdateDocumentRequest) (map[string]any, error)
 	}
 
 	if len(updates) == 0 {
-		return nil, ErrNoFieldsToUpdate
+		return nil, vo.ErrNoFieldsToUpdate
 	}
 
 	return updates, nil

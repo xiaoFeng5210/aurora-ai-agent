@@ -3,6 +3,7 @@ package handler
 import (
 	"aurora-agent/database"
 	"aurora-agent/handler/dto"
+	"aurora-agent/handler/vo"
 	"aurora-agent/middleware"
 	"aurora-agent/service"
 	"net/http"
@@ -15,14 +16,14 @@ import (
 func CreateDocument(ctx *gin.Context) {
 	var req dto.CreateDocumentRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		respondError(ctx, http.StatusBadRequest, err)
+		vo.RespondError(ctx, http.StatusBadRequest, err)
 		return
 	}
 
 	document, err := service.CreateDocument(ctx.GetInt(middleware.UID_IN_CTX), req)
 	if err != nil {
 		logger.Error("create document failed", zap.Error(err))
-		respondWithServiceError(ctx, err)
+		vo.RespondWithServiceError(ctx, err)
 		return
 	}
 
@@ -36,14 +37,14 @@ func CreateDocument(ctx *gin.Context) {
 func GetDocumentById(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		respondError(ctx, http.StatusBadRequest, err)
+		vo.RespondError(ctx, http.StatusBadRequest, err)
 		return
 	}
 
 	document, err := service.GetDocumentByID(ctx.GetInt(middleware.UID_IN_CTX), id)
 	if err != nil {
 		logger.Error("get document by id failed", zap.Error(err))
-		respondWithServiceError(ctx, err)
+		vo.RespondWithServiceError(ctx, err)
 		return
 	}
 
@@ -57,14 +58,14 @@ func GetDocumentById(ctx *gin.Context) {
 func QueryDocument(ctx *gin.Context) {
 	var filter dto.QueryDocumentDTO
 	if err := ctx.ShouldBindJSON(&filter); err != nil {
-		respondError(ctx, http.StatusBadRequest, err)
+		vo.RespondError(ctx, http.StatusBadRequest, err)
 		return
 	}
 
 	documents, err := service.QueryDocuments(ctx.GetInt(middleware.UID_IN_CTX), filter)
 	if err != nil {
 		logger.Error("query document failed", zap.Error(err))
-		respondWithServiceError(ctx, err)
+		vo.RespondWithServiceError(ctx, err)
 		return
 	}
 
@@ -78,20 +79,20 @@ func QueryDocument(ctx *gin.Context) {
 func UpdateDocument(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		respondError(ctx, http.StatusBadRequest, err)
+		vo.RespondError(ctx, http.StatusBadRequest, err)
 		return
 	}
 
 	var req dto.UpdateDocumentRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		respondError(ctx, http.StatusBadRequest, err)
+		vo.RespondError(ctx, http.StatusBadRequest, err)
 		return
 	}
 
 	document, err := service.UpdateDocument(ctx.GetInt(middleware.UID_IN_CTX), id, req)
 	if err != nil {
 		logger.Error("update document failed", zap.Error(err))
-		respondWithServiceError(ctx, err)
+		vo.RespondWithServiceError(ctx, err)
 		return
 	}
 
@@ -105,13 +106,13 @@ func UpdateDocument(ctx *gin.Context) {
 func DeleteDocument(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		respondError(ctx, http.StatusBadRequest, err)
+		vo.RespondError(ctx, http.StatusBadRequest, err)
 		return
 	}
 
 	if err := service.DeleteDocument(ctx.GetInt(middleware.UID_IN_CTX), id); err != nil {
 		logger.Error("delete document failed", zap.Error(err))
-		respondWithServiceError(ctx, err)
+		vo.RespondWithServiceError(ctx, err)
 		return
 	}
 
@@ -125,7 +126,7 @@ func GetAllDocuments(ctx *gin.Context) {
 	documents, err := database.GetAllDocumentsByUserID(ctx.GetInt(middleware.UID_IN_CTX))
 	if err != nil {
 		logger.Error("get all documents failed", zap.Error(err))
-		respondWithServiceError(ctx, err)
+		vo.RespondWithServiceError(ctx, err)
 		return
 	}
 

@@ -2,6 +2,7 @@ package service
 
 import (
 	"aurora-agent/handler/dto"
+	"aurora-agent/handler/vo"
 	"testing"
 )
 
@@ -44,8 +45,8 @@ func TestNormalizeOptionalString(t *testing.T) {
 }
 
 func TestBuildDocumentUpdates(t *testing.T) {
-	if _, err := buildDocumentUpdates(dto.UpdateDocumentRequest{}); err != ErrNoFieldsToUpdate {
-		t.Fatalf("expected %v, got %v", ErrNoFieldsToUpdate, err)
+	if _, err := buildDocumentUpdates(dto.UpdateDocumentRequest{}); err != vo.ErrNoFieldsToUpdate {
+		t.Fatalf("expected %v, got %v", vo.ErrNoFieldsToUpdate, err)
 	}
 
 	blankDisplayName := "   "

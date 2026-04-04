@@ -2,6 +2,7 @@ package handler
 
 import (
 	"aurora-agent/handler/dto"
+	"aurora-agent/handler/vo"
 	"aurora-agent/service"
 	"encoding/json"
 	"fmt"
@@ -15,7 +16,7 @@ import (
 func StreamChatWithGLMController(ctx *gin.Context) {
 	documentID, err := strconv.Atoi(ctx.Param("document_id"))
 	if err != nil {
-		respondError(ctx, http.StatusBadRequest, err)
+		vo.RespondError(ctx, http.StatusBadRequest, err)
 		return
 	}
 	sseCh := make(chan string, 2)
@@ -26,7 +27,7 @@ func StreamChatWithGLMController(ctx *gin.Context) {
 
 	var req dto.ChatRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		respondError(ctx, http.StatusBadRequest, err)
+		vo.RespondError(ctx, http.StatusBadRequest, err)
 		return
 	}
 
