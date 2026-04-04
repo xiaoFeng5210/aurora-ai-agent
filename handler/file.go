@@ -8,11 +8,15 @@ import (
 )
 
 func GetBaiduNetworkdiskToken(ctx *gin.Context) {
-	resp, err := service.GetBaiduNetworkdiskTokenWeb()
+	resp, err := service.GetBaiduNetworkdiskToken()
 	if err != nil {
 		respondError(ctx, http.StatusInternalServerError, err)
 		return
 	}
-	ctx.Header("Content-Type", "text/html")
-	ctx.Writer.Write(resp)
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "success",
+		"data":    *resp,
+	})
 }
