@@ -20,3 +20,21 @@ func TestGetBaiduNetworkdiskFileList(t *testing.T) {
 	}
 	t.Logf("resp: %v", resp.List)
 }
+
+func TestPrecreateUpload(t *testing.T) {
+	resp, err := PrecreateUpload("/test.md", 0)
+	if err != nil {
+		t.Fatalf("PrecreateUpload failed: %v", err)
+	}
+	t.Logf("resp: %v", resp)
+}
+
+
+func TestHandleFile(t *testing.T) {
+	blockList, size, err := HandleFile()
+	if err != nil {
+		t.Fatalf("HandleFile failed: %v", err)
+	}
+	t.Logf("blockList: %v", blockList)
+	t.Logf("size: %d", size)
+}

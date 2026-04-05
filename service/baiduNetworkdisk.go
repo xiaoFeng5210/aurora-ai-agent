@@ -5,6 +5,7 @@ import (
 	"aurora-agent/handler/vo"
 	"aurora-agent/utils"
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,6 +15,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"crypto/md5"
 
 	"go.uber.org/zap"
 )
@@ -43,8 +46,15 @@ func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, error
 	httpUrl := baseUrl + "/rest/2.0/xpan/file"
 
 	appName := "/aurora-ai-agent" + url.PathEscape("知识库")
-	parent := "/apps" + appName + "/super"
+	username := "super"  // TODO
+	parent := "/apps" + appName + "/" + username
 	path = parent + path
+
+	blockList, size, err := HandleFile()
+	if err != nil {
+		return nil, err
+	}
+
 	postBytes, err := json.Marshal(
 		dto.PrecreateUploadRequest{
 			Method: "precreate",
@@ -52,6 +62,8 @@ func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, error
 			Path: path,
 			Isdir: isdir,
 			Autoinit: 1,
+			BlockList: blockList,
+			Size: int(size),
 		},
 	)
 	if err != nil {
@@ -76,6 +88,41 @@ func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, error
 		return nil, errors.New("百度网盘预上传失败: " + strconv.Itoa(result.Errno))
 	}
 	return &result, nil
+}
+
+
+// TODO 处理文件，这里测试我们使用本地
+func HandleFile() (blockList []string, size int64, err error) {
+	filePath := "test.md"
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, 0, err
+	}
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return nil, 0, err
+	}
+	size = fileInfo.Size()
+	defer file.Close()
+
+	var buffer = make([]byte, 1024 * 1024 * 4)
+	for {
+		n, err := file.Read(buffer)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, 0, err
+			}
+
+		md5DataContainer := make([]byte, 16)
+		md5Data := md5.Sum(buffer[:n])
+		copy(md5DataContainer, md5Data[:])
+		block := hex.EncodeToString(md5DataContainer)
+		blockList = append(blockList, block)
+	}
+
+	return blockList, size, nil		
 }
 
 
