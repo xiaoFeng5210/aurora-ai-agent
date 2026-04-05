@@ -37,8 +37,49 @@ func init() {
 }
 
 
-func BaiduNetworkdiskCreate() {
+func CreateFileOrDir(path string, isdir int, uploadid string, blockList []string, size int) error {
+	access_token, err := GetBaiduNetworkdiskTokenFromRedis()
+	if err != nil {
+		return err
+	}
+	method := "create"
 
+	if isdir != 1 {
+		size = 0
+	}
+	httpUrl := baseUrl + "/rest/2.0/xpan/file" + fmt.Sprintf("?access_token=%s&method=%s", access_token, method)
+
+	postData := dto.CreateFileOrDirRequest{
+		Path: path,
+		Isdir: isdir,
+		Uploadid: uploadid,
+		BlockList: blockList,
+		Size: int(size),
+	}
+
+	postBytes, err := json.Marshal(postData)
+	if err != nil {
+		return err
+	}
+	postDataBuffer := bytes.NewBuffer(postBytes)
+	resp, err := http.Post(httpUrl, "application/json", postDataBuffer)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	var result vo.CreateFileOrDirResponse
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		return err
+	}
+	if result.Errno != 0 {
+		return errors.New("百度网盘创建文件或文件夹失败: " + strconv.Itoa(result.Errno))
+	}
+	return nil
 }
 
 // 分片上传
@@ -79,10 +120,10 @@ func Upload(precreateInfo *vo.PrecreateUploadResponse, fileData []byte) (*vo.Upl
 }
 
 // 预上传
-func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, []byte, error) {
+func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, []byte, []string, error) {
 	access_token, err := GetBaiduNetworkdiskTokenFromRedis()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	httpUrl := baseUrl + "/rest/2.0/xpan/file"
 
@@ -93,7 +134,7 @@ func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, []byt
 
 	blockList, size, fileData, err := HandleFile()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	postBytes, err := json.Marshal(
@@ -108,27 +149,28 @@ func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, []byt
 		},
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	postData := bytes.NewBuffer(postBytes)
 	resp, err := http.Post(httpUrl, "application/json", postData)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	var result vo.PrecreateUploadResponse
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	if result.Errno != 0 {
-		return nil, nil, errors.New("百度网盘预上传失败: " + strconv.Itoa(result.Errno))
+		return nil, nil, nil, errors.New("百度网盘预上传失败: " + strconv.Itoa(result.Errno))
 	}
-	return &result, fileData, nil
+	result.Size = int(size)
+	return &result, fileData, blockList, nil
 }
 
 

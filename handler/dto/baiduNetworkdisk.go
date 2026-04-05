@@ -16,3 +16,12 @@ type PrecreateUploadRequest struct {
 	BlockList []string `json:"block_list"`
 	Autoinit int `json:"autoinit"`
 }
+
+
+type CreateFileOrDirRequest struct {
+	Path string `json:"path"`
+	Isdir int `json:"isdir"`
+	Uploadid string `json:"uploadid"`
+	BlockList []string `json:"block_list"`
+	Size int `json:"size"`
+}

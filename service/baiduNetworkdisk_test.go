@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/joho/godotenv"
@@ -22,11 +24,24 @@ func TestGetBaiduNetworkdiskFileList(t *testing.T) {
 }
 
 func TestUpload(t *testing.T) {
-	resp, _, err := PrecreateUpload("/test.md", 0)
+	precreateInfo, fileData, blockList, err := PrecreateUpload("/test.md", 0)
 	if err != nil {
 		t.Fatalf("PrecreateUpload failed: %v", err)
 	}
-	t.Logf("resp: %v", resp)
+
+	_, err = Upload(precreateInfo, fileData)
+	if err != nil {
+		t.Fatalf("Upload failed: %v", err)
+	}
+
+	fmt.Println("precreateInfo.Size: " + strconv.Itoa(precreateInfo.Size))
+
+	err = CreateFileOrDir(precreateInfo.Path, 0, precreateInfo.Uploadid, blockList, precreateInfo.Size)
+	if err != nil {
+		t.Fatalf("CreateFileOrDir failed: %v", err)
+	}
+
+	t.Logf("CreateFileOrDir success")
 }
 
 

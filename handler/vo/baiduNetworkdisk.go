@@ -48,6 +48,7 @@ type PrecreateUploadResponse struct {
 	Path string `json:"path"`
 	Uploadid string `json:"uploadid"`
 	Partseq int `json:"partseq"`
+	Size int `json:"size"`
 }
 
 type UploadResponse struct {
@@ -55,4 +56,7 @@ type UploadResponse struct {
 	MD5 string `json:"md5"`
 }
 
-
+type CreateFileOrDirResponse struct {
+	Errno int `json:"errno"`
+	FsId int `json:"fs_id"`
+}
