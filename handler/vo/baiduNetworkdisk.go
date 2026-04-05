@@ -15,10 +15,21 @@ type BaiduNetworkdiskCapacityResponse struct {
 	Free float64 `json:"free"`
 }
 
+type FileCategory int
+const (
+	fileVideo FileCategory = 1
+  fileAudio FileCategory = 2
+	fileImage FileCategory = 3
+	fileDocument FileCategory = 4
+	fileApp FileCategory = 5
+)
+
 type Info struct {
 	Category int `json:"category"`
 	FsId int `json:"fs_id"`
-  Isdir bool `json:"isdir"`
+	Path string `json:"path"`   // 绝对路径
+	ServerFilename string `json:"server_filename"` // 文件名称
+  Isdir int `json:"isdir"`
 	LocalCtime int `json:"local_ctime"`
 	LocalMtime int `json:"local_mtime"`
 	ServerCtime int `json:"server_ctime"`
@@ -27,5 +38,6 @@ type Info struct {
 }
 
 type BaiduNetworkdiskFileListResponse struct {
-	Info []Info `json:"info"`
+	List []Info `json:"list"`
+	Errno int `json:"errno"`
 }

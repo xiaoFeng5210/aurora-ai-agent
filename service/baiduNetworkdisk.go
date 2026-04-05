@@ -21,15 +21,14 @@ var (
 
 
 // 获取文件或文件夹列表
-func GetBaiduNetworkdiskFileList(parentPath string) (*vo.BaiduNetworkdiskFileListResponse, error) {
+func GetBaiduNetworkdiskFileList(dir string) (*vo.BaiduNetworkdiskFileListResponse, error) {
 	access_token, err := GetBaiduNetworkdiskTokenFromRedis()
 	if err != nil {
 		return nil, err
 	}
 
-	method := "doclist"
-	parent_path := parentPath
-	url := baseUrl + "/rest/2.0/xpan/file?" + fmt.Sprintf("access_token=%s&method=%s&parent_path=%s", access_token, method, parent_path)
+	method := "list"
+	url := baseUrl + "/rest/2.0/xpan/file?" + fmt.Sprintf("access_token=%s&method=%s&dir=%s", access_token, method, dir)
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
