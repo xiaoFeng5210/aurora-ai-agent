@@ -2,12 +2,18 @@ package service
 
 import (
 	"aurora-agent/handler/vo"
+	"aurora-agent/utils"
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
 var (
@@ -18,6 +24,50 @@ var (
 	}
 	capacityUnit float64 = 1024 * 1024 * 1024
 )
+
+var logger *zap.Logger
+
+func init() {
+	logger = utils.Logger
+}
+
+
+// 预上传
+func PrecreateUpload() (*vo.PrecreateUploadResponse, error) {
+	access_token, err := GetBaiduNetworkdiskTokenFromRedis()
+	if err != nil {
+		return nil, err
+	}
+	method := "precreate"
+	url := baseUrl + "/rest/2.0/xpan/file"
+	postBytes, err := json.Marshal(map[string]string{
+		"access_token": access_token,
+		"method": method,
+	})
+	if err != nil {
+		return nil, err
+	}
+	postData := bytes.NewBuffer(postBytes)
+	resp, err := http.Post(url, "application/json", postData)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	var result vo.PrecreateUploadResponse
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		return nil, err
+	}
+	if result.Errno != 0 {
+		return nil, errors.New("百度网盘预上传失败: " + strconv.Itoa(result.Errno))
+	}
+	return &result, nil
+}
+
 
 
 // 获取文件或文件夹列表

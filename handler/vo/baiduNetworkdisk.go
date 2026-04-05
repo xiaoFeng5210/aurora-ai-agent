@@ -41,3 +41,12 @@ type BaiduNetworkdiskFileListResponse struct {
 	List []Info `json:"list"`
 	Errno int `json:"errno"`
 }
+
+
+type PrecreateUploadResponse struct {
+	Errno int `json:"errno"`
+	Path string `json:"path"`
+	
+}
+
+
