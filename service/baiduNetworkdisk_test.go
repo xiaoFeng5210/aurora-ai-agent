@@ -22,7 +22,7 @@ func TestGetBaiduNetworkdiskFileList(t *testing.T) {
 }
 
 func TestPrecreateUpload(t *testing.T) {
-	resp, err := PrecreateUpload("/test.md", 0)
+	resp, _, err := PrecreateUpload("/test.md", 0)
 	if err != nil {
 		t.Fatalf("PrecreateUpload failed: %v", err)
 	}

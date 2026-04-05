@@ -38,10 +38,10 @@ func init() {
 
 
 // 预上传
-func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, error) {
+func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, []byte, error) {
 	access_token, err := GetBaiduNetworkdiskTokenFromRedis()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	httpUrl := baseUrl + "/rest/2.0/xpan/file"
 
@@ -50,9 +50,9 @@ func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, error
 	parent := "/apps" + appName + "/" + username
 	path = parent + path
 
-	blockList, size, err := HandleFile()
+	blockList, size, fileData, err := HandleFile()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	postBytes, err := json.Marshal(
@@ -67,44 +67,49 @@ func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, error
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	postData := bytes.NewBuffer(postBytes)
 	resp, err := http.Post(httpUrl, "application/json", postData)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var result vo.PrecreateUploadResponse
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if result.Errno != 0 {
-		return nil, errors.New("百度网盘预上传失败: " + strconv.Itoa(result.Errno))
+		return nil, nil, errors.New("百度网盘预上传失败: " + strconv.Itoa(result.Errno))
 	}
-	return &result, nil
+	return &result, fileData, nil
 }
 
 
 // TODO 处理文件，这里测试我们使用本地
-func HandleFile() (blockList []string, size int64, err error) {
+func HandleFile() (blockList []string, size int64, fileData []byte, err error) {
 	filePath := "test.md"
 	file, err := os.Open(filePath)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, nil, err
 	}
 	fileInfo, err := file.Stat()
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, nil, err
 	}
 	size = fileInfo.Size()
 	defer file.Close()
 
+	if err != nil {
+		return nil, 0, nil, err
+	}
+
+	fileData = []byte{}
 	var buffer = make([]byte, 1024 * 1024 * 4)
 	for {
 		n, err := file.Read(buffer)
@@ -112,7 +117,7 @@ func HandleFile() (blockList []string, size int64, err error) {
 			if err == io.EOF {
 				break
 			}
-			return nil, 0, err
+			return nil, 0, nil, err
 			}
 
 		md5DataContainer := make([]byte, 16)
@@ -120,9 +125,10 @@ func HandleFile() (blockList []string, size int64, err error) {
 		copy(md5DataContainer, md5Data[:])
 		block := hex.EncodeToString(md5DataContainer)
 		blockList = append(blockList, block)
+		fileData = append(fileData, buffer[:n]...)
 	}
 
-	return blockList, size, nil		
+	return blockList, size, fileData, nil		
 }
 
 
