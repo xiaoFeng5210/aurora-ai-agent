@@ -20,11 +20,3 @@ func TestGetBaiduNetworkdiskFileList(t *testing.T) {
 	}
 	t.Logf("resp: %v", resp.List)
 }
-
-// func TestGetBaiduNetworkdiskToken(t *testing.T) {
-// 	resp, err := GetBaiduNetworkdiskTokenWeb()
-// 	if err != nil {
-// 		t.Fatalf("GetBaiduNetworkdiskToken failed: %v", err)
-// 	}
-// 	t.Logf("resp: %s", string(resp))
-// }
