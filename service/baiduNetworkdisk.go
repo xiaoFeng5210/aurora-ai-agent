@@ -37,6 +37,47 @@ func init() {
 }
 
 
+func BaiduNetworkdiskCreate() {
+
+}
+
+// 分片上传
+func Upload(precreateInfo *vo.PrecreateUploadResponse, fileData []byte) (*vo.UploadResponse, error) {
+	access_token, err := GetBaiduNetworkdiskTokenFromRedis()
+	if err != nil {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+		return nil, err
+	}
+	method := "upload"
+	path := precreateInfo.Path
+	uploadid := precreateInfo.Uploadid
+	partseq := 0
+	httpUrl := baseUrl + "/rest/2.0/xpan/file" + fmt.Sprintf("?access_token=%s&method=%s&path=%s&uploadid=%s&partseq=%d&type=tmpfile", access_token, method, path, uploadid, partseq)
+
+	postBytes, err := json.Marshal(map[string]interface{}{
+		"file": fileData,
+	})
+	postData := bytes.NewBuffer(postBytes)
+	resp, err := http.Post(httpUrl, "content-type: application/json", postData)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	var result vo.UploadResponse
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		return nil, err
+	}
+	if result.Errno != 0 {
+		return nil, errors.New("百度网盘上传失败: " + strconv.Itoa(result.Errno))
+	}
+	return &result, nil
+}
+
 // 预上传
 func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, []byte, error) {
 	access_token, err := GetBaiduNetworkdiskTokenFromRedis()

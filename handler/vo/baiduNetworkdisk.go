@@ -50,4 +50,9 @@ type PrecreateUploadResponse struct {
 	Partseq int `json:"partseq"`
 }
 
+type UploadResponse struct {
+	Errno int `json:"errno"`
+	MD5 string `json:"md5"`
+}
+
 
