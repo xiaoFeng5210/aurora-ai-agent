@@ -14,3 +14,18 @@ type BaiduNetworkdiskCapacityResponse struct {
 	Used float64 `json:"used"`
 	Free float64 `json:"free"`
 }
+
+type Info struct {
+	Category int `json:"category"`
+	FsId int `json:"fs_id"`
+  Isdir bool `json:"isdir"`
+	LocalCtime int `json:"local_ctime"`
+	LocalMtime int `json:"local_mtime"`
+	ServerCtime int `json:"server_ctime"`
+	ServerMtime int `json:"server_mtime"`
+	Size int `json:"size"`
+}
+
+type BaiduNetworkdiskFileListResponse struct {
+	Info []Info `json:"info"`
+}

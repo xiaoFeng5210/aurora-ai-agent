@@ -12,7 +12,7 @@ import (
 
 var (
 	baiduTokenResponse vo.BaiduTokenResponse
-	baseUrl = "https://pan.baidu.com/api"
+	baseUrl = "https://pan.baidu.com"
 	headers = map[string]string{
 		"User-Agent": "pan.baidu.com",
 	}
@@ -20,11 +20,40 @@ var (
 )
 
 
+// 获取文件或文件夹列表
+func GetBaiduNetworkdiskFileList(parentPath string) (*vo.BaiduNetworkdiskFileListResponse, error) {
+	access_token, err := GetBaiduNetworkdiskTokenFromRedis()
+	if err != nil {
+		return nil, err
+	}
+
+	method := "doclist"
+	parent_path := parentPath
+	url := baseUrl + "/rest/2.0/xpan/file?" + fmt.Sprintf("access_token=%s&method=%s&parent_path=%s", access_token, method, parent_path)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	var result vo.BaiduNetworkdiskFileListResponse
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+
+
 // 获取百度网盘容量
 func GetBaiduNetworkdiskCapacity() (*vo.BaiduNetworkdiskCapacityResponse, error) {
 	access_token, _ := GetBaiduNetworkdiskTokenFromRedis()
 	checkfree := 1
-	url := baseUrl + "/quota" + fmt.Sprintf("?access_token=%s&checkfree=%d", access_token, checkfree)
+	url := baseUrl + "/api/quota" + fmt.Sprintf("?access_token=%s&checkfree=%d", access_token, checkfree)
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
