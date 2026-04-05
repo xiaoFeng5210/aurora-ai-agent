@@ -1,6 +1,7 @@
 package service
 
 import (
+	"aurora-agent/handler/dto"
 	"aurora-agent/handler/vo"
 	"aurora-agent/utils"
 	"bytes"
@@ -9,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -33,22 +35,30 @@ func init() {
 
 
 // 预上传
-func PrecreateUpload() (*vo.PrecreateUploadResponse, error) {
+func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, error) {
 	access_token, err := GetBaiduNetworkdiskTokenFromRedis()
 	if err != nil {
 		return nil, err
 	}
-	method := "precreate"
-	url := baseUrl + "/rest/2.0/xpan/file"
-	postBytes, err := json.Marshal(map[string]string{
-		"access_token": access_token,
-		"method": method,
-	})
+	httpUrl := baseUrl + "/rest/2.0/xpan/file"
+
+	appName := "/aurora-ai-agent" + url.PathEscape("知识库")
+	parent := "/apps" + appName + "/super"
+	path = parent + path
+	postBytes, err := json.Marshal(
+		dto.PrecreateUploadRequest{
+			Method: "precreate",
+			AccessToken: access_token,
+			Path: path,
+			Isdir: isdir,
+			Autoinit: 1,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 	postData := bytes.NewBuffer(postBytes)
-	resp, err := http.Post(url, "application/json", postData)
+	resp, err := http.Post(httpUrl, "application/json", postData)
 	if err != nil {
 		return nil, err
 	}

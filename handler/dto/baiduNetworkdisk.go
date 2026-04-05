@@ -8,11 +8,11 @@ type GetBaiduNetworkdiskFileListRequest struct {
 
 
 type PrecreateUploadRequest struct {
-	Method string `json:"method" binding:"required"`
-	AccessToken string `json:"access_token" binding:"required"`
-	Path string `json:"path" binding:"required"`
-	Size int `json:"size" binding:"required"`
-	Isdir int `json:"isdir" binding:"required"`
-	BlockList []string `json:"block_list" binding:"required"`
-	Autoinit int `json:"autoinit" binding:"required"`
+	Method string `json:"method"`
+	AccessToken string `json:"access_token"`
+	Path string `json:"path"`
+	Size int `json:"size"`
+	Isdir int `json:"isdir"`
+	BlockList []string `json:"block_list"`
+	Autoinit int `json:"autoinit"`
 }
