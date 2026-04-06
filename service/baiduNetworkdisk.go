@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
@@ -61,7 +62,6 @@ func CreateFileOrDir(path string, isdir int, uploadid string, blockList string, 
 	}
 
 	encodedFormData := formData.Encode()
-	fmt.Printf("create postData: %s\n", encodedFormData)
 
 	req, err := http.NewRequest(http.MethodPost, httpUrl, strings.NewReader(encodedFormData))
 	if err != nil {
@@ -101,13 +101,30 @@ func Upload(precreateInfo *vo.PrecreateUploadResponse, fileData []byte) (*vo.Upl
 	path := precreateInfo.Path
 	uploadid := precreateInfo.Uploadid
 	partseq := 0
-	httpUrl := baseUrl + "/rest/2.0/pcs/superfile2" + fmt.Sprintf("?access_token=%s&method=%s&path=%s&uploadid=%s&partseq=%d&type=tmpfile", access_token, method, path, uploadid, partseq)
+	httpUrl := "https://c3.pcs.baidu.com/rest/2.0/pcs/superfile2" + fmt.Sprintf("?access_token=%s&method=%s&path=%s&uploadid=%s&partseq=%d&type=tmpfile", access_token, method, url.QueryEscape(path), uploadid, partseq)
 
-	postBytes, err := json.Marshal(map[string]interface{}{
-		"file": fileData,
-	})
-	postData := bytes.NewBuffer(postBytes)
-	resp, err := http.Post(httpUrl, "content-type: application/json", postData)
+	var postData bytes.Buffer
+	writer := multipart.NewWriter(&postData)
+	fileWriter, err := writer.CreateFormFile("file", "upload-part")
+	if err != nil {
+		return nil, err
+	}
+	if _, err = fileWriter.Write(fileData); err != nil {
+		return nil, err
+	}
+	if err = writer.Close(); err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, httpUrl, &postData)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", headers["User-Agent"])
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+  
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
