@@ -129,7 +129,7 @@ func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, []byt
 	}
 	httpUrl := baseUrl + "/rest/2.0/xpan/file?" + fmt.Sprintf("method=precreate&access_token=%s", access_token)
 
-	appName := "/aurora-ai-agent" + url.PathEscape("知识库")
+	appName := "/aurora-ai-agent知识库"
 	username := "super"  // TODO
 	parent := "/apps" + appName + "/" + username
 	path = parent + path
@@ -143,22 +143,26 @@ func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, []byt
 	if err != nil {
 		return nil, nil, "", err
 	}
-	postBytes, err := json.Marshal(
-		dto.PrecreateUploadRequest{
-			Path: path,
-			Isdir: isdir,
-			Autoinit: 1,
-			BlockList: blockList,
-			Size: int(size),
-			Rtype: 3,
-		},
-	)
+
+	formData := url.Values{}
+	formData.Set("path", path)
+	formData.Set("size", strconv.FormatInt(size, 10))
+	formData.Set("isdir", strconv.Itoa(isdir))
+	formData.Set("autoinit", "1")
+	formData.Set("rtype", "3")
+	formData.Set("block_list", string(blockListBytes))
+
+	encodedFormData := formData.Encode()
+	fmt.Printf("postData: %v\n", encodedFormData)
+
+	req, err := http.NewRequest(http.MethodPost, httpUrl, strings.NewReader(encodedFormData))
 	if err != nil {
 		return nil, nil, "", err
 	}
-	fmt.Printf("postBytes: %v\n", string(postBytes))
-	postData := bytes.NewBuffer(postBytes)
-	resp, err := http.Post(httpUrl, "application/x-www-form-urlencoded", postData)
+	req.Header.Set("User-Agent", headers["User-Agent"])
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, nil, "", err
 	}
