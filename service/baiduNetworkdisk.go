@@ -37,6 +37,29 @@ func init() {
 }
 
 
+// 通用上传文件或文件夹
+func GMBaiduNetworkdiskUpload(paramPath string, isdir int) error {
+	precreateInfo, fileData, blockList, err := PrecreateUpload(paramPath, isdir)
+	if err != nil {
+		logger.Error("PrecreateUpload failed", zap.Error(err))
+		return err 
+	}
+
+	_, err = SplitUpload(precreateInfo, fileData)
+	if err != nil {
+		logger.Error("Upload failed", zap.Error(err))
+		return err
+	}
+
+	err = CreateFileOrDir(precreateInfo.Path, 0, precreateInfo.Uploadid, blockList, precreateInfo.Size)
+	if err != nil {
+		logger.Error("CreateFileOrDir failed", zap.Error(err))
+		return err
+	}
+	return nil
+}
+
+
 func CreateFileOrDir(path string, isdir int, uploadid string, blockList string, size int) error {
 	access_token, err := GetBaiduNetworkdiskTokenFromRedis()
 	if err != nil {
@@ -80,7 +103,6 @@ func CreateFileOrDir(path string, isdir int, uploadid string, blockList string, 
 	if err != nil {
 		return err
 	}
-	fmt.Println("result: " + string(body))
 	if result.Errno != 0 {
 		return errors.New("百度网盘创建文件或文件夹失败: " + strconv.Itoa(result.Errno))
 	}
@@ -88,7 +110,7 @@ func CreateFileOrDir(path string, isdir int, uploadid string, blockList string, 
 }
 
 // 分片上传
-func Upload(precreateInfo *vo.PrecreateUploadResponse, fileData []byte) (*vo.UploadResponse, error) {
+func SplitUpload(precreateInfo *vo.PrecreateUploadResponse, fileData []byte) (*vo.UploadResponse, error) {
 	access_token, err := GetBaiduNetworkdiskTokenFromRedis()
 	if err != nil {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
 		return nil, err
