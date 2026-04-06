@@ -54,8 +54,10 @@ func CreateFileOrDir(path string, isdir int, uploadid string, blockList []string
 		Isdir: isdir,
 		Uploadid: uploadid,
 		BlockList: blockList,
-		Size: int(size),
+		Size: size,
 	}
+
+	fmt.Printf("path: %s, isdir: %d, uploadid: %s, blockList: %v, size: %d\n", path, isdir, uploadid, blockList, size)
 
 	postBytes, err := json.Marshal(postData)
 	if err != nil {
@@ -76,6 +78,7 @@ func CreateFileOrDir(path string, isdir int, uploadid string, blockList []string
 	if err != nil {
 		return err
 	}
+	fmt.Println("result: " + string(body))
 	if result.Errno != 0 {
 		return errors.New("百度网盘创建文件或文件夹失败: " + strconv.Itoa(result.Errno))
 	}

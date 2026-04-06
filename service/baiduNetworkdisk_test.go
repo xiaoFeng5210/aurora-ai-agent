@@ -1,8 +1,6 @@
 package service
 
 import (
-	"fmt"
-	"strconv"
 	"testing"
 
 	"github.com/joho/godotenv"
@@ -33,8 +31,6 @@ func TestUpload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Upload failed: %v", err)
 	}
-
-	fmt.Println("precreateInfo.Size: " + strconv.Itoa(precreateInfo.Size))
 
 	err = CreateFileOrDir(precreateInfo.Path, 0, precreateInfo.Uploadid, blockList, precreateInfo.Size)
 	if err != nil {
