@@ -49,18 +49,14 @@ func CreateFileOrDir(path string, isdir int, uploadid string, blockList string, 
 	}
 	httpUrl := baseUrl + "/rest/2.0/xpan/file" + fmt.Sprintf("?access_token=%s&method=%s", access_token, method)
 
-	formData := url.Values{}
-	formData.Set("path", path)
-	formData.Set("size", strconv.Itoa(size))
-	formData.Set("isdir", strconv.Itoa(isdir))
-	formData.Set("rtype", "3")
-	if uploadid != "" {
-		formData.Set("uploadid", uploadid)
+	formData := url.Values{
+		"path": {path},
+		"size": {strconv.Itoa(size)},
+		"isdir": {strconv.Itoa(isdir)},
+		"rtype": {"3"},
+		"uploadid": {uploadid},
+		"block_list": {blockList},
 	}
-	if blockList != "" {
-		formData.Set("block_list", blockList)
-	}
-
 	encodedFormData := formData.Encode()
 
 	req, err := http.NewRequest(http.MethodPost, httpUrl, strings.NewReader(encodedFormData))
