@@ -8,13 +8,12 @@ type GetBaiduNetworkdiskFileListRequest struct {
 
 
 type PrecreateUploadRequest struct {
-	Method string `json:"method"`
-	AccessToken string `json:"access_token"`
 	Path string `json:"path"`
 	Size int `json:"size"`
 	Isdir int `json:"isdir"`
 	BlockList []string `json:"block_list"`
 	Autoinit int `json:"autoinit"`
+	Rtype int `json:"rtype"`
 }
 
 
@@ -22,6 +21,6 @@ type CreateFileOrDirRequest struct {
 	Path string `json:"path"`
 	Isdir int `json:"isdir"`
 	Uploadid string `json:"uploadid"`
-	BlockList []string `json:"block_list"`
+	BlockList string `json:"block_list"`
 	Size int `json:"size"`
 }

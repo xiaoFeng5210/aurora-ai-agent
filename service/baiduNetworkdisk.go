@@ -37,7 +37,7 @@ func init() {
 }
 
 
-func CreateFileOrDir(path string, isdir int, uploadid string, blockList []string, size int) error {
+func CreateFileOrDir(path string, isdir int, uploadid string, blockList string, size int) error {
 	access_token, err := GetBaiduNetworkdiskTokenFromRedis()
 	if err != nil {
 		return err
@@ -48,7 +48,6 @@ func CreateFileOrDir(path string, isdir int, uploadid string, blockList []string
 		size = 0
 	}
 	httpUrl := baseUrl + "/rest/2.0/xpan/file" + fmt.Sprintf("?access_token=%s&method=%s", access_token, method)
-
 	postData := dto.CreateFileOrDirRequest{
 		Path: path,
 		Isdir: isdir,
@@ -123,12 +122,12 @@ func Upload(precreateInfo *vo.PrecreateUploadResponse, fileData []byte) (*vo.Upl
 }
 
 // 预上传
-func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, []byte, []string, error) {
+func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, []byte, string, error) {
 	access_token, err := GetBaiduNetworkdiskTokenFromRedis()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, "", err
 	}
-	httpUrl := baseUrl + "/rest/2.0/xpan/file"
+	httpUrl := baseUrl + "/rest/2.0/xpan/file?" + fmt.Sprintf("method=precreate&access_token=%s", access_token)
 
 	appName := "/aurora-ai-agent" + url.PathEscape("知识库")
 	username := "super"  // TODO
@@ -137,43 +136,48 @@ func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, []byt
 
 	blockList, size, fileData, err := HandleFile()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, "", err
 	}
 
+	blockListBytes, err := json.Marshal(blockList)
+	if err != nil {
+		return nil, nil, "", err
+	}
 	postBytes, err := json.Marshal(
 		dto.PrecreateUploadRequest{
-			Method: "precreate",
-			AccessToken: access_token,
 			Path: path,
 			Isdir: isdir,
 			Autoinit: 1,
 			BlockList: blockList,
 			Size: int(size),
+			Rtype: 3,
 		},
 	)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, "", err
 	}
+	fmt.Printf("postBytes: %v\n", string(postBytes))
 	postData := bytes.NewBuffer(postBytes)
-	resp, err := http.Post(httpUrl, "application/json", postData)
+	resp, err := http.Post(httpUrl, "application/x-www-form-urlencoded", postData)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, "", err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
+	fmt.Println("body: " + string(body))
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, "", err
 	}
 	var result vo.PrecreateUploadResponse
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, "", err
 	}
 	if result.Errno != 0 {
-		return nil, nil, nil, errors.New("百度网盘预上传失败: " + strconv.Itoa(result.Errno))
+		return nil, nil, "", errors.New("百度网盘预上传失败: " + strconv.Itoa(result.Errno))
 	}
 	result.Size = int(size)
-	return &result, fileData, blockList, nil
+	return &result, fileData, string(blockListBytes), nil
 }
 
 
@@ -278,14 +282,14 @@ func GetBaiduNetworkdiskCapacity() (*vo.BaiduNetworkdiskCapacityResponse, error)
 // 获取存着的百度网盘token
 func GetBaiduNetworkdiskTokenFromRedis() (string, error) {
 	// TODO
-	return "121.9c59616adbca06490171624ad5e0144e.Ysba4kKcKqJDh1aOOj-NribdDuYz6M4c9_M0S9Y.sUIB3A", nil
+	return "121.fd4aaafe9c485ee574ede6d425b7dc44.Y3yDmZzKQMW56XOwD8Sg3yXuEci7UV5_aFOPY--.mq6tWg", nil
 }
 
 
 
 func GetBaiduNetworkdiskToken() (*vo.BaiduTokenResponse, error) {
 	clientId := os.Getenv("BAIDU_NETWORKDISK_CLIENT_ID")
-	code := "78c9184f32a08bd4e54bbcaff2b6e49f"
+	code := "30cbd944cc1706524de096e358d7c138"
 	clientSecret := os.Getenv("BAIDU_NETWORKDISK_CLIENT_SECRET")
 	url := fmt.Sprintf(`
 	https://openapi.baidu.com/oauth/2.0/token?
