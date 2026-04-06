@@ -1,7 +1,6 @@
 package service
 
 import (
-	"aurora-agent/handler/dto"
 	"aurora-agent/handler/vo"
 	"aurora-agent/utils"
 	"bytes"
@@ -44,26 +43,34 @@ func CreateFileOrDir(path string, isdir int, uploadid string, blockList string, 
 	}
 	method := "create"
 
-	if isdir != 1 {
+	if isdir == 1 {
 		size = 0
 	}
 	httpUrl := baseUrl + "/rest/2.0/xpan/file" + fmt.Sprintf("?access_token=%s&method=%s", access_token, method)
-	postData := dto.CreateFileOrDirRequest{
-		Path: path,
-		Isdir: isdir,
-		Uploadid: uploadid,
-		BlockList: blockList,
-		Size: size,
+
+	formData := url.Values{}
+	formData.Set("path", path)
+	formData.Set("size", strconv.Itoa(size))
+	formData.Set("isdir", strconv.Itoa(isdir))
+	formData.Set("rtype", "3")
+	if uploadid != "" {
+		formData.Set("uploadid", uploadid)
+	}
+	if blockList != "" {
+		formData.Set("block_list", blockList)
 	}
 
-	fmt.Printf("path: %s, isdir: %d, uploadid: %s, blockList: %v, size: %d\n", path, isdir, uploadid, blockList, size)
+	encodedFormData := formData.Encode()
+	fmt.Printf("create postData: %s\n", encodedFormData)
 
-	postBytes, err := json.Marshal(postData)
+	req, err := http.NewRequest(http.MethodPost, httpUrl, strings.NewReader(encodedFormData))
 	if err != nil {
 		return err
 	}
-	postDataBuffer := bytes.NewBuffer(postBytes)
-	resp, err := http.Post(httpUrl, "application/json", postDataBuffer)
+	req.Header.Set("User-Agent", headers["User-Agent"])
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -94,7 +101,7 @@ func Upload(precreateInfo *vo.PrecreateUploadResponse, fileData []byte) (*vo.Upl
 	path := precreateInfo.Path
 	uploadid := precreateInfo.Uploadid
 	partseq := 0
-	httpUrl := baseUrl + "/rest/2.0/xpan/file" + fmt.Sprintf("?access_token=%s&method=%s&path=%s&uploadid=%s&partseq=%d&type=tmpfile", access_token, method, path, uploadid, partseq)
+	httpUrl := baseUrl + "/rest/2.0/pcs/superfile2" + fmt.Sprintf("?access_token=%s&method=%s&path=%s&uploadid=%s&partseq=%d&type=tmpfile", access_token, method, path, uploadid, partseq)
 
 	postBytes, err := json.Marshal(map[string]interface{}{
 		"file": fileData,
@@ -153,7 +160,6 @@ func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, []byt
 	formData.Set("block_list", string(blockListBytes))
 
 	encodedFormData := formData.Encode()
-	fmt.Printf("postData: %v\n", encodedFormData)
 
 	req, err := http.NewRequest(http.MethodPost, httpUrl, strings.NewReader(encodedFormData))
 	if err != nil {
@@ -168,7 +174,6 @@ func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, []byt
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
-	fmt.Println("body: " + string(body))
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -321,15 +326,11 @@ redirect_uri=oob
 		return nil, err
 	}
 
-	fmt.Println("body: " + string(body))
-
 	
   err = json.Unmarshal(body, &baiduTokenResponse)
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("token: " + baiduTokenResponse.AccessToken)
 
 	return &baiduTokenResponse, nil
 }
