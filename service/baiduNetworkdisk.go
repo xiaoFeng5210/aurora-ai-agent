@@ -361,7 +361,6 @@ redirect_uri=oob
 		return nil, err
 	}
 
-	
   err = json.Unmarshal(body, &baiduTokenResponse)
 	if err != nil {
 		return nil, err
