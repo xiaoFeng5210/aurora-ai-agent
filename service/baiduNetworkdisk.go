@@ -252,7 +252,7 @@ func HandleFile() (blockList []string, size int64, fileData []byte, err error) {
 				break
 			}
 			return nil, 0, nil, err
-			}
+		}
 
 		md5DataContainer := make([]byte, 16)
 		md5Data := md5.Sum(buffer[:n])
