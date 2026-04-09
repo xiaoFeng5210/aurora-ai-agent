@@ -42,7 +42,7 @@ func GMBaiduNetworkdiskUpload(paramPath string, isdir int) error {
 	precreateInfo, fileData, blockList, err := PrecreateUpload(paramPath, isdir)
 	if err != nil {
 		logger.Error("PrecreateUpload failed", zap.Error(err))
-		return err 
+		return err
 	}
 
 	_, err = SplitUpload(precreateInfo, fileData)
@@ -274,8 +274,10 @@ func GetBaiduNetworkdiskFileList(dir string) (*vo.BaiduNetworkdiskFileListRespon
 		return nil, err
 	}
 
+	allDir := "/apps/aurora-ai-agent知识库/" + dir
+
 	method := "list"
-	url := baseUrl + "/rest/2.0/xpan/file?" + fmt.Sprintf("access_token=%s&method=%s&dir=%s", access_token, method, dir)
+	url := baseUrl + "/rest/2.0/xpan/file?" + fmt.Sprintf("access_token=%s&method=%s&dir=%s", access_token, method, allDir)
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err

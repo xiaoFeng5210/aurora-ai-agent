@@ -24,3 +24,9 @@ type CreateFileOrDirRequest struct {
 	BlockList string `json:"block_list"`
 	Size int `json:"size"`
 }
+
+
+type GMBaiduNetworkdiskUploadRequest struct {
+	Path string `json:"path"`
+	Isdir int `json:"isdir"`
+}

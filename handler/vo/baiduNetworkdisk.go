@@ -60,3 +60,5 @@ type CreateFileOrDirResponse struct {
 	Errno int `json:"errno"`
 	FsId int `json:"fs_id"`
 }
+
+

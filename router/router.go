@@ -42,7 +42,7 @@ func SetupRouter() *gin.Engine {
 	documentGroup.GET("", handler.GetAllDocuments)
 	documentGroup.POST("", handler.CreateDocument)
 	documentGroup.GET("/:id", handler.GetDocumentById)
-	documentGroup.POST("/query", handler.QueryDocument)
+documentGroup.POST("/query", handler.QueryDocument)
 	documentGroup.PUT("/:id", handler.UpdateDocument)
 	documentGroup.DELETE("/:id", handler.DeleteDocument)
 
@@ -50,10 +50,8 @@ func SetupRouter() *gin.Engine {
 	baiduNetworkdiskGroup := apiv1.Group("/file")
 	baiduNetworkdiskGroup.GET("/baidu_networkdisk/token", handler.GetBaiduNetworkdiskToken)
 	baiduNetworkdiskGroup.GET("/baidu_networkdisk/capacity", handler.GetBaiduNetworkdiskCapacity)
-
-
-
-
+	baiduNetworkdiskGroup.GET("/baidu_networkdisk/file_list", handler.GetBaiduNetworkdiskFileList)
+	baiduNetworkdiskGroup.POST("/baidu_networkdisk/upload", handler.GMBaiduNetworkdiskUpload)
 	
 	return r
 }
