@@ -38,8 +38,12 @@ func init() {
 
 
 // 通用上传文件或文件夹
-func GMBaiduNetworkdiskUpload(paramPath string, isdir int) error {
-	precreateInfo, fileData, blockList, err := PrecreateUpload(paramPath, isdir)
+func GMBaiduNetworkdiskUpload(fileParam multipart.File, paramPath string, isdir string) error {
+	isdirInt, err := strconv.Atoi(isdir)
+	if err != nil {
+		return errors.New("isdir is not a valid integer: " + err.Error())
+	}
+	precreateInfo, fileData, blockList, err := PrecreateUpload(paramPath, isdirInt, fileParam)
 	if err != nil {
 		logger.Error("PrecreateUpload failed", zap.Error(err))
 		return err
@@ -50,6 +54,7 @@ func GMBaiduNetworkdiskUpload(paramPath string, isdir int) error {
 		logger.Error("Upload failed", zap.Error(err))
 		return err
 	}
+
 
 	err = CreateFileOrDir(precreateInfo.Path, 0, precreateInfo.Uploadid, blockList, precreateInfo.Size)
 	if err != nil {
@@ -88,7 +93,6 @@ func CreateFileOrDir(path string, isdir int, uploadid string, blockList string, 
 	}
 	req.Header.Set("User-Agent", headers["User-Agent"])
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
@@ -164,7 +168,7 @@ func SplitUpload(precreateInfo *vo.PrecreateUploadResponse, fileData []byte) (*v
 }
 
 // 预上传
-func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, []byte, string, error) {
+func PrecreateUpload(paramPath string, isdir int, fileParam multipart.File) (*vo.PrecreateUploadResponse, []byte, string, error) {
 	access_token, err := GetBaiduNetworkdiskTokenFromRedis()
 	if err != nil {
 		return nil, nil, "", err
@@ -173,10 +177,10 @@ func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, []byt
 
 	appName := "/aurora-ai-agent知识库"
 	username := "super"  // TODO
-	parent := "/apps" + appName + "/" + username
-	path = parent + path
+	parent := "/apps" + appName + "/" + username + "/"
+	path := parent + paramPath
 
-	blockList, size, fileData, err := HandleFile()
+	blockList, size, fileData, err := HandleFile(fileParam)
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -220,38 +224,24 @@ func PrecreateUpload(path string, isdir int) (*vo.PrecreateUploadResponse, []byt
 	if result.Errno != 0 {
 		return nil, nil, "", errors.New("百度网盘预上传失败: " + strconv.Itoa(result.Errno))
 	}
+
+	result.Path = path
 	result.Size = int(size)
 	return &result, fileData, string(blockListBytes), nil
 }
 
 
 // TODO 处理文件，这里测试我们使用本地
-func HandleFile() (blockList []string, size int64, fileData []byte, err error) {
-	filePath := "test.md"
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, 0, nil, err
-	}
-	fileInfo, err := file.Stat()
-	if err != nil {
-		return nil, 0, nil, err
-	}
-	size = fileInfo.Size()
-	defer file.Close()
-
-	if err != nil {
-		return nil, 0, nil, err
-	}
-
+func HandleFile(fileParam multipart.File) (blockList []string, size int64, fileData []byte, err error) {
 	fileData = []byte{}
 	var buffer = make([]byte, 1024 * 1024 * 4)
 	for {
-		n, err := file.Read(buffer)
+		n, err := fileParam.Read(buffer)
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
-			return nil, 0, nil, err
+			return nil, 0, nil, errors.New("读取上传文件失败: " + err.Error())
 		}
 
 		md5DataContainer := make([]byte, 16)
@@ -261,6 +251,8 @@ func HandleFile() (blockList []string, size int64, fileData []byte, err error) {
 		blockList = append(blockList, block)
 		fileData = append(fileData, buffer[:n]...)
 	}
+
+	size = int64(len(fileData))
 
 	return blockList, size, fileData, nil		
 }

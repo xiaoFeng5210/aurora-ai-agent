@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"aurora-agent/handler/dto"
 	"aurora-agent/handler/vo"
 	"aurora-agent/service"
 	"net/http"
@@ -10,15 +9,14 @@ import (
 )
 
 func GMBaiduNetworkdiskUpload(ctx *gin.Context) {
-	var request dto.GMBaiduNetworkdiskUploadRequest
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		vo.RespondError(ctx, http.StatusBadRequest, err)
-		return
-	}
 
-	file, err := ctx.FormFile("file")
+	filename := ctx.PostForm("filename")
+	isdir := ctx.PostForm("isdir")
 
-	err = service.GMBaiduNetworkdiskUpload(request.Path, request.Isdir)
+	fh, err := ctx.FormFile("file")
+	fileParam, err := fh.Open()
+
+	err = service.GMBaiduNetworkdiskUpload(fileParam, filename, isdir)
 	if err != nil {
 		vo.RespondError(ctx, http.StatusInternalServerError, err)
 		return
