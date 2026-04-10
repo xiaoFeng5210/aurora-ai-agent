@@ -15,6 +15,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"crypto/md5"
 
@@ -115,6 +116,19 @@ func CreateFileOrDir(path string, isdir int, uploadid string, blockList string, 
 
 // 分片上传
 func SplitUpload(precreateInfo *vo.PrecreateUploadResponse, fileData []byte) (*vo.UploadResponse, error) {
+	ch := make(chan string, 1)
+	go func() {
+		for {
+			time.Sleep(1 * time.Second)
+			select {
+			case <-ch:
+				fmt.Println("split uploading finished")
+				return
+			default:
+				fmt.Println("split uploading...")
+			}
+		}
+	}()
 	access_token, err := GetBaiduNetworkdiskTokenFromRedis()
 	if err != nil {
 		return nil, err
@@ -137,7 +151,7 @@ func SplitUpload(precreateInfo *vo.PrecreateUploadResponse, fileData []byte) (*v
 	if err = writer.Close(); err != nil {
 		return nil, err
 	}
-
+	fmt.Println("httpUrl: ", httpUrl)
 	req, err := http.NewRequest(http.MethodPost, httpUrl, &postData)
 	if err != nil {
 		return nil, err
@@ -164,6 +178,7 @@ func SplitUpload(precreateInfo *vo.PrecreateUploadResponse, fileData []byte) (*v
 	if result.Errno != 0 {
 		return nil, errors.New("百度网盘上传失败: " + strconv.Itoa(result.Errno))
 	}
+	ch <- "finish"
 	return &result, nil
 }
 
