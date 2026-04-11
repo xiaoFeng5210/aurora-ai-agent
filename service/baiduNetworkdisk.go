@@ -56,6 +56,8 @@ func GMBaiduNetworkdiskUpload(fileParam multipart.File, paramPath string, isdir 
 		return err
 	}
 
+	fmt.Println("precreateInfo: ", precreateInfo)
+
 
 	err = CreateFileOrDir(precreateInfo.Path, 0, precreateInfo.Uploadid, blockList, precreateInfo.Size)
 	if err != nil {
@@ -109,7 +111,7 @@ func CreateFileOrDir(path string, isdir int, uploadid string, blockList string, 
 		return err
 	}
 	if result.Errno != 0 {
-		return errors.New("百度网盘创建文件或文件夹失败: " + strconv.Itoa(result.Errno))
+		return errors.New(utils.CreateFileOrDirErrorCodeBaiduNetworkdisk(result.Errno))
 	}
 	return nil
 }
@@ -176,7 +178,7 @@ func SplitUpload(precreateInfo *vo.PrecreateUploadResponse, fileData []byte) (*v
 		return nil, err
 	}
 	if result.Errno != 0 {
-		return nil, errors.New("百度网盘上传失败: " + strconv.Itoa(result.Errno))
+		return nil, errors.New(utils.SplitUploadErrorCodeBaiduNetworkdisk(result.Errno))
 	}
 	ch <- "finish"
 	return &result, nil
@@ -237,7 +239,7 @@ func PrecreateUpload(paramPath string, isdir int, fileParam multipart.File) (*vo
 		return nil, nil, "", err
 	}
 	if result.Errno != 0 {
-		return nil, nil, "", errors.New("百度网盘预上传失败: " + strconv.Itoa(result.Errno))
+		return nil, nil, "", errors.New(utils.PrecreateUploadErrorCodeBaiduNetworkdisk(result.Errno))
 	}
 
 	result.Path = path
