@@ -56,7 +56,7 @@ func GMBaiduNetworkdiskUpload(fileParam multipart.File, paramPath string, isdir 
 		return err
 	}
 
-	fmt.Println("precreateInfo: ", precreateInfo)
+	fmt.Println("file size: ", precreateInfo.Size)
 
 
 	err = CreateFileOrDir(precreateInfo.Path, 0, precreateInfo.Uploadid, blockList, precreateInfo.Size)
@@ -153,7 +153,6 @@ func SplitUpload(precreateInfo *vo.PrecreateUploadResponse, fileData []byte) (*v
 	if err = writer.Close(); err != nil {
 		return nil, err
 	}
-	fmt.Println("httpUrl: ", httpUrl)
 	req, err := http.NewRequest(http.MethodPost, httpUrl, &postData)
 	if err != nil {
 		return nil, err
@@ -248,28 +247,33 @@ func PrecreateUpload(paramPath string, isdir int, fileParam multipart.File) (*vo
 }
 
 
-// TODO 处理文件，这里测试我们使用本地
 func HandleFile(fileParam multipart.File) (blockList []string, size int64, fileData []byte, err error) {
 	fileData = []byte{}
 	var buffer = make([]byte, 1024 * 1024 * 4)
 	for {
 		n, err := fileParam.Read(buffer)
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return nil, 0, nil, errors.New("读取上传文件失败: " + err.Error())
+		if n > 0 {
+			md5DataContainer := make([]byte, 16)
+			md5Data := md5.Sum(buffer[:n])
+			copy(md5DataContainer, md5Data[:])
+			block := hex.EncodeToString(md5DataContainer)
+			blockList = append(blockList, block)
+			fileData = append(fileData, buffer[:n]...)
 		}
 
-		md5DataContainer := make([]byte, 16)
-		md5Data := md5.Sum(buffer[:n])
-		copy(md5DataContainer, md5Data[:])
-		block := hex.EncodeToString(md5DataContainer)
-		blockList = append(blockList, block)
-		fileData = append(fileData, buffer[:n]...)
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {			
+			return nil, 0, nil, errors.New("读取上传文件失败: " + err.Error())
+		}
+		
 	}
 
 	size = int64(len(fileData))
+
+	fmt.Println("block list length: ", len(blockList))
 
 	return blockList, size, fileData, nil		
 }
