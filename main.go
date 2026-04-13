@@ -2,6 +2,7 @@ package main
 
 import (
 	"aurora-agent/database"
+	qdrant_db "aurora-agent/database/qdrant"
 	"aurora-agent/router"
 	utils "aurora-agent/utils"
 
@@ -12,6 +13,7 @@ import (
 func init() {
 	godotenv.Load()
 	database.DBConnect()
+	qdrant_db.Connect()
 }
 
 func main() {
