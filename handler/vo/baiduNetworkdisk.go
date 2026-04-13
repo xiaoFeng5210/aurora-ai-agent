@@ -49,6 +49,7 @@ type PrecreateUploadResponse struct {
 	Uploadid string `json:"uploadid"`
 	Partseq int `json:"partseq"`
 	Size int `json:"size"`
+	BlockList []int `json:"block_list"`
 }
 
 type UploadResponse struct {

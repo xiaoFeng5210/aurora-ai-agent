@@ -15,7 +15,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"crypto/md5"
 
@@ -50,13 +49,20 @@ func GMBaiduNetworkdiskUpload(fileParam multipart.File, paramPath string, isdir 
 		return err
 	}
 
-	_, err = SplitUpload(precreateInfo, fileData)
-	if err != nil {
-		logger.Error("Upload failed", zap.Error(err))
-		return err
+	const chunkSize = 1024 * 1024 * 4
+	for _, blockIdx := range precreateInfo.BlockList {
+		start := blockIdx * chunkSize
+		end := start + chunkSize
+		if end > len(fileData) {
+			end = len(fileData)
+		}
+		partData := fileData[start:end]
+		_, err = SplitUpload(precreateInfo, partData, blockIdx)
+		if err != nil {
+			logger.Error("Upload failed", zap.Error(err))
+			return err
+		}
 	}
-
-	fmt.Println("file size: ", precreateInfo.Size)
 
 
 	err = CreateFileOrDir(precreateInfo.Path, 0, precreateInfo.Uploadid, blockList, precreateInfo.Size)
@@ -117,20 +123,9 @@ func CreateFileOrDir(path string, isdir int, uploadid string, blockList string, 
 }
 
 // 分片上传
-func SplitUpload(precreateInfo *vo.PrecreateUploadResponse, fileData []byte) (*vo.UploadResponse, error) {
-	ch := make(chan string, 1)
-	go func() {
-		for {
-			time.Sleep(1 * time.Second)
-			select {
-			case <-ch:
-				fmt.Println("split uploading finished")
-				return
-			default:
-				fmt.Println("split uploading...")
-			}
-		}
-	}()
+func SplitUpload(precreateInfo *vo.PrecreateUploadResponse, fileData []byte, partseqIdx int) (*vo.UploadResponse, error) {
+
+
 	access_token, err := GetBaiduNetworkdiskTokenFromRedis()
 	if err != nil {
 		return nil, err
@@ -138,8 +133,9 @@ func SplitUpload(precreateInfo *vo.PrecreateUploadResponse, fileData []byte) (*v
 	method := "upload"
 	path := precreateInfo.Path
 	uploadid := precreateInfo.Uploadid
-	partseq := 0
+	partseq := partseqIdx
 	httpUrl := "https://c3.pcs.baidu.com/rest/2.0/pcs/superfile2" + fmt.Sprintf("?access_token=%s&method=%s&path=%s&uploadid=%s&partseq=%d&type=tmpfile", access_token, method, url.QueryEscape(path), uploadid, partseq)
+  
 
 	var postData bytes.Buffer
 	writer := multipart.NewWriter(&postData)
@@ -179,7 +175,6 @@ func SplitUpload(precreateInfo *vo.PrecreateUploadResponse, fileData []byte) (*v
 	if result.Errno != 0 {
 		return nil, errors.New(utils.SplitUploadErrorCodeBaiduNetworkdisk(result.Errno))
 	}
-	ch <- "finish"
 	return &result, nil
 }
 
@@ -249,6 +244,7 @@ func PrecreateUpload(paramPath string, isdir int, fileParam multipart.File) (*vo
 
 func HandleFile(fileParam multipart.File) (blockList []string, size int64, fileData []byte, err error) {
 	fileData = []byte{}
+
 	var buffer = make([]byte, 1024 * 1024 * 4)
 	for {
 		n, err := fileParam.Read(buffer)
@@ -265,7 +261,7 @@ func HandleFile(fileParam multipart.File) (blockList []string, size int64, fileD
 			break
 		}
 
-		if err != nil {			
+		if err != nil {
 			return nil, 0, nil, errors.New("读取上传文件失败: " + err.Error())
 		}
 		
@@ -273,9 +269,7 @@ func HandleFile(fileParam multipart.File) (blockList []string, size int64, fileD
 
 	size = int64(len(fileData))
 
-	fmt.Println("block list length: ", len(blockList))
-
-	return blockList, size, fileData, nil		
+	return blockList, size, fileData, nil
 }
 
 
