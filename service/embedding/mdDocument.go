@@ -39,6 +39,7 @@ func (md *MdDocument) Chunk() []string {
 	return chunks
 }
 
+// 向量化
 func (md *MdDocument) Embedding() ([]float64, error) {
 	return Embed(md.content, 2048)
 }
