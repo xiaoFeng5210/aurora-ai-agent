@@ -1,5 +1,7 @@
 package embedding
 
+import "strings"
+
 type MdDocument struct {
 	data []byte // markdown 文件数据
 	content string // 转换后的文本内容
@@ -23,7 +25,7 @@ func (md *MdDocument) Chunk() []string {
 	delta := 500
 	end := start + delta
 
-	runeContent := []rune(md.content)
+	runeContent := []rune(strings.TrimSpace(md.content))
 	for {
 		if end >= len(runeContent) {
 			chunks = append(chunks, string(runeContent[start:]))
