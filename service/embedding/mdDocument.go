@@ -3,6 +3,7 @@ package embedding
 type MdDocument struct {
 	data []byte // markdown 文件数据
 	content string // 转换后的文本内容
+	chunks []string // 分块后的文本内容
 }
 
 func (md *MdDocument) ConvertToText() string {
@@ -12,4 +13,32 @@ func (md *MdDocument) ConvertToText() string {
 	}
 
 	return ""
+}
+
+// 分块
+func (md *MdDocument) Chunk() []string {
+	chunks := []string{}
+	
+	start := 0
+	delta := 3
+	end := start + delta
+
+	runeContent := []rune(md.content)
+	for {
+		if end >= len(runeContent) {
+			chunks = append(chunks, string(runeContent[start:]))
+			break
+		} else {
+			chunks = append(chunks, string(runeContent[start:end]))
+			start = end
+			end += delta
+		}
+	}
+
+	return chunks
+
+}
+
+func (md *MdDocument) Embedding() ([]float64, error) {
+	return Embed(md.content, 2048)
 }
