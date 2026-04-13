@@ -3,7 +3,7 @@ package embedding
 import "strings"
 
 type MdDocument struct {
-	data []byte // markdown 文件数据
+	data []byte  // markdown 文件数据
 	content string // 转换后的文本内容
 	chunks []string // 分块后的文本内容
 }
@@ -36,9 +36,7 @@ func (md *MdDocument) Chunk() []string {
 			end += delta
 		}
 	}
-
 	return chunks
-
 }
 
 func (md *MdDocument) Embedding() ([]float64, error) {
