@@ -13,7 +13,7 @@ import (
 func init() {
 	godotenv.Load()
 	database.DBConnect()
-	qdrant_db.Connect()
+	qdrant_db.QdrantConnect()
 }
 
 func main() {

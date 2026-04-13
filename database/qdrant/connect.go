@@ -1,28 +1,40 @@
 package qdrant_db
 
 import (
-	"errors"
+	"aurora-agent/utils"
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/qdrant/go-client/qdrant"
+	"go.uber.org/zap"
 )
 
+var (
+	qdrantClient *qdrant.Client
+	qdrantOnce   sync.Once
+)
 
-func Connect() (*qdrant.Client, error) {
+func QdrantConnect() {
+	logger := utils.InitZap("log/zap")
+	qdrantOnce.Do(func() {
 	host := os.Getenv("QDRANT_HOST")
 	apiKey := os.Getenv("QDRANT_API_KEY")
 	if host == "" || apiKey == "" {
-		return nil, errors.New("QDRANT_HOST or QDRANT_API_KEY is not set")
+		fmt.Println("QDRANT_HOST or QDRANT_API_KEY is not set")
+		return
 	}
 	client, err := qdrant.NewClient(&qdrant.Config{
 		Host:   host,
+		Port:   6443,
 		APIKey: apiKey,
 		UseTLS: true,
 	})
 	if err != nil {
-		fmt.Println("Failed to create qdrant client", err)
-		return nil, err
+		logger.Error("Failed to create qdrant client", zap.Error(err))
+		panic(err)
 	}
-	return client, nil
+	qdrantClient = client
+	fmt.Println("Qdrant client created successfully")
+	})
 }
