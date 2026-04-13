@@ -20,7 +20,7 @@ func (md *MdDocument) Chunk() []string {
 	chunks := []string{}
 	
 	start := 0
-	delta := 3
+	delta := 500
 	end := start + delta
 
 	runeContent := []rune(md.content)
