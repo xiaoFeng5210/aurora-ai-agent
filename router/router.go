@@ -52,5 +52,8 @@ func SetupRouter() *gin.Engine {
 	baiduNetworkdiskGroup.GET("/baidu_networkdisk/capacity", handler.GetBaiduNetworkdiskCapacity)
 	baiduNetworkdiskGroup.GET("/baidu_networkdisk/file_list", handler.GetBaiduNetworkdiskFileList)
 	baiduNetworkdiskGroup.POST("/baidu_networkdisk/upload", handler.GMBaiduNetworkdiskUpload)
+
+	qdrantGroup := apiv1.Group("/qdrant")
+	qdrantGroup.POST("/upsert", handler.UpsertQdrantTest)
 	return r
 }
