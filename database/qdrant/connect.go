@@ -26,7 +26,7 @@ func QdrantConnect() {
 	}
 	client, err := qdrant.NewClient(&qdrant.Config{
 		Host:   host,
-		Port:   6443,
+		Port:   6334,
 		APIKey: apiKey,
 		UseTLS: true,
 	})

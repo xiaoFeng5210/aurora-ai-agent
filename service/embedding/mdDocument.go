@@ -9,16 +9,16 @@ import (
 )
 
 type MdDocument struct {
-	data []byte  // markdown 文件数据
-	content string // 转换后的文本内容
+	Data []byte  // markdown 文件数据
+	Content string // 转换后的文本内容
 	chunks []string // 分块后的文本内容
 	vectors [][]float32 // 向量化后
 }
 
 func (md *MdDocument) ConvertToText() string {
-  if md.data != nil {
-		md.content = string(md.data)
-		return md.content
+  if md.Data != nil {
+		md.Content = string(md.Data)
+		return md.Content
 	}
 
 	return ""
@@ -32,7 +32,7 @@ func (md *MdDocument) Chunk() []string {
 	delta := 500
 	end := start + delta
 
-	runeContent := []rune(strings.TrimSpace(md.content))
+	runeContent := []rune(strings.TrimSpace(md.Content))
 	for {
 		if end >= len(runeContent) {
 			chunks = append(chunks, string(runeContent[start:]))
@@ -62,11 +62,11 @@ func (md *MdDocument) Embedding() ([][]float32, error) {
 }
 
 func (md *MdDocument) UpsertQdrantVector() (*qdrant.UpdateResult, error) {
-	if md.content == "" {
+	if md.Content == "" {
 		return nil, errors.New("content is empty")
 	}
 	if len(md.chunks) > 0 && len(md.vectors) > 0 {
-	  result,err := qdrant_db.UpsertRagVector(md.chunks, md.vectors, map[string]any{"text": md.content})
+	  result,err := qdrant_db.UpsertRagVector(md.chunks, md.vectors, map[string]any{"text": md.Content})
 		if err != nil {
 			return nil, err
 		}

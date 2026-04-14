@@ -14,6 +14,10 @@ func init() {
 	godotenv.Load()
 	database.DBConnect()
 	qdrant_db.QdrantConnect()
+	err := qdrant_db.CreateRagCollection()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {

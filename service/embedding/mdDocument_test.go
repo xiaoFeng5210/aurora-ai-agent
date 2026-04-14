@@ -48,14 +48,13 @@ func TestMdDocumentEmbedding(t *testing.T) {
 	md.ConvertToText()
 	chunks := md.Chunk()
 	t.Logf("chunks: %v", chunks)
-	vectors, err := md.Embedding()
+	_, err = md.Embedding()
 	if err != nil {
 		t.Fatalf("Failed to embed: %v", err)
 	}
-	t.Logf("vectors: %v", len(vectors))
-	// updateResult, err := md.UpsertQdrantVector()
-	// if err != nil {
-	// 	t.Fatalf("Failed to upsert qdrant vector: %v", err)
-	// }
-	// t.Logf("updateResult: %v", updateResult)
+	updateResult, err := md.UpsertQdrantVector()
+	if err != nil {
+		t.Fatalf("Failed to upsert qdrant vector: %v", err)
+	}
+	t.Logf("updateResult: %v", updateResult)
 }

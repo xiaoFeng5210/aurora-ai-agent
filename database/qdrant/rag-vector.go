@@ -16,7 +16,7 @@ func CreateRagCollection() error {
   if err != nil {                                                                                                                                   
     return err
   }                                                                                                                                                 
-  if exists { 
+  if exists {
     return nil
   }
 	return qdrantClient.CreateCollection(context.Background(), &qdrant.CreateCollection{
@@ -30,10 +30,10 @@ func CreateRagCollection() error {
 
 // upsert engine, 每个文本chunk组成一个point
 func UpsertRagVector(chunks []string, vectors [][]float32, payload map[string]any) (*qdrant.UpdateResult, error) {
-	points := []*qdrant.PointStruct{}
+	points := make([]*qdrant.PointStruct, len(chunks))
 	// userID := payload["user_id"]
 	// fileName := payload["file_name"]
-	for idx, _ := range chunks {
+	for idx := range chunks {
 		points[idx] = &qdrant.PointStruct{
 			Id: qdrant.NewIDNum(uint64(idx)),
 			Vectors: qdrant.NewVectors(vectors[idx]...),
