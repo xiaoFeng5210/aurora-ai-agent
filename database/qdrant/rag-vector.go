@@ -7,13 +7,14 @@ import (
 )
 
 // 创建集合
-func CreateCollection(collectionName string) error {
+func CreateRagCollection(collectionName string) error {
 	err := qdrantClient.CreateCollection(context.Background(), &qdrant.CreateCollection{
 		CollectionName: collectionName,
 		VectorsConfig: qdrant.NewVectorsConfig(&qdrant.VectorParams{
-			Size:     1024, // Vector size is defined by used model
+			Size:     1024,  // Vector size is defined by used model
 			Distance: qdrant.Distance_Cosine,
 		}),
 	})
 	return err
 }
+
