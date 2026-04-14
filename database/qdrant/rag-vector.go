@@ -18,3 +18,25 @@ func CreateRagCollection(collectionName string) error {
 	return err
 }
 
+// 上传
+func UploadRagVector(collectionName string, docs []string) {
+	embeddingModel := "sentence-transformers/all-minilm-l6-v2"
+	points := []*qdrant.PointStruct{}
+	for idx, doc := range docs {
+		points[idx] = &qdrant.PointStruct{
+			Id: qdrant.NewIDNum(uint64(idx)),
+			Vectors: qdrant.NewVectorsDocument(&qdrant.Document{
+				Text:  doc,
+				Model: embeddingModel,
+			}),
+			Payload: qdrant.NewValueMap(map[string]any{
+				"text": doc,
+			}),
+		}
+	}
+	qdrantClient.Upsert(context.Background(), &qdrant.UpsertPoints{
+		CollectionName: collectionName,
+		Points:         points,
+	})
+}
+
