@@ -2,6 +2,7 @@ package qdrant_db
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/qdrant/go-client/qdrant"
 )
@@ -28,18 +29,15 @@ func CreateRagCollection() error {
 	})
 }
 
-// 
-
 // upsert engine, 每个文本chunk组成一个point
-func UploadRagVector(chunks []string, userID int, fileName string) {
+func UploadRagVector(chunks []string, vectors []float32, payload map[string]any) error {
 	points := []*qdrant.PointStruct{}
+	userID := payload["user_id"]
+	fileName := payload["file_name"]
 	for idx, chunk := range chunks {
 		points[idx] = &qdrant.PointStruct{
 			Id: qdrant.NewIDNum(uint64(idx)),
-			Vectors: qdrant.NewVectorsDocument(&qdrant.Document{
-				Text:  chunk,
-				Model: embeddingModel,
-			}),
+			Vectors: qdrant.NewVectors(vectors...),
 			Payload: qdrant.NewValueMap(map[string]any{
 				"user_id": userID,
 				"text": chunk,
@@ -47,28 +45,30 @@ func UploadRagVector(chunks []string, userID int, fileName string) {
 			}),
 		}
 	}
-	qdrantClient.Upsert(context.Background(), &qdrant.UpsertPoints{
+	_, err := qdrantClient.Upsert(context.Background(), &qdrant.UpsertPoints{
 		CollectionName: ragCollectionName,
 		Points:         points,
 	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 
 // query engine
-// func QueryRagVector(query string, userID int) {
-// 	queryResult, err := qdrantClient.Query(context.Background(), &qdrant.QueryPoints{
-// 		CollectionName: ragCollectionName,
-// 		Query: qdrant.NewQueryDocument(&qdrant.Document{
-// 			Text:  query,
-// 			Model: embeddingModel,
-// 		}),
-// 		Limit: qdrant.PtrOf(uint64(3)),
-// 		Filter: &qdrant.Filter{
-// 			Must: []*qdrant.Condition{
-// 				qdrant.NewRange("user_id", &qdrant.Range{
-// 					Match: qdrant.PtrOf(userID),
-// 				}),
-// 			},
-// 		},
-// 	})
-// }
+func QueryRagVector(queryVector []float32, userID int) ([]*qdrant.ScoredPoint, error) {
+	searchResult, err := qdrantClient.Query(context.Background(), &qdrant.QueryPoints{
+		CollectionName: ragCollectionName,
+		Query:          qdrant.NewQuery(queryVector...),
+		Filter: &qdrant.Filter{
+			Must: []*qdrant.Condition{
+				qdrant.NewMatch("user_id", strconv.Itoa(userID)),
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return searchResult, nil
+}
