@@ -21,7 +21,7 @@ type embeddingRequest struct {
 }
 
 type embeddingData struct {
-	Embedding []float64 `json:"embedding"`
+	Embedding []float32 `json:"embedding"`
 	Index     int       `json:"index"`
 }
 
@@ -34,7 +34,7 @@ type embeddingResponse struct {
 }
 
 // Embed 将文本向量化，dimensions 为 0 时使用模型默认维度，2048最高, 我们一般选取1024
-func Embed(text string, dimensions int) ([]float64, error) {
+func Embed(text string, dimensions int) ([]float32, error) {
 	apiKey := os.Getenv("GLM_API_KEY")
 	if apiKey == "" {
 		return nil, fmt.Errorf("GLM_API_KEY is not set")
