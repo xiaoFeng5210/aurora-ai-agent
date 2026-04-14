@@ -28,7 +28,7 @@ func TestMdDocument_ConvertToText(t *testing.T) {
 	t.Logf("content: %s", md.content)
 }
 
-func TestMdDocumentChunk(t *testing.T) {
+func TestMdDocumentEmbedding(t *testing.T) {
 	file, err := os.Open("test.md")
 	if err != nil {
 		t.Fatalf("Failed to open test.md: %v", err)
@@ -46,7 +46,16 @@ func TestMdDocumentChunk(t *testing.T) {
 	}
 
 	md.ConvertToText()
-
 	chunks := md.Chunk()
-	t.Logf("chunks: %v", chunks[0:10])
+	t.Logf("chunks: %v", chunks)
+	vectors, err := md.Embedding()
+	if err != nil {
+		t.Fatalf("Failed to embed: %v", err)
+	}
+	t.Logf("vectors: %v", len(vectors))
+	// updateResult, err := md.UpsertQdrantVector()
+	// if err != nil {
+	// 	t.Fatalf("Failed to upsert qdrant vector: %v", err)
+	// }
+	// t.Logf("updateResult: %v", updateResult)
 }

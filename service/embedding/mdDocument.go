@@ -4,13 +4,15 @@ import (
 	qdrant_db "aurora-agent/database/qdrant"
 	"errors"
 	"strings"
+
+	"github.com/qdrant/go-client/qdrant"
 )
 
 type MdDocument struct {
 	data []byte  // markdown 文件数据
 	content string // 转换后的文本内容
 	chunks []string // 分块后的文本内容
-	vectors []float32 // 向量化后
+	vectors [][]float32 // 向量化后
 }
 
 func (md *MdDocument) ConvertToText() string {
@@ -41,29 +43,34 @@ func (md *MdDocument) Chunk() []string {
 			end += delta
 		}
 	}
+	md.chunks = chunks
 	return chunks
 }
 
 // 向量化
-func (md *MdDocument) Embedding() ([]float32, error) {
-	vectors, err := Embed(md.content, 2048)
-	if err != nil {
-		return nil, err
+func (md *MdDocument) Embedding() ([][]float32, error) {
+	vectors := [][]float32{}
+	for _, chunk := range md.chunks {
+		vector, err := Embed(chunk, 1024)
+		if err != nil {
+			return nil, err
+		}
+		vectors = append(vectors, vector)
 	}
 	md.vectors = vectors
 	return vectors, nil
 }
 
-func (md *MdDocument) UpsertQdrantVector() error {
+func (md *MdDocument) UpsertQdrantVector() (*qdrant.UpdateResult, error) {
 	if md.content == "" {
-		return errors.New("content is empty")
+		return nil, errors.New("content is empty")
 	}
 	if len(md.chunks) > 0 && len(md.vectors) > 0 {
-	  err := qdrant_db.UpsertRagVector(md.chunks, md.vectors, map[string]any{"text": md.content})
+	  result,err := qdrant_db.UpsertRagVector(md.chunks, md.vectors, map[string]any{"text": md.content})
 		if err != nil {
-			return err
+			return nil, err
 		}
-		return nil
+		return result, nil
 	}
-	return errors.New("chunks or vectors is empty")
+	return nil, errors.New("chunks or vectors is empty")
 }

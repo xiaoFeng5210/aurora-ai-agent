@@ -29,25 +29,25 @@ func CreateRagCollection() error {
 }
 
 // upsert engine, 每个文本chunk组成一个point
-func UpsertRagVector(chunks []string, vectors []float32, payload map[string]any) error {
+func UpsertRagVector(chunks []string, vectors [][]float32, payload map[string]any) (*qdrant.UpdateResult, error) {
 	points := []*qdrant.PointStruct{}
 	// userID := payload["user_id"]
 	// fileName := payload["file_name"]
 	for idx, _ := range chunks {
 		points[idx] = &qdrant.PointStruct{
 			Id: qdrant.NewIDNum(uint64(idx)),
-			Vectors: qdrant.NewVectors(vectors...),
+			Vectors: qdrant.NewVectors(vectors[idx]...),
 			Payload: qdrant.NewValueMap(payload),
 		}
 	}
-	_, err := qdrantClient.Upsert(context.Background(), &qdrant.UpsertPoints{
+	result, err := qdrantClient.Upsert(context.Background(), &qdrant.UpsertPoints{
 		CollectionName: ragCollectionName,
 		Points:         points,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return result, nil
 }
 
 
