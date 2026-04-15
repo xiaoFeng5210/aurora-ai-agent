@@ -12,7 +12,6 @@ import (
 )
 
 var (
-	ErrDocumentNotFound            = errors.New("document not found")
 	ErrDocumentDisplayNameRequired = errors.New("display_name is required")
 )
 
@@ -38,7 +37,7 @@ func GetDocumentByID(uid int, id int) (dto.DocumentResponse, error) {
 	document, err := database.GetDocumentByIDAndUserID(id, uid)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return dto.DocumentResponse{}, ErrDocumentNotFound
+			return dto.DocumentResponse{}, vo.ErrDocumentNotFound
 		}
 		return dto.DocumentResponse{}, err
 	}
@@ -71,7 +70,7 @@ func UpdateDocument(uid int, id int, req dto.UpdateDocumentRequest) (dto.Documen
 
 	if err := database.UpdateDocumentByIDAndUserID(id, uid, updates); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return dto.DocumentResponse{}, ErrDocumentNotFound
+			return dto.DocumentResponse{}, vo.ErrDocumentNotFound
 		}
 		return dto.DocumentResponse{}, err
 	}
@@ -82,7 +81,7 @@ func UpdateDocument(uid int, id int, req dto.UpdateDocumentRequest) (dto.Documen
 func DeleteDocument(uid int, id int) error {
 	if err := database.SoftDeleteDocumentByIDAndUserID(id, uid); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ErrDocumentNotFound
+			return vo.ErrDocumentNotFound
 		}
 		return err
 	}

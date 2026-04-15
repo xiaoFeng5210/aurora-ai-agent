@@ -45,7 +45,12 @@ func SetupRouter() *gin.Engine {
 	documentGroup.POST("/query", handler.QueryDocument)
 	documentGroup.PUT("/:id", handler.UpdateDocument)
 	documentGroup.DELETE("/:id", handler.DeleteDocument)
-
+	documentGroup.POST("/:document_id/messages", handler.CreateHistoryMessage)
+	documentGroup.GET("/:document_id/messages/:message_id", handler.GetHistoryMessageByMessageID)
+	documentGroup.POST("/:document_id/messages/query", handler.QueryHistoryMessages)
+	documentGroup.GET("/:document_id/messages/proxy/history", handler.ProxyQueryHistoryMessages)
+	documentGroup.PUT("/:document_id/messages/:message_id", handler.UpdateHistoryMessage)
+	documentGroup.DELETE("/:document_id/messages/:message_id", handler.DeleteHistoryMessage)
 
 	baiduNetworkdiskGroup := apiv1.Group("/file")
 	baiduNetworkdiskGroup.GET("/baidu_networkdisk/token", handler.GetBaiduNetworkdiskToken)

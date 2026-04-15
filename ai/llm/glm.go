@@ -105,7 +105,7 @@ func (glm *GLM) ChatWithGLMInStreamWithEvents(messages []ai.Message, opts ChatOp
 		"thinking": map[string]interface{}{
 			"type": glm.ThinkingType,
 		},
-		"tools": functioncall.WeatherTools,
+		"tools": functioncall.RAGTools,
 	}
 
 	if glm.Temperature > 0 {

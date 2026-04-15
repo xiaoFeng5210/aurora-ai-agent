@@ -21,6 +21,9 @@ func RunToolFunction(functionName string, functionArguments string) ([]byte, err
 		cityStr, _ := city.(string)
 
 		return GetWeather(cityStr), nil
+
+	case "query_rag":
+		return QueryRag(functionArguments)
 	default:
 		return nil, fmt.Errorf("function %s not found", functionName)
 	}

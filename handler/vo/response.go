@@ -10,12 +10,16 @@ import (
 
 var (
 	ErrUserNotFound         = errors.New("user not found")
+	ErrDocumentNotFound     = errors.New("document not found")
+	ErrMessageNotFound      = errors.New("message not found")
 	ErrUsernameExists       = errors.New("username already exists")
 	ErrEmailExists          = errors.New("email already exists")
 	ErrInvalidCredentials   = errors.New("invalid email or password")
 	ErrOldPasswordIncorrect = errors.New("old password is incorrect")
 	ErrPasswordTooShort     = errors.New("password must be at least 6 characters")
 	ErrBirthdayFormat       = errors.New("birthday must be in YYYY-MM-DD format")
+	ErrMessageRoleRequired  = errors.New("role is required")
+	ErrMessageOrderInvalid  = errors.New("order must be asc or desc")
 	ErrNoFieldsToUpdate     = errors.New("no fields to update")
 )
 
@@ -27,7 +31,6 @@ func RespondSuccess(ctx *gin.Context, data any) {
 	})
 }
 
-
 func RespondError(ctx *gin.Context, status int, err error) {
 	ctx.JSON(status, gin.H{
 		"code":    -1,
@@ -38,7 +41,10 @@ func RespondError(ctx *gin.Context, status int, err error) {
 func RespondWithServiceError(ctx *gin.Context, err error) {
 	status := http.StatusInternalServerError
 	switch {
-	case errors.Is(err, ErrUserNotFound):
+	case errors.Is(err, ErrUserNotFound),
+		errors.Is(err, ErrDocumentNotFound),
+		errors.Is(err, ErrMessageNotFound),
+		errors.Is(err, gorm.ErrRecordNotFound):
 		status = http.StatusNotFound
 	case errors.Is(err, ErrUsernameExists),
 		errors.Is(err, ErrEmailExists),
@@ -46,6 +52,8 @@ func RespondWithServiceError(ctx *gin.Context, err error) {
 		errors.Is(err, ErrOldPasswordIncorrect),
 		errors.Is(err, ErrPasswordTooShort),
 		errors.Is(err, ErrBirthdayFormat),
+		errors.Is(err, ErrMessageRoleRequired),
+		errors.Is(err, ErrMessageOrderInvalid),
 		errors.Is(err, ErrNoFieldsToUpdate),
 		errors.Is(err, gorm.ErrInvalidData):
 		status = http.StatusBadRequest
