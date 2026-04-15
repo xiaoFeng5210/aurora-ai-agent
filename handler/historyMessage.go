@@ -12,8 +12,17 @@ import (
 	"go.uber.org/zap"
 )
 
+func parseHistoryDocumentID(ctx *gin.Context) (int, error) {
+	documentID := ctx.Param("id")
+	if documentID == "" {
+		documentID = ctx.Param("document_id")
+	}
+
+	return strconv.Atoi(documentID)
+}
+
 func CreateHistoryMessage(ctx *gin.Context) {
-	documentID, err := strconv.Atoi(ctx.Param("document_id"))
+	documentID, err := parseHistoryDocumentID(ctx)
 	if err != nil {
 		vo.RespondError(ctx, http.StatusBadRequest, err)
 		return
@@ -36,7 +45,7 @@ func CreateHistoryMessage(ctx *gin.Context) {
 }
 
 func GetHistoryMessageByMessageID(ctx *gin.Context) {
-	documentID, err := strconv.Atoi(ctx.Param("document_id"))
+	documentID, err := parseHistoryDocumentID(ctx)
 	if err != nil {
 		vo.RespondError(ctx, http.StatusBadRequest, err)
 		return
@@ -53,7 +62,7 @@ func GetHistoryMessageByMessageID(ctx *gin.Context) {
 }
 
 func QueryHistoryMessages(ctx *gin.Context) {
-	documentID, err := strconv.Atoi(ctx.Param("document_id"))
+	documentID, err := parseHistoryDocumentID(ctx)
 	if err != nil {
 		vo.RespondError(ctx, http.StatusBadRequest, err)
 		return
@@ -76,7 +85,7 @@ func QueryHistoryMessages(ctx *gin.Context) {
 }
 
 func ProxyQueryHistoryMessages(ctx *gin.Context) {
-	documentID, err := strconv.Atoi(ctx.Param("document_id"))
+	documentID, err := parseHistoryDocumentID(ctx)
 	if err != nil {
 		vo.RespondError(ctx, http.StatusBadRequest, err)
 		return
@@ -93,7 +102,7 @@ func ProxyQueryHistoryMessages(ctx *gin.Context) {
 }
 
 func UpdateHistoryMessage(ctx *gin.Context) {
-	documentID, err := strconv.Atoi(ctx.Param("document_id"))
+	documentID, err := parseHistoryDocumentID(ctx)
 	if err != nil {
 		vo.RespondError(ctx, http.StatusBadRequest, err)
 		return
@@ -116,7 +125,7 @@ func UpdateHistoryMessage(ctx *gin.Context) {
 }
 
 func DeleteHistoryMessage(ctx *gin.Context) {
-	documentID, err := strconv.Atoi(ctx.Param("document_id"))
+	documentID, err := parseHistoryDocumentID(ctx)
 	if err != nil {
 		vo.RespondError(ctx, http.StatusBadRequest, err)
 		return

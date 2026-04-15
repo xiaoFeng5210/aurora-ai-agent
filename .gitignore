@@ -46,3 +46,6 @@ log/
 # Temporary files
 tmp/
 temp/
+
+
+.gocache
