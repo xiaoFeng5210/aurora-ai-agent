@@ -37,7 +37,9 @@ func UpsertRagVector(chunks []string, vectors [][]float32, payload map[string]an
 		points[idx] = &qdrant.PointStruct{
 			Id: qdrant.NewIDNum(uint64(idx)),
 			Vectors: qdrant.NewVectors(vectors[idx]...),
-			Payload: qdrant.NewValueMap(payload),
+			Payload: qdrant.NewValueMap(map[string]any{
+				"text": chunks[idx],
+			}),
 		}
 	}
 	result, err := qdrantClient.Upsert(context.Background(), &qdrant.UpsertPoints{
