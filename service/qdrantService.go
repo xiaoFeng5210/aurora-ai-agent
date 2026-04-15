@@ -26,8 +26,8 @@ func UpsertQdrantByMDText(mdText string) (*qdrant.UpdateResult, error) {
 	return updateResult, nil
 }
 
-func QueryQdrantVector(queryText string) ([]*qdrant.ScoredPoint, error) {
-	queryVector, err := embedding.Embed(queryText, 1024)
+func QueryQdrantVector(prompt string) ([]*qdrant.ScoredPoint, error) {
+	queryVector, err := embedding.Embed(prompt, 1024)
 	if err != nil {
 		return nil, err
 	}

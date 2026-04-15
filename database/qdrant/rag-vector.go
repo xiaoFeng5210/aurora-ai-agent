@@ -56,6 +56,7 @@ func QueryRagVector(queryVector []float32) ([]*qdrant.ScoredPoint, error) {
 	searchResult, err := qdrantClient.Query(context.Background(), &qdrant.QueryPoints{
 		CollectionName: ragCollectionName,
 		Query:          qdrant.NewQuery(queryVector...),
+		WithPayload:    qdrant.NewWithPayload(true),
 		// Filter: &qdrant.Filter{
 		// 	Must: []*qdrant.Condition{
 		// 		qdrant.NewMatch("user_id", strconv.Itoa(userID)),

@@ -55,5 +55,6 @@ func SetupRouter() *gin.Engine {
 
 	qdrantGroup := apiv1.Group("/qdrant")
 	qdrantGroup.POST("/upsert", handler.UpsertQdrantTest)
+	qdrantGroup.POST("/query", handler.QueryQdrantVector)
 	return r
 }
