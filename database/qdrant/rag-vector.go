@@ -3,6 +3,7 @@ package qdrant_db
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/qdrant/go-client/qdrant"
 )
 
@@ -35,7 +36,7 @@ func UpsertRagVector(chunks []string, vectors [][]float32, payload map[string]an
 	// fileName := payload["file_name"]
 	for idx := range chunks {
 		points[idx] = &qdrant.PointStruct{
-			Id: qdrant.NewIDNum(uint64(idx)),
+			Id: qdrant.NewIDUUID(uuid.New().String()),
 			Vectors: qdrant.NewVectors(vectors[idx]...),
 			Payload: qdrant.NewValueMap(map[string]any{
 				"text": chunks[idx],
