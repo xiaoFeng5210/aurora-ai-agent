@@ -33,6 +33,7 @@ func QueryQdrantVector(queryText string) ([]*qdrant.ScoredPoint, error) {
 	}
 	searchResult, err := qdrant_db.QueryRagVector(queryVector)
 	if err != nil {
+		logger.Error("Query Qdrant vector failed", zap.Error(err))
 		return nil, err
 	}
 	logger.Info("Query Qdrant vector success", zap.Any("searchResult", searchResult))
