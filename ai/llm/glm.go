@@ -62,7 +62,7 @@ func InitModel() *GLM {
 	apiKey := os.Getenv("GLM_API_KEY")
 	glm := &GLM{
 		APIKey:       apiKey,
-		Model:        "glm-4.7",
+		Model:        "glm-4.5-air",
 		MaxToken:     65536,
 		Stream:       true,
 		Temperature:  1.0,

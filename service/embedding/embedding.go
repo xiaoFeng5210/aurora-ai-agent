@@ -1,12 +1,15 @@
 package embedding
 
 import (
+	"aurora-agent/utils"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+
+	"go.uber.org/zap"
 )
 
 const (
@@ -33,8 +36,11 @@ type embeddingResponse struct {
 	} `json:"error"`
 }
 
+var logger *zap.Logger
+
 // Embed 将文本向量化，dimensions 为 0 时使用模型默认维度，2048最高, 我们一般选取1024
 func Embed(text string, dimensions int) ([]float32, error) {
+	logger = utils.InitZap("log/zap")
 	apiKey := os.Getenv("GLM_API_KEY")
 	if apiKey == "" {
 		return nil, fmt.Errorf("GLM_API_KEY is not set")
@@ -73,9 +79,11 @@ func Embed(text string, dimensions int) ([]float32, error) {
 		return nil, err
 	}
 	if result.Error != nil {
+		logger.Error("embedding api error", zap.Any("error", result.Error))
 		return nil, fmt.Errorf("embedding api error %s: %s", result.Error.Code, result.Error.Message)
 	}
 	if len(result.Data) == 0 {
+		logger.Error("embedding api returned empty data")
 		return nil, fmt.Errorf("embedding api returned empty data")
 	}
 

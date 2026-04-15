@@ -12,7 +12,10 @@ func UpsertQdrantByMDText(mdText string) (*qdrant.UpdateResult, error) {
 		Content: mdText,
 	}
 	md.Chunk()
-	md.Embedding()
+	_, err := md.Embedding()
+	if err != nil {
+		return nil, err
+	}
 	updateResult, err := md.UpsertQdrantVector()
 	if err != nil {
 		logger.Error("Upsert Qdrant by MD text failed", zap.Error(err))
