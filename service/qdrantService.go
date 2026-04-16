@@ -22,7 +22,7 @@ func UpsertQdrantByMDText(ctx *gin.Context, mdText string) (*qdrant.UpdateResult
 		return nil, err
 	}
 	logger.Info("Upsert Qdrant UID:", zap.Any("uid", uid))
-	updateResult, err := md.UpsertQdrantVector(uid)
+	updateResult, err := md.UpsertQdrantVector(uid, "")
 	if err != nil {
 		logger.Error("Upsert Qdrant by MD text failed", zap.Error(err))
 		return nil, err

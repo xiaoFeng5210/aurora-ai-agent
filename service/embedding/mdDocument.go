@@ -61,12 +61,17 @@ func (md *MdDocument) Embedding() ([][]float32, error) {
 	return vectors, nil
 }
 
-func (md *MdDocument) UpsertQdrantVector(uid int) (*qdrant.UpdateResult, error) {
+// UpsertQdrantVector 将分块和向量写入 Qdrant
+// filename 记录数据来源文件名，便于用户管理知识库
+func (md *MdDocument) UpsertQdrantVector(uid int, filename string) (*qdrant.UpdateResult, error) {
 	if md.Content == "" {
 		return nil, errors.New("content is empty")
 	}
 	if len(md.chunks) > 0 && len(md.vectors) > 0 {
-	  result,err := qdrant_db.UpsertRagVector(md.chunks, md.vectors, map[string]any{"text": md.Content, "user_id": uid})
+		result, err := qdrant_db.UpsertRagVector(md.chunks, md.vectors, map[string]any{
+			"user_id":  uid,
+			"filename": filename,
+		})
 		if err != nil {
 			return nil, err
 		}

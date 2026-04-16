@@ -41,16 +41,19 @@ func CreateRagCollection() error {
 }
 
 // upsert engine, 每个文本chunk组成一个point
+// payload 必须包含 user_id 和 filename，用于数据隔离和来源追踪
 func UpsertRagVector(chunks []string, vectors [][]float32, payload map[string]any) (*qdrant.UpdateResult, error) {
 	points := make([]*qdrant.PointStruct, len(chunks))
 	userID := fmt.Sprintf("%v", payload["user_id"])
+	filename := fmt.Sprintf("%v", payload["filename"])
 	for idx := range chunks {
 		points[idx] = &qdrant.PointStruct{
 			Id: qdrant.NewIDUUID(uuid.New().String()),
 			Vectors: qdrant.NewVectors(vectors[idx]...),
 			Payload: qdrant.NewValueMap(map[string]any{
-				"text": chunks[idx],
-				"user_id": userID,
+				"text":     chunks[idx],
+				"user_id":  userID,
+				"filename": filename,
 			}),
 		}
 	}

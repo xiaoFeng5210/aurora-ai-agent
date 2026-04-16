@@ -95,7 +95,7 @@ func CreateRag(ctx *gin.Context, file multipart.File, filename string) (*qdrant.
 		zap.Int("uid", uid),
 		zap.String("filename", filename),
 	)
-	result, err := md.UpsertQdrantVector(uid)
+	result, err := md.UpsertQdrantVector(uid, filename)
 	if err != nil {
 		logger.Error("RAG 创建: 写入 Qdrant 失败", zap.Error(err))
 		return nil, fmt.Errorf("写入知识库失败: %w", err)
