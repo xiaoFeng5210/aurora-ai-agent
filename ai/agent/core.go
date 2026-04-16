@@ -9,6 +9,7 @@ import (
 
 	utils "aurora-agent/utils"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -64,7 +65,7 @@ func (a *Agent) NewAgentWithOptions(opts llm.ChatOptions) {
 	}
 }
 
-func (a *Agent) RunAgent(messages []ai.Message, onEvent llm.StreamEventHandler) (AgentResult, error) {
+func (a *Agent) RunAgent(ctx *gin.Context, messages []ai.Message, onEvent llm.StreamEventHandler) (AgentResult, error) {
 	if a.Llm == nil {
 		a.NewAgent()
 	}
@@ -120,7 +121,7 @@ func (a *Agent) RunAgent(messages []ai.Message, onEvent llm.StreamEventHandler) 
 		for _, toolCall := range toolCalls {
 			switch toolCall.Type {
 			case "function":
-				result, runErr := functioncall.RunToolFunction(toolCall.Function.Name, toolCall.Function.Arguments)
+				result, runErr := functioncall.RunToolFunction(ctx, toolCall.Function.Name, toolCall.Function.Arguments)
 				if runErr != nil {
 					logger.Error("RunToolFunction failed", zap.Error(runErr))
 					emitAgentEvent(onEvent, "error", map[string]any{
@@ -159,7 +160,7 @@ func emitAgentEvent(onEvent llm.StreamEventHandler, event string, data any) {
 	onEvent(event, data)
 }
 
-func (a *Agent) RunAgentWithPormpt(userPrompt string) (AgentResult, error) {
+func (a *Agent) RunAgentWithPormpt(ctx *gin.Context, userPrompt string) (AgentResult, error) {
 	for {
 		a.CurrentLoop++
 
@@ -185,7 +186,7 @@ func (a *Agent) RunAgentWithPormpt(userPrompt string) (AgentResult, error) {
 			case "function":
 				functionName := toolCall.Function.Name
 				functionArguments := toolCall.Function.Arguments
-				result, err := functioncall.RunToolFunction(functionName, functionArguments)
+				result, err := functioncall.RunToolFunction(ctx, functionName, functionArguments)
 				if err != nil {
 					logger.Error("RunToolFunction failed", zap.Error(err))
 					return AgentResult{Result: AgentResultTypeError, message: err.Error()}, err

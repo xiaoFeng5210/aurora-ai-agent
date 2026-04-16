@@ -61,12 +61,12 @@ func (md *MdDocument) Embedding() ([][]float32, error) {
 	return vectors, nil
 }
 
-func (md *MdDocument) UpsertQdrantVector() (*qdrant.UpdateResult, error) {
+func (md *MdDocument) UpsertQdrantVector(uid int) (*qdrant.UpdateResult, error) {
 	if md.Content == "" {
 		return nil, errors.New("content is empty")
 	}
 	if len(md.chunks) > 0 && len(md.vectors) > 0 {
-	  result,err := qdrant_db.UpsertRagVector(md.chunks, md.vectors, map[string]any{"text": md.Content})
+	  result,err := qdrant_db.UpsertRagVector(md.chunks, md.vectors, map[string]any{"text": md.Content, "user_id": uid})
 		if err != nil {
 			return nil, err
 		}

@@ -39,7 +39,7 @@ func StreamChatWithGLMController(ctx *gin.Context) {
 	ctx.Writer.Flush()
 
 	var writeErr error
-	err = service.ChatWithGLMStream(documentID, req, func(event service.ChatStreamEvent) {
+	err = service.ChatWithGLMStream(ctx, documentID, req, func(event service.ChatStreamEvent) {
 		if ctx.Request.Context().Err() != nil {
 			return
 		}

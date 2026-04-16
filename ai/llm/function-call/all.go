@@ -3,9 +3,11 @@ package functioncall
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/gin-gonic/gin"
 )
 
-func RunToolFunction(functionName string, functionArguments string) ([]byte, error) {
+func RunToolFunction(ctx *gin.Context, functionName string, functionArguments string) ([]byte, error) {
 	switch functionName {
 	case "get_weather":
 		var arguments map[string]interface{}
@@ -23,7 +25,7 @@ func RunToolFunction(functionName string, functionArguments string) ([]byte, err
 		return GetWeather(cityStr), nil
 
 	case "query_rag":
-		return QueryRag(functionArguments)
+		return QueryRag(ctx, functionArguments)
 	default:
 		return nil, fmt.Errorf("function %s not found", functionName)
 	}

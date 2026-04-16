@@ -2,6 +2,7 @@ package qdrant_db
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/qdrant/go-client/qdrant"
@@ -32,14 +33,14 @@ func CreateRagCollection() error {
 // upsert engine, 每个文本chunk组成一个point
 func UpsertRagVector(chunks []string, vectors [][]float32, payload map[string]any) (*qdrant.UpdateResult, error) {
 	points := make([]*qdrant.PointStruct, len(chunks))
-	// userID := payload["user_id"]
-	// fileName := payload["file_name"]
+	userID := payload["user_id"]
 	for idx := range chunks {
 		points[idx] = &qdrant.PointStruct{
 			Id: qdrant.NewIDUUID(uuid.New().String()),
 			Vectors: qdrant.NewVectors(vectors[idx]...),
 			Payload: qdrant.NewValueMap(map[string]any{
 				"text": chunks[idx],
+				"user_id": userID,
 			}),
 		}
 	}
@@ -55,16 +56,16 @@ func UpsertRagVector(chunks []string, vectors [][]float32, payload map[string]an
 
 
 // query engine
-func QueryRagVector(queryVector []float32) ([]*qdrant.ScoredPoint, error) {
+func QueryRagVector(queryVector []float32, userID int) ([]*qdrant.ScoredPoint, error) {
 	searchResult, err := qdrantClient.Query(context.Background(), &qdrant.QueryPoints{
 		CollectionName: ragCollectionName,
 		Query:          qdrant.NewQuery(queryVector...),
 		WithPayload:    qdrant.NewWithPayload(true),
-		// Filter: &qdrant.Filter{
-		// 	Must: []*qdrant.Condition{
-		// 		qdrant.NewMatch("user_id", strconv.Itoa(userID)),
-		// 	},
-		// },
+		Filter: &qdrant.Filter{
+			Must: []*qdrant.Condition{
+				qdrant.NewMatch("user_id", strconv.Itoa(userID)),
+			},
+		},
 	})
 	if err != nil {
 		return nil, err

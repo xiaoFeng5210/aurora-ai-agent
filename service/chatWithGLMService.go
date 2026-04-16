@@ -9,6 +9,7 @@ import (
 	"aurora-agent/handler/dto"
 	"strings"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
@@ -17,7 +18,7 @@ type ChatStreamEvent struct {
 	Data  any    `json:"data"`
 }
 
-func ChatWithGLMStream(documentID int, req dto.ChatRequest, onSSEEvent func(ChatStreamEvent)) error {
+func ChatWithGLMStream(ctx *gin.Context, documentID int, req dto.ChatRequest, onSSEEvent func(ChatStreamEvent)) error {
 	messages := buildChatMessages(req)
 	chatAgent := agent.Agent{}
 	chatAgent.NewAgentWithOptions(llm.ChatOptions{
@@ -27,7 +28,7 @@ func ChatWithGLMStream(documentID int, req dto.ChatRequest, onSSEEvent func(Chat
 		ThinkingType: req.Thinking.Type,
 	})
 
-	agentResult, err := chatAgent.RunAgent(messages, func(event string, data any) {
+	agentResult, err := chatAgent.RunAgent(ctx, messages, func(event string, data any) {
 		if onSSEEvent == nil {
 			return
 		}

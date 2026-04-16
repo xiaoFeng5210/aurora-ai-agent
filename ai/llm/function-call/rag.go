@@ -2,8 +2,12 @@ package functioncall
 
 import (
 	qdrant_db "aurora-agent/database/qdrant"
+	"aurora-agent/middleware"
 	"aurora-agent/service/embedding"
 	"encoding/json"
+	"fmt"
+
+	"github.com/gin-gonic/gin"
 )
 
 var RAGTools = []map[string]interface{}{
@@ -11,13 +15,13 @@ var RAGTools = []map[string]interface{}{
 		"type": "function",
 		"function": map[string]interface{}{
 			"name":        "query_rag",
-			"description": "查询RAG向量库的方法，首先你需要自主判断用户的问题，属于闲聊类的还是？如果你觉得用户的问题不属于闲聊倾向，对知识论文的问题，或者对故事问题的探索，或者对其他常用问题的询问，那么你需要调用这个方法查询RAG向量库。",
+			"description": "查询RAG向量库的方法, 首先你需要自主判断用户的问题,属于闲聊类的还是知识库类的。如果你觉得用户的问题不属于闲聊倾向，对知识论文的问题，或者对故事问题的探索，或者对其他常用问题的询问，那么你需要调用这个方法查询RAG向量库。需要你判断用户的问题，需不需要查询个人RAG向量知识库。如果需要，那么你调用这个方法查询个人RAG向量知识库。",
 			"parameters": map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
 					"prompt": map[string]interface{}{
 						"type":        "string",
-						"description": "直接将用户的问题或者相关关键词传递给这个参数，可以不进行任何处理，如果用户的问题很长，可以适当组织语言后传递给这个参数",
+						"description": "直接将用户的问题或者相关关键词传递给这个参数，可以不进行任何处理，如果用户的问题很长，可以适当组织语言后传递给这个参数。",
 					},
 				},
 				"required": []interface{}{"prompt"},
@@ -27,12 +31,14 @@ var RAGTools = []map[string]interface{}{
 }
 
 
-func QueryRag(prompt string) ([]byte, error) {
+func QueryRag(ctx *gin.Context, prompt string) ([]byte, error) {
+	uid := ctx.GetInt(middleware.UID_IN_CTX)
 	queryVector, err := embedding.Embed(prompt, 1024)
 	if err != nil {
 		return nil, err
 	}
-	searchResult, err := qdrant_db.QueryRagVector(queryVector)
+	fmt.Println("Query RAG UID:", uid)
+	searchResult, err := qdrant_db.QueryRagVector(queryVector, uid)
 	if err != nil {
 		return nil, err
 	}

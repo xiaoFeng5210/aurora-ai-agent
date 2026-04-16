@@ -24,7 +24,7 @@ func UpsertQdrantTest(ctx *gin.Context) {
 		return
 	}
 
-	updateResult, err := service.UpsertQdrantByMDText(req.Text)
+	updateResult, err := service.UpsertQdrantByMDText(ctx, req.Text)
 	if err != nil {
 		vo.RespondError(ctx, http.StatusInternalServerError, err)
 		return
@@ -41,7 +41,7 @@ func QueryQdrantVector(ctx *gin.Context) {
 		vo.RespondError(ctx, http.StatusBadRequest, err)
 		return
 	}
-	searchResult, err := service.QueryQdrantVector(req.Prompt)
+	searchResult, err := service.QueryQdrantVector(ctx, req.Prompt)
 	if err != nil {
 		vo.RespondError(ctx, http.StatusInternalServerError, err)
 		return
