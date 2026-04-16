@@ -9,7 +9,6 @@ import (
 )
 
 func GMBaiduNetworkdiskUpload(ctx *gin.Context) {
-
 	filename := ctx.PostForm("filename")
 	isdir := ctx.PostForm("isdir")
 

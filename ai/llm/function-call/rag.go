@@ -5,7 +5,6 @@ import (
 	"aurora-agent/middleware"
 	"aurora-agent/service/embedding"
 	"encoding/json"
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,7 +36,6 @@ func QueryRag(ctx *gin.Context, prompt string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("Query RAG UID:", uid)
 	searchResult, err := qdrant_db.QueryRagVector(queryVector, uid)
 	if err != nil {
 		return nil, err
