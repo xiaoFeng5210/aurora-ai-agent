@@ -2,6 +2,7 @@ package qdrant_db
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -14,26 +15,35 @@ var embeddingModel = "sentence-transformers/all-minilm-l6-v2"
 
 // 创建集合
 func CreateRagCollection() error {
-	exists, err := qdrantClient.CollectionExists(context.Background(), ragCollectionName)                                                                
-  if err != nil {                                                                                                                                   
+	exists, err := qdrantClient.CollectionExists(context.Background(), ragCollectionName)
+  if err != nil {
     return err
-  }                                                                                                                                                 
-  if exists {
-    return nil
   }
-	return qdrantClient.CreateCollection(context.Background(), &qdrant.CreateCollection{
+  if !exists {
+		err = qdrantClient.CreateCollection(context.Background(), &qdrant.CreateCollection{
+			CollectionName: ragCollectionName,
+			VectorsConfig: qdrant.NewVectorsConfig(&qdrant.VectorParams{
+				Size:     1024,  // Vector size is defined by used model
+				Distance: qdrant.Distance_Cosine,
+			}),
+		})
+		if err != nil {
+			return err
+		}
+	}
+	// 为 user_id 创建 keyword 索引，支持过滤查询（已存在则幂等）
+	_, err = qdrantClient.CreateFieldIndex(context.Background(), &qdrant.CreateFieldIndexCollection{
 		CollectionName: ragCollectionName,
-		VectorsConfig: qdrant.NewVectorsConfig(&qdrant.VectorParams{
-			Size:     1024,  // Vector size is defined by used model
-			Distance: qdrant.Distance_Cosine,
-		}),
+		FieldName:      "user_id",
+		FieldType:      qdrant.PtrOf(qdrant.FieldType_FieldTypeKeyword),
 	})
+	return err
 }
 
 // upsert engine, 每个文本chunk组成一个point
 func UpsertRagVector(chunks []string, vectors [][]float32, payload map[string]any) (*qdrant.UpdateResult, error) {
 	points := make([]*qdrant.PointStruct, len(chunks))
-	userID := payload["user_id"]
+	userID := fmt.Sprintf("%v", payload["user_id"])
 	for idx := range chunks {
 		points[idx] = &qdrant.PointStruct{
 			Id: qdrant.NewIDUUID(uuid.New().String()),

@@ -4,6 +4,7 @@ import (
 	qdrant_db "aurora-agent/database/qdrant"
 	"aurora-agent/middleware"
 	"aurora-agent/service/embedding"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/qdrant/go-client/qdrant"
@@ -43,6 +44,7 @@ func UpsertQdrantByMDText(ctx *gin.Context, mdText string) (*qdrant.UpdateResult
 
 func QueryQdrantVector(ctx *gin.Context, prompt string) ([]*qdrant.ScoredPoint, error) {
 	uid := ctx.GetInt(middleware.UID_IN_CTX)
+	fmt.Println("Query Qdrant UID:", uid)
 	queryVector, err := embedding.Embed(prompt, 1024)
 	if err != nil {
 		return nil, err

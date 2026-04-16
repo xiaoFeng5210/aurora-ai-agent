@@ -20,7 +20,7 @@ func SetupRouter() *gin.Engine {
 		apiv1.POST("/register", handler.CreateUser)
 
 		apiv1.POST("/login", handler.Login)
-		apiv1.POST("/chat/glm/stream/:document_id", handler.StreamChatWithGLMController)
+		apiv1.POST("/chat/glm/stream/:document_id", middleware.Auth, handler.StreamChatWithGLMController)
 
 		apiv1.GET("/test_jwt", middleware.Auth, func(c *gin.Context) {
 			c.JSON(200, gin.H{"message": "test jwt success"})
@@ -59,6 +59,7 @@ func SetupRouter() *gin.Engine {
 	baiduNetworkdiskGroup.POST("/baidu_networkdisk/upload", handler.GMBaiduNetworkdiskUpload)
 
 	qdrantGroup := apiv1.Group("/qdrant")
+	qdrantGroup.Use(middleware.Auth)
 	qdrantGroup.POST("/upsert", handler.UpsertQdrantTest)
 	qdrantGroup.POST("/query", handler.QueryQdrantVector)
 	return r
