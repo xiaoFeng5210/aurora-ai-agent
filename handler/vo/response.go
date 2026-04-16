@@ -21,6 +21,7 @@ var (
 	ErrMessageRoleRequired  = errors.New("role is required")
 	ErrMessageOrderInvalid  = errors.New("order must be asc or desc")
 	ErrNoFieldsToUpdate     = errors.New("no fields to update")
+	ErrUnsupportedFileType  = errors.New("unsupported file type, currently supported: .txt, .md, .csv")
 )
 
 func RespondSuccess(ctx *gin.Context, data any) {

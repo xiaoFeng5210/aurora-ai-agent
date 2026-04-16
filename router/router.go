@@ -62,5 +62,12 @@ func SetupRouter() *gin.Engine {
 	qdrantGroup.Use(middleware.Auth)
 	qdrantGroup.POST("/upsert", handler.UpsertQdrantTest)
 	qdrantGroup.POST("/query", handler.QueryQdrantVector)
+
+	// RAG 个人知识库：上传文件 → 文本提取 → 向量化 → 写入 Qdrant
+	// 每个用户的数据通过 user_id 隔离，互不可见
+	ragGroup := apiv1.Group("/rag")
+	ragGroup.Use(middleware.Auth)
+	ragGroup.POST("/create", handler.CreateRag)
+
 	return r
 }
