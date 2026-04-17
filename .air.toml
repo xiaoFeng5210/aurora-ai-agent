@@ -11,9 +11,19 @@ tmp_dir = "tmp"
   cmd = "go build -o ./tmp/main ."
   delay = 1000
   entrypoint = ["./tmp/main"]
-  exclude_dir = ["assets", "tmp", "vendor", "testdata"]
+  exclude_dir = [
+    ".claude",
+    ".cursor",
+    ".git",
+    "assets",
+    "testdata",
+    "tmp",
+    "vendor",
+    "web",
+  ]
   exclude_file = []
-  exclude_regex = ["_test.go"]
+  # 测试文件不触发重建（与 exclude_dir 中的 .claude/.cursor 等目录排除配合）
+  exclude_regex = ["_test\\.go$"]
   exclude_unchanged = false
   follow_symlink = false
   full_bin = ""

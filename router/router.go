@@ -2,11 +2,17 @@ package router
 
 import (
 	"aurora-agent/handler"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"aurora-agent/middleware"
 
 	"github.com/gin-gonic/gin"
 )
+
+const webDistDir = "web/dist"
 
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
@@ -73,5 +79,36 @@ func SetupRouter() *gin.Engine {
 	ragGroup.Use(middleware.Auth)
 	ragGroup.POST("/create", handler.CreateRag)
 
+	registerWebStatic(r)
+
 	return r
+}
+
+// registerWebStatic 将 web/dist 静态资源挂载到根路径，并对未命中的非 API
+// 请求回退到 index.html，以支持 SPA 的前端路由。
+func registerWebStatic(r *gin.Engine) {
+	indexFile := filepath.Join(webDistDir, "index.html")
+	assetsDir := filepath.Join(webDistDir, "assets")
+
+	r.Static("/assets", assetsDir)
+	r.StaticFile("/", indexFile)
+	r.StaticFile("/index.html", indexFile)
+	r.StaticFile("/favicon.svg", filepath.Join(webDistDir, "favicon.svg"))
+	r.StaticFile("/icons.svg", filepath.Join(webDistDir, "icons.svg"))
+
+	r.NoRoute(func(c *gin.Context) {
+		path := c.Request.URL.Path
+		if strings.HasPrefix(path, "/api/") {
+			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+			return
+		}
+
+		fsPath := filepath.Join(webDistDir, filepath.Clean(path))
+		if info, err := os.Stat(fsPath); err == nil && !info.IsDir() {
+			c.File(fsPath)
+			return
+		}
+
+		c.File(indexFile)
+	})
 }
