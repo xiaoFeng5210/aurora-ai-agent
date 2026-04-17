@@ -8,6 +8,7 @@ import (
 	"aurora-agent/handler/vo"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -85,17 +86,54 @@ func QueryHistoryMessages(uid int, documentID int, req dto.QueryHistoryMessagesR
 	return toHistoryMessageResponses(messages), nil
 }
 
-func ProxyQueryHistoryMessages(uid int, documentID int) ([]dto.HistoryMessageResponse, error) {
+func ProxyQueryHistoryMessages(uid int, documentID int, req dto.ProxyQueryHistoryMessagesRequest) ([]dto.HistoryMessageResponse, error) {
 	if err := ensureHistoryDocumentAccessible(uid, documentID); err != nil {
 		return nil, err
 	}
 
-	messages, err := database.GetConversationMessages(documentID)
+	startTime, err := parseConversationTime(req.StartTime)
+	if err != nil {
+		return nil, err
+	}
+
+	endTime, err := parseConversationTime(req.EndTime)
+	if err != nil {
+		return nil, err
+	}
+
+	if startTime != nil && endTime != nil && startTime.After(*endTime) {
+		return nil, vo.ErrMessageTimeRange
+	}
+
+	page, pageSize := normalizePagination(req.Page, req.PageSize)
+
+	messages, err := database.GetConversationMessages(database.ConversationMessageFilter{
+		DocumentID: documentID,
+		StartTime:  startTime,
+		EndTime:    endTime,
+		Keyword:    strings.TrimSpace(req.Keyword),
+		Page:       page,
+		PageSize:   pageSize,
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	return toHistoryMessageResponses(messages), nil
+}
+
+func parseConversationTime(value string) (*time.Time, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil, nil
+	}
+
+	t, err := time.Parse(time.RFC3339, value)
+	if err != nil {
+		return nil, vo.ErrMessageTimeFormat
+	}
+
+	return &t, nil
 }
 
 func UpdateHistoryMessage(uid int, documentID int, messageID string, req dto.UpdateHistoryMessageRequest) (dto.HistoryMessageResponse, error) {

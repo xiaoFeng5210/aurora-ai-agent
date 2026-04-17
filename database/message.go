@@ -4,6 +4,7 @@ import (
 	"aurora-agent/ai"
 	"aurora-agent/database/model"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -15,6 +16,15 @@ type MessageQueryFilter struct {
 	Page       int
 	PageSize   int
 	Order      string
+}
+
+type ConversationMessageFilter struct {
+	DocumentID int
+	StartTime  *time.Time
+	EndTime    *time.Time
+	Keyword    string
+	Page       int
+	PageSize   int
 }
 
 func CreateMessage(message model.Message) (model.Message, error) {
@@ -70,12 +80,29 @@ func QueryMessagesByDocumentID(filter MessageQueryFilter) ([]model.Message, erro
 	return messages, err
 }
 
-func GetConversationMessages(documentID int) ([]model.Message, error) {
+func GetConversationMessages(filter ConversationMessageFilter) ([]model.Message, error) {
+	queryDB := db.Model(&model.Message{}).Where("document_id = ?", filter.DocumentID)
+
+	if filter.StartTime != nil {
+		queryDB = queryDB.Where("create_time >= ?", *filter.StartTime)
+	}
+
+	if filter.EndTime != nil {
+		queryDB = queryDB.Where("create_time <= ?", *filter.EndTime)
+	}
+
+	if filter.Keyword != "" {
+		queryDB = queryDB.Where("content ILIKE ?", "%"+filter.Keyword+"%")
+	}
+
+	if filter.Page > 0 && filter.PageSize > 0 {
+		queryDB = queryDB.Offset((filter.Page - 1) * filter.PageSize).Limit(filter.PageSize)
+	} else if filter.PageSize > 0 {
+		queryDB = queryDB.Limit(filter.PageSize)
+	}
+
 	var messages []model.Message
-	err := db.Model(&model.Message{}).
-		Where("document_id = ?", documentID).
-		Order("create_time ASC, id ASC").
-		Find(&messages).Error
+	err := queryDB.Order("create_time ASC, id ASC").Find(&messages).Error
 	return messages, err
 }
 

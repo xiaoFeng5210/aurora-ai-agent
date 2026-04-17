@@ -91,7 +91,13 @@ func ProxyQueryHistoryMessages(ctx *gin.Context) {
 		return
 	}
 
-	messages, err := service.ProxyQueryHistoryMessages(ctx.GetInt(middleware.UID_IN_CTX), documentID)
+	var req dto.ProxyQueryHistoryMessagesRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		vo.RespondError(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	messages, err := service.ProxyQueryHistoryMessages(ctx.GetInt(middleware.UID_IN_CTX), documentID, req)
 	if err != nil {
 		logger.Error("proxy query history messages failed", zap.Error(err))
 		vo.RespondWithServiceError(ctx, err)

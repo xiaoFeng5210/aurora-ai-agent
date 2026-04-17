@@ -26,6 +26,14 @@ type QueryHistoryMessagesRequest struct {
 	Order    string `json:"order"`
 }
 
+type ProxyQueryHistoryMessagesRequest struct {
+	StartTime string `form:"start_time"`
+	EndTime   string `form:"end_time"`
+	Keyword   string `form:"keyword"`
+	Page      int    `form:"page"`
+	PageSize  int    `form:"page_size"`
+}
+
 type HistoryMessageResponse struct {
 	Id         int           `json:"id"`
 	MessageId  string        `json:"message_id"`

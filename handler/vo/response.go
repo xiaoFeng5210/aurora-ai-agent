@@ -20,6 +20,8 @@ var (
 	ErrBirthdayFormat       = errors.New("birthday must be in YYYY-MM-DD format")
 	ErrMessageRoleRequired  = errors.New("role is required")
 	ErrMessageOrderInvalid  = errors.New("order must be asc or desc")
+	ErrMessageTimeFormat    = errors.New("time must be in RFC3339 format")
+	ErrMessageTimeRange     = errors.New("start_time must not be after end_time")
 	ErrNoFieldsToUpdate     = errors.New("no fields to update")
 	ErrUnsupportedFileType  = errors.New("unsupported file type, currently supported: .txt, .md, .csv")
 )
@@ -55,6 +57,8 @@ func RespondWithServiceError(ctx *gin.Context, err error) {
 		errors.Is(err, ErrBirthdayFormat),
 		errors.Is(err, ErrMessageRoleRequired),
 		errors.Is(err, ErrMessageOrderInvalid),
+		errors.Is(err, ErrMessageTimeFormat),
+		errors.Is(err, ErrMessageTimeRange),
 		errors.Is(err, ErrNoFieldsToUpdate),
 		errors.Is(err, gorm.ErrInvalidData):
 		status = http.StatusBadRequest
