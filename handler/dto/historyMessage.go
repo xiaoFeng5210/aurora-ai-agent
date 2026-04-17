@@ -27,11 +27,12 @@ type QueryHistoryMessagesRequest struct {
 }
 
 type ProxyQueryHistoryMessagesRequest struct {
-	StartTime string `form:"start_time"`
-	EndTime   string `form:"end_time"`
+	StartTime string `form:"startTime"`
+	EndTime   string `form:"endTime"`
 	Keyword   string `form:"keyword"`
 	Page      int    `form:"page"`
-	PageSize  int    `form:"page_size"`
+	PageSize  int    `form:"pageSize"`
+	Order     string `form:"order"`
 }
 
 type HistoryMessageResponse struct {

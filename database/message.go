@@ -25,6 +25,7 @@ type ConversationMessageFilter struct {
 	Keyword    string
 	Page       int
 	PageSize   int
+	Order      string
 }
 
 func CreateMessage(message model.Message) (model.Message, error) {
@@ -102,7 +103,7 @@ func GetConversationMessages(filter ConversationMessageFilter) ([]model.Message,
 	}
 
 	var messages []model.Message
-	err := queryDB.Order("create_time ASC, id ASC").Find(&messages).Error
+	err := queryDB.Order(messageOrderClause(filter.Order)).Find(&messages).Error
 	return messages, err
 }
 

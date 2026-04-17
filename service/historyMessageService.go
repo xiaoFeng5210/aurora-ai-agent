@@ -114,6 +114,7 @@ func ProxyQueryHistoryMessages(uid int, documentID int, req dto.ProxyQueryHistor
 		Keyword:    strings.TrimSpace(req.Keyword),
 		Page:       page,
 		PageSize:   pageSize,
+		Order:      req.Order,
 	})
 	if err != nil {
 		return nil, err
