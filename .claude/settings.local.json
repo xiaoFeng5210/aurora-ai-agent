@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(go build *)",
-      "Bash(pnpm -v)"
+      "Bash(pnpm -v)",
+      "Bash(grep -E \"\\\\.\\(go\\)$\")",
+      "Bash(pnpm add *)"
     ]
   }
 }
