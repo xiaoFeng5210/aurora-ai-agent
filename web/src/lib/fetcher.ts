@@ -10,11 +10,15 @@ export class HttpError extends Error {
 }
 
 export const fetcher = async <T = unknown>(input: RequestInfo | URL, init?: RequestInit): Promise<T> => {
+  const headers = new Headers(init?.headers)
+  if (!headers.has('Content-Type') && init?.body && !(init.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json')
+  }
+
   const res = await fetch(input, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    credentials: 'include',
     ...init,
+    headers,
   })
 
   if (!res.ok) {
@@ -27,5 +31,6 @@ export const fetcher = async <T = unknown>(input: RequestInfo | URL, init?: Requ
     throw new HttpError(`Request failed with status ${res.status}`, res.status, info)
   }
 
+  if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
 }
