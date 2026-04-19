@@ -19,7 +19,7 @@ export interface UpdateDocumentRequest {
   file_name?: string | null
 }
 
-export const listDocuments = () => apiGet<Document[]>('/documents')
+export const listDocuments = () => apiGet<{code: number, data: Document[]}>('/documents')
 
 export const getDocument = (id: number) => apiGet<Document>(`/documents/${id}`)
 

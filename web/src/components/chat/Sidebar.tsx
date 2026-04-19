@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { useToast } from '@/hooks/useToast'
 import { cn } from '@/lib/cn'
+import { useMemo } from 'react'
 
 const KEY = '/documents'
 
@@ -16,7 +17,8 @@ export function Sidebar() {
   const currentId = documentId ? Number(documentId) : null
   const { show } = useToast()
 
-  const { data, error, isLoading, mutate } = useSWR<Document[]>(KEY, () => listDocuments())
+  const { data, error, isLoading, mutate } = useSWR<{code: number, data: Document[]}>(KEY, () => listDocuments())
+  console.log('%c [  ]-20', 'font-size:13px; background:pink; color:#bf2c9f;', data)
 
   const onCreate = async () => {
     try {
@@ -42,9 +44,12 @@ export function Sidebar() {
     }
   }
 
-  const sorted = (data ?? [])
+  const sorted = useMemo(() => {
+    return data !== undefined ? data.data
     .slice()
     .sort((a, b) => +new Date(b.updated_at) - +new Date(a.updated_at))
+    : []
+    }, [data])
 
   return (
     <aside className="flex h-screen w-[280px] flex-col border-r border-ink-200/80 bg-paper-100">

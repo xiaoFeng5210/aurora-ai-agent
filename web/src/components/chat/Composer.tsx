@@ -42,7 +42,7 @@ export function Composer({
 
   return (
     <div className="border-t border-ink-200/60 bg-paper-50">
-      <div className="mx-auto flex max-w-3xl items-end gap-2 px-4 py-4">
+      <div className="mx-auto flex max-w-3xl items-center gap-2 px-4 py-4">
         <Textarea
           ref={ref}
           rows={1}
@@ -67,7 +67,7 @@ export function Composer({
             type="button"
           >
             <Send className="h-4 w-4" />
-            发送
+            {/* 发送 */}
           </Button>
         )}
       </div>

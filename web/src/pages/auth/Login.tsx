@@ -35,10 +35,13 @@ export function Login() {
     if (!validate()) return
     setSubmitting(true)
     try {
-      await login({ email, password })
-      const user = await refresh()
-      if (!user) throw new Error('登录态获取失败')
-      show('登录成功', 'success')
+      const res = await login({ email, password })
+      if (res.code === 0) {
+        await refresh()
+        show('登录成功', 'success')
+      } else {
+        show(res.message, 'error')
+      }
       navigate(redirect, { replace: true })
     } catch (err) {
       const msg =

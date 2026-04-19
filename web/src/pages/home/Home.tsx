@@ -15,7 +15,6 @@ export function Home() {
   return (
     <div className="min-h-screen bg-paper-50 text-ink-900">
       <SiteHeader />
-
       <main className="mx-auto flex max-w-5xl flex-col items-center px-6 pt-[18vh] text-center">
         <span className="inline-flex items-center gap-2 rounded-full bg-accent-vermilion/10 px-4 py-1.5 text-sm font-medium text-accent-vermilion">
           <span className="text-xs">●</span>
@@ -23,14 +22,16 @@ export function Home() {
         </span>
 
         <h1 className="font-display mt-8 text-6xl font-black leading-[1.05] tracking-tight text-ink-950 md:text-8xl">
-          模型是大脑，<span className="text-accent-vermilion">Aurora</span>{' '}
-          <br className="hidden md:block" />
-          是除此之外的一切。
+          搭建属于你自己的 <br className="hidden md:block" />
+          <span className="font-display font-black tracking-tight text-ink-700">
+            AI
+          </span>{' '}
+          <span className="text-accent-vermilion">知识库</span>
         </h1>
 
         <p className="mt-8 max-w-2xl text-lg leading-relaxed text-ink-500">
-          Aurora 为 AI Agent 提供完整的项目迭代环境 —— 从需求澄清到任务验收的结构化流水线 —— 让 Agent
-          团队能交付项目，而不只是写代码。AI 提议，人类把关。
+          Aurora 让你把私有文档、笔记与资料沉淀为可检索、可对话的知识库 ——
+          与模型协作回答问题、生成内容，真正拥有一份专属于你的 AI 大脑。
         </p>
 
         <div className="mt-10 flex flex-wrap justify-center gap-4">
