@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from './client'
+import { apiGet, apiPost, type ApiEnvelope } from './client'
 
 export interface RegisterRequest {
   username: string
@@ -25,8 +25,10 @@ export interface User {
   updated_at: string
 }
 
-export const register = (body: RegisterRequest) => apiPost<void>('/register', body)
+export const register = (body: RegisterRequest) =>
+  apiPost<ApiEnvelope<null>>('/register', body)
 
-export const login = (body: LoginRequest) => apiPost<{code: number, message: string}>('/login', body)
+export const login = (body: LoginRequest) =>
+  apiPost<ApiEnvelope<null>>('/login', body)
 
-export const getMe = () => apiGet<User>('/users/me')
+export const getMe = () => apiGet<ApiEnvelope<User>>('/users/me')

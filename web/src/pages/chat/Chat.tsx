@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import useSWR from 'swr'
 import { listHistoryMessages, type HistoryMessage } from '@/api/messages'
-import { getDocument } from '@/api/documents'
+import { getDocument, type Document } from '@/api/documents'
+import type { ApiEnvelope } from '@/api/client'
 import { Sidebar } from '@/components/chat/Sidebar'
 import { MessageBubble } from '@/components/chat/MessageBubble'
 import { Composer } from '@/components/chat/Composer'
@@ -25,16 +26,20 @@ export function Chat() {
   const { show } = useToast()
 
   const docKey = docId ? `/documents/${docId}` : null
-  const { data: doc } = useSWR(docKey, () => (docId ? getDocument(docId) : null))
+  const { data: docRes } = useSWR<ApiEnvelope<Document> | null>(docKey, () =>
+    docId ? getDocument(docId) : null,
+  )
+  const doc = docRes?.data
 
   const historyKey = docId ? `/documents/${docId}/messages/proxy/history?order=asc&pageSize=200` : null
   const {
-    data: history,
+    data: historyRes,
     isLoading: historyLoading,
     mutate: mutateHistory,
-  } = useSWR<HistoryMessage[]>(historyKey, () =>
-    docId ? listHistoryMessages(docId, { order: 'asc', pageSize: 200 }) : Promise.resolve([]),
+  } = useSWR<ApiEnvelope<HistoryMessage[]> | null>(historyKey, () =>
+    docId ? listHistoryMessages(docId, { order: 'asc', pageSize: 200 }) : null,
   )
+  const history = historyRes?.data
 
   const [pending, setPending] = useState<DisplayMessage[]>([])
   const { send, abort, streaming } = useChatStream()
@@ -55,7 +60,7 @@ export function Chat() {
         content: m.content,
       })) ?? []
     return [...base, ...pending]
-  }, [history, pending])
+  }, [historyRes, pending])
 
   // 自动滚到底
   const scrollRef = useRef<HTMLDivElement>(null)

@@ -18,7 +18,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const init = async () => {
     try {
-      const me = await getMe()
+      const res = await getMe()
+      const me = res.data ?? null
       setUser(me)
       return me
     } catch (err) {
@@ -34,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const refresh = useCallback(async () => {
-    await init()
+    return init()
   }, [init])
 
   useEffect(() => {

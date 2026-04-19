@@ -2,7 +2,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import useSWR from 'swr'
 import { Music, Plus, Trash2 } from 'lucide-react'
 import { createDocument, deleteDocument, listDocuments, type Document } from '@/api/documents'
-// import { swrFetcher } from '@/api/client'
+import type { ApiEnvelope } from '@/api/client'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { useToast } from '@/hooks/useToast'
@@ -17,15 +17,17 @@ export function Sidebar() {
   const currentId = documentId ? Number(documentId) : null
   const { show } = useToast()
 
-  const { data, error, isLoading, mutate } = useSWR<{code: number, data: Document[]}>(KEY, () => listDocuments())
-  console.log('%c [  ]-20', 'font-size:13px; background:pink; color:#bf2c9f;', data)
+  const { data, error, isLoading, mutate } = useSWR<ApiEnvelope<Document[]>>(
+    KEY,
+    () => listDocuments(),
+  )
 
   const onCreate = async () => {
     try {
       const name = `新会话 · ${new Date().toLocaleString('zh-CN', { hour12: false })}`
       const created = await createDocument({ display_name: name })
       await mutate()
-      navigate(`/chat/${created.id}`)
+      if (created.data) navigate(`/chat/${created.data.id}`)
     } catch (e) {
       show(e instanceof Error ? e.message : '创建失败', 'error')
     }
@@ -45,11 +47,11 @@ export function Sidebar() {
   }
 
   const sorted = useMemo(() => {
-    return data !== undefined ? data.data
-    .slice()
-    .sort((a, b) => +new Date(b.updated_at) - +new Date(a.updated_at))
-    : []
-    }, [data])
+    const list = data?.data ?? []
+    return list
+      .slice()
+      .sort((a, b) => +new Date(b.updated_at) - +new Date(a.updated_at))
+  }, [data])
 
   return (
     <aside className="flex h-screen w-[280px] flex-col border-r border-ink-200/80 bg-paper-100">

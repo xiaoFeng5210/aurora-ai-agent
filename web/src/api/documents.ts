@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPost, apiPut } from './client'
+import { apiDelete, apiGet, apiPost, apiPut, type ApiEnvelope } from './client'
 
 export interface Document {
   id: number
@@ -19,15 +19,16 @@ export interface UpdateDocumentRequest {
   file_name?: string | null
 }
 
-export const listDocuments = () => apiGet<{code: number, data: Document[]}>('/documents')
+export const listDocuments = () => apiGet<ApiEnvelope<Document[]>>('/documents')
 
-export const getDocument = (id: number) => apiGet<Document>(`/documents/${id}`)
+export const getDocument = (id: number) =>
+  apiGet<ApiEnvelope<Document>>(`/documents/${id}`)
 
 export const createDocument = (body: CreateDocumentRequest) =>
-  apiPost<Document>('/documents', body)
+  apiPost<ApiEnvelope<Document>>('/documents', body)
 
 export const updateDocument = (id: number, body: UpdateDocumentRequest) =>
-  apiPut<Document>(`/documents/${id}`, body)
+  apiPut<ApiEnvelope<Document>>(`/documents/${id}`, body)
 
 export const deleteDocument = (id: number) =>
-  apiDelete<{ code: number; message: string }>(`/documents/${id}`)
+  apiDelete<ApiEnvelope<null>>(`/documents/${id}`)

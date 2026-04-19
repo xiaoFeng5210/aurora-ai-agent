@@ -1,4 +1,4 @@
-import { apiGet } from './client'
+import { apiGet, type ApiEnvelope } from './client'
 
 export interface ToolCallFunction {
   name: string
@@ -38,5 +38,5 @@ export const listHistoryMessages = (documentId: number, query: HistoryQuery = {}
   })
   const qs = params.toString()
   const path = `/documents/${documentId}/messages/proxy/history${qs ? `?${qs}` : ''}`
-  return apiGet<HistoryMessage[]>(path)
+  return apiGet<ApiEnvelope<HistoryMessage[]>>(path)
 }
