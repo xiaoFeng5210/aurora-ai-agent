@@ -39,7 +39,7 @@ export function Chat() {
   } = useSWR<ApiEnvelope<HistoryMessage[]> | null>(historyKey, () =>
     docId ? listHistoryMessages(docId, { order: 'asc', pageSize: 200 }) : null,
   )
-  const history = historyRes?.data
+  const history = useMemo(() => historyRes?.data ?? [], [historyRes])
 
   const [pending, setPending] = useState<DisplayMessage[]>([])
   const { send, abort, streaming } = useChatStream()
@@ -53,14 +53,13 @@ export function Chat() {
   }, [docId])
 
   const messages = useMemo<DisplayMessage[]>(() => {
-    const base: DisplayMessage[] =
-      history?.map((m) => ({
-        key: `db-${m.id}`,
-        role: (m.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
-        content: m.content,
-      })) ?? []
+    const base: DisplayMessage[] = history.map((m) => ({
+      key: `db-${m.id}`,
+      role: (m.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
+      content: m.content,
+    }))
     return [...base, ...pending]
-  }, [historyRes, pending])
+  }, [history, pending])
 
   // 自动滚到底
   const scrollRef = useRef<HTMLDivElement>(null)
