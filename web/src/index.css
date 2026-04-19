@@ -50,3 +50,82 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* ────── highlight.js token colors (warm palette, paired with ink-950 bg) ────── */
+.markdown-body pre code.hljs,
+.markdown-body code.hljs {
+  background: transparent;
+  color: #e6d29a;
+}
+
+.markdown-body .hljs-comment,
+.markdown-body .hljs-quote {
+  color: #8a7659;
+  font-style: italic;
+}
+
+.markdown-body .hljs-keyword,
+.markdown-body .hljs-selector-tag,
+.markdown-body .hljs-literal,
+.markdown-body .hljs-section,
+.markdown-body .hljs-link {
+  color: #e8a868;
+}
+
+.markdown-body .hljs-string,
+.markdown-body .hljs-regexp,
+.markdown-body .hljs-addition,
+.markdown-body .hljs-attribute,
+.markdown-body .hljs-meta-string {
+  color: #c6d992;
+}
+
+.markdown-body .hljs-number,
+.markdown-body .hljs-symbol,
+.markdown-body .hljs-bullet,
+.markdown-body .hljs-subst {
+  color: #f0c88a;
+}
+
+.markdown-body .hljs-built_in,
+.markdown-body .hljs-builtin-name,
+.markdown-body .hljs-type {
+  color: #e89a88;
+}
+
+.markdown-body .hljs-title,
+.markdown-body .hljs-name,
+.markdown-body .hljs-class .hljs-title,
+.markdown-body .hljs-selector-id,
+.markdown-body .hljs-selector-class {
+  color: #f5d484;
+}
+
+.markdown-body .hljs-variable,
+.markdown-body .hljs-template-variable,
+.markdown-body .hljs-attr,
+.markdown-body .hljs-params {
+  color: #f2e4c4;
+}
+
+.markdown-body .hljs-tag {
+  color: #c7b79a;
+}
+
+.markdown-body .hljs-deletion {
+  color: #d77a6b;
+}
+
+.markdown-body .hljs-doctag,
+.markdown-body .hljs-meta,
+.markdown-body .hljs-meta-keyword {
+  color: #a8bfe0;
+}
+
+.markdown-body .hljs-emphasis {
+  font-style: italic;
+}
+
+.markdown-body .hljs-strong {
+  font-weight: 600;
+}

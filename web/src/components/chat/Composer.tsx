@@ -42,7 +42,7 @@ export function Composer({
   const canSend = !!value.trim() && !disabled && !streaming
 
   return (
-    <div className="bg-gradient-to-b from-transparent via-paper-50/70 to-paper-50 px-4 pb-6 pt-4">
+    <div className="bg-linear-to-b from-transparent via-paper-50/70 to-paper-50 px-4 pb-6 pt-4">
       <div className="mx-auto w-full max-w-3xl">
         <div className="relative rounded-3xl border border-ink-200 bg-paper-50 shadow-[0_2px_18px_rgba(90,60,30,0.06)] transition focus-within:border-ink-300 focus-within:shadow-[0_4px_28px_rgba(90,60,30,0.12)]">
           <textarea

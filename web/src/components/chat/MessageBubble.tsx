@@ -1,4 +1,5 @@
 import { Sparkles } from 'lucide-react'
+import { Markdown } from './Markdown'
 
 export interface ToolCallDisplay {
   id: string
@@ -31,18 +32,18 @@ export function MessageBubble({ role, content, streaming, toolCalls }: MessageBu
         <Sparkles className="h-3.5 w-3.5" strokeWidth={2.2} />
       </div>
       <div className="min-w-0 flex-1 pt-0.5">
-        <div className="whitespace-pre-wrap break-words text-[15px] leading-[1.75] text-ink-900">
-          {empty && streaming ? (
+        {empty && streaming ? (
+          <div className="text-[15px] leading-[1.75] text-ink-900">
             <TypingDots />
-          ) : (
-            <>
-              {content}
-              {streaming ? (
-                <span className="ml-0.5 inline-block h-[1.05em] w-[2px] translate-y-[2px] animate-pulse bg-ink-500 align-text-bottom" />
-              ) : null}
-            </>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="relative">
+            <Markdown content={content} />
+            {streaming ? (
+              <span className="ml-0.5 inline-block h-[1.05em] w-[2px] translate-y-[2px] animate-pulse bg-ink-500 align-text-bottom" />
+            ) : null}
+          </div>
+        )}
 
         {toolCalls && toolCalls.length > 0 ? (
           <div className="mt-3 space-y-1.5">
