@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
-import { Send, Square } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Textarea } from '@/components/ui/Textarea'
+import { ArrowUp, Square } from 'lucide-react'
+import { cn } from '@/lib/cn'
 
 export function Composer({
   disabled,
   streaming,
   onSend,
   onStop,
-  placeholder = '给 Aurora 发消息（Enter 发送 / Shift+Enter 换行）',
+  placeholder = '给 Aurora 发消息…',
 }: {
   disabled?: boolean
   streaming?: boolean
@@ -28,7 +27,7 @@ export function Composer({
 
   const submit = () => {
     const text = value.trim()
-    if (!text || disabled) return
+    if (!text || disabled || streaming) return
     setValue('')
     onSend(text)
   }
@@ -40,36 +39,54 @@ export function Composer({
     }
   }
 
+  const canSend = !!value.trim() && !disabled && !streaming
+
   return (
-    <div className="border-t border-ink-200/60 bg-paper-50">
-      <div className="mx-auto flex max-w-3xl items-center gap-2 px-4 py-4">
-        <Textarea
-          ref={ref}
-          rows={1}
-          value={value}
-          placeholder={placeholder}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={onKeyDown}
-          disabled={disabled && !streaming}
-          className="max-h-60 min-h-[44px]"
-        />
-        {streaming && onStop ? (
-          <Button variant="danger" size="md" onClick={onStop} type="button">
-            <Square className="h-4 w-4" />
-            停止
-          </Button>
-        ) : (
-          <Button
-            variant="primary"
-            size="md"
-            onClick={submit}
-            disabled={disabled || !value.trim()}
-            type="button"
-          >
-            <Send className="h-4 w-4" />
-            {/* 发送 */}
-          </Button>
-        )}
+    <div className="bg-gradient-to-b from-transparent via-paper-50/70 to-paper-50 px-4 pb-6 pt-4">
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="relative rounded-3xl border border-ink-200 bg-paper-50 shadow-[0_2px_18px_rgba(90,60,30,0.06)] transition focus-within:border-ink-300 focus-within:shadow-[0_4px_28px_rgba(90,60,30,0.12)]">
+          <textarea
+            ref={ref}
+            rows={1}
+            value={value}
+            placeholder={placeholder}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={onKeyDown}
+            disabled={disabled && !streaming}
+            className="block w-full resize-none rounded-3xl bg-transparent px-5 pb-14 pt-4 text-[15px] leading-relaxed text-ink-900 placeholder:text-ink-300 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+            style={{ minHeight: 56 }}
+          />
+          <div className="absolute bottom-2.5 right-2.5 flex items-center gap-2">
+            {streaming && onStop ? (
+              <button
+                type="button"
+                onClick={onStop}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-ink-950 text-paper-50 transition hover:bg-ink-900"
+                aria-label="停止生成"
+              >
+                <Square className="h-3 w-3 fill-paper-50" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={submit}
+                disabled={!canSend}
+                className={cn(
+                  'flex h-9 w-9 items-center justify-center rounded-full transition',
+                  canSend
+                    ? 'bg-accent-vermilion text-paper-50 hover:bg-accent-vermilion/90 shadow-sm'
+                    : 'bg-ink-200 text-ink-500',
+                )}
+                aria-label="发送"
+              >
+                <ArrowUp className="h-4 w-4" strokeWidth={2.4} />
+              </button>
+            )}
+          </div>
+        </div>
+        <p className="mt-2 text-center text-[11px] text-ink-500">
+          Aurora 可能会出错 · Enter 发送 · Shift + Enter 换行
+        </p>
       </div>
     </div>
   )

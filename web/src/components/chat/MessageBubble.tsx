@@ -1,39 +1,61 @@
-import { cn } from '@/lib/cn'
-import { Spinner } from '@/components/ui/Spinner'
+import { Sparkles } from 'lucide-react'
+
+export interface ToolCallDisplay {
+  id: string
+  name: string
+  result?: string
+}
 
 export interface MessageBubbleProps {
   role: 'user' | 'assistant'
   content: string
   streaming?: boolean
-  toolCalls?: Array<{ id: string; name: string; result?: string }>
+  toolCalls?: ToolCallDisplay[]
 }
 
 export function MessageBubble({ role, content, streaming, toolCalls }: MessageBubbleProps) {
-  const isUser = role === 'user'
+  if (role === 'user') {
+    return (
+      <div className="flex justify-end">
+        <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl bg-paper-200/70 px-4 py-2.5 text-[15px] leading-relaxed text-ink-900 shadow-[0_1px_2px_rgba(90,60,30,0.06)]">
+          {content}
+        </div>
+      </div>
+    )
+  }
+
+  const empty = !content
   return (
-    <div className={cn('flex w-full', isUser ? 'justify-end' : 'justify-start')}>
-      <div
-        className={cn(
-          'max-w-[78%] whitespace-pre-wrap break-words rounded-lg px-4 py-3 text-sm leading-relaxed',
-          isUser
-            ? 'border border-accent-vermilion/30 bg-accent-vermilion/5 text-ink-950'
-            : 'border border-ink-200 bg-paper-50 text-ink-900',
-        )}
-      >
-        {content || (streaming ? <Spinner /> : <span className="text-ink-300">（空消息）</span>)}
-        {streaming && content ? (
-          <span className="ml-1 inline-block h-3 w-1.5 animate-pulse bg-accent-vermilion align-middle" />
-        ) : null}
+    <div className="group flex gap-3">
+      <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-accent-vermilion/10 text-accent-vermilion ring-1 ring-accent-vermilion/15">
+        <Sparkles className="h-3.5 w-3.5" strokeWidth={2.2} />
+      </div>
+      <div className="min-w-0 flex-1 pt-0.5">
+        <div className="whitespace-pre-wrap break-words text-[15px] leading-[1.75] text-ink-900">
+          {empty && streaming ? (
+            <TypingDots />
+          ) : (
+            <>
+              {content}
+              {streaming ? (
+                <span className="ml-0.5 inline-block h-[1.05em] w-[2px] translate-y-[2px] animate-pulse bg-ink-500 align-text-bottom" />
+              ) : null}
+            </>
+          )}
+        </div>
 
         {toolCalls && toolCalls.length > 0 ? (
-          <div className="mt-3 space-y-1.5 border-t border-ink-200/60 pt-2">
+          <div className="mt-3 space-y-1.5">
             {toolCalls.map((tc) => (
-              <details key={tc.id} className="text-xs text-ink-500">
-                <summary className="cursor-pointer text-ink-700">
-                  🛠 工具调用: <span className="font-mono">{tc.name}</span>
+              <details
+                key={tc.id}
+                className="rounded-lg border border-ink-200/70 bg-paper-100 px-3 py-2 text-xs text-ink-700"
+              >
+                <summary className="cursor-pointer select-none text-ink-800">
+                  工具调用 · <span className="font-mono text-ink-950">{tc.name}</span>
                 </summary>
                 {tc.result ? (
-                  <pre className="mt-1 max-h-48 overflow-auto rounded bg-paper-200/60 p-2 font-mono text-[11px] text-ink-800">
+                  <pre className="mt-2 max-h-48 overflow-auto rounded bg-paper-200/70 p-2 font-mono text-[11px] leading-snug text-ink-800">
                     {tc.result}
                   </pre>
                 ) : null}
@@ -43,5 +65,19 @@ export function MessageBubble({ role, content, streaming, toolCalls }: MessageBu
         ) : null}
       </div>
     </div>
+  )
+}
+
+function TypingDots() {
+  return (
+    <span className="inline-flex items-center gap-1 py-1.5">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-500"
+          style={{ animationDelay: `${i * 150}ms`, animationDuration: '900ms' }}
+        />
+      ))}
+    </span>
   )
 }
