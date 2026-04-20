@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import useSWR from 'swr'
 import { Plus, Trash2 } from 'lucide-react'
+import { AlertDialog, Button as RTButton, Flex } from '@radix-ui/themes'
 import { createDocument, deleteDocument, listDocuments, type Document } from '@/api/documents'
 import type { ApiEnvelope } from '@/api/client'
 import { Button } from '@/components/ui/Button'
@@ -34,10 +35,7 @@ export function Sidebar() {
     }
   }
 
-  const onDelete = async (e: React.MouseEvent, id: number) => {
-    e.stopPropagation()
-    e.preventDefault()
-    if (!confirm('确认删除这个会话及全部消息？')) return
+  const onDelete = async (id: number) => {
     try {
       await deleteDocument(id)
       await mutate()
@@ -106,14 +104,10 @@ export function Sidebar() {
                     )}
                   >
                     <span className="flex-1 truncate">{doc.display_name}</span>
-                    <button
-                      type="button"
-                      onClick={(e) => onDelete(e, doc.id)}
-                      className="hidden rounded p-1 text-ink-500 hover:bg-paper-300/60 hover:text-danger group-hover:inline-flex"
-                      aria-label="删除"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    <DeleteConfirm
+                      docName={doc.display_name}
+                      onConfirm={() => onDelete(doc.id)}
+                    />
                   </div>
                 </li>
               )
@@ -122,5 +116,49 @@ export function Sidebar() {
         )}
       </div>
     </aside>
+  )
+}
+
+function DeleteConfirm({
+  docName,
+  onConfirm,
+}: {
+  docName: string
+  onConfirm: () => void | Promise<void>
+}) {
+  return (
+    <AlertDialog.Root>
+      <AlertDialog.Trigger>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            e.preventDefault()
+          }}
+          className="hidden rounded p-1 text-ink-500 hover:bg-paper-300/60 hover:text-danger group-hover:inline-flex"
+          aria-label="删除"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </AlertDialog.Trigger>
+      <AlertDialog.Content maxWidth="420px">
+        <AlertDialog.Title>删除会话</AlertDialog.Title>
+        <AlertDialog.Description size="2">
+          确认删除「{docName}」及其全部消息？此操作不可撤销。
+        </AlertDialog.Description>
+        <Flex gap="3" mt="4" justify="end">
+          <AlertDialog.Cancel>
+            <RTButton variant="soft" color="gray">
+              取消
+            </RTButton>
+          </AlertDialog.Cancel>
+          <AlertDialog.Action>
+            <RTButton color="tomato" onClick={() => onConfirm()}>
+              删除
+            </RTButton>
+          </AlertDialog.Action>
+        </Flex>
+      </AlertDialog.Content>
+    </AlertDialog.Root>
   )
 }

@@ -6,7 +6,8 @@
       "Bash(grep -E \"\\\\.\\(go\\)$\")",
       "Bash(pnpm add *)",
       "Bash(pnpm exec *)",
-      "Bash(echo \"EXIT=$?\")"
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(npx tsc *)"
     ]
   }
 }
