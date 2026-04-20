@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   ChevronDown,
   Container,
   Globe,
   Menu,
-  Music,
   Star,
   UserRound,
   X,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
+import logoUrl from '@/assets/logo.png'
 
 const NAV = [
   { label: '功能', href: '#features' },
@@ -44,14 +44,27 @@ export function SiteHeader() {
     navigate('/chat')
   }
 
+  const go = (to: string) => () => {
+    setOpen(false)
+    navigate(to)
+  }
+
   return (
     <header className="sticky top-0 z-40 border-b border-ink-200/60 bg-paper-50/80 backdrop-blur">
       <div className="mx-auto grid h-16 max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-4 px-4 md:grid-cols-3 md:px-6">
-        <Link to="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
-          <Music className="h-6 w-6 text-accent-olive" strokeWidth={2.2} />
+        <div
+          role="link"
+          tabIndex={0}
+          onClick={go('/')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') go('/')()
+          }}
+          className="flex h-full w-fit cursor-pointer items-center gap-2 select-none z-10"
+        >
+          <img src={logoUrl} alt="Aurora" className="h-8 w-8" />
           <span className="font-display text-xl font-extrabold text-accent-vermilion">Aurora</span>
           <span className="hidden text-ink-300 md:inline">·</span>
-        </Link>
+        </div>
 
         <nav className="hidden items-center justify-center gap-10 md:flex">
           {NAV.map((item) => (
@@ -78,18 +91,22 @@ export function SiteHeader() {
             </Button>
           ) : (
             <>
-              <Link
-                to="/login"
-                className="text-sm text-ink-700 transition hover:text-accent-vermilion"
+              <div
+                role="link"
+                tabIndex={0}
+                onClick={go('/login')}
+                className="cursor-pointer text-sm text-ink-700 transition hover:text-accent-vermilion"
               >
                 登录
-              </Link>
-              <Link
-                to="/register"
-                className="text-sm text-ink-700 transition hover:text-accent-vermilion"
+              </div>
+              <div
+                role="link"
+                tabIndex={0}
+                onClick={go('/register')}
+                className="cursor-pointer text-sm text-ink-700 transition hover:text-accent-vermilion"
               >
                 注册
-              </Link>
+              </div>
             </>
           )}
 
@@ -160,20 +177,22 @@ export function SiteHeader() {
                 </Button>
               ) : (
                 <div className="grid grid-cols-2 gap-3">
-                  <Link
-                    to="/login"
-                    onClick={() => setOpen(false)}
-                    className="inline-flex items-center justify-center rounded-md border border-ink-300 px-4 py-2 text-sm font-medium text-ink-900 transition hover:bg-paper-200/60"
+                  <div
+                    role="link"
+                    tabIndex={0}
+                    onClick={go('/login')}
+                    className="inline-flex cursor-pointer items-center justify-center rounded-md border border-ink-300 px-4 py-2 text-sm font-medium text-ink-900 transition hover:bg-paper-200/60"
                   >
                     登录
-                  </Link>
-                  <Link
-                    to="/register"
-                    onClick={() => setOpen(false)}
-                    className="inline-flex items-center justify-center rounded-md bg-accent-vermilion px-4 py-2 text-sm font-medium text-paper-50 transition hover:bg-accent-vermilion/90"
+                  </div>
+                  <div
+                    role="link"
+                    tabIndex={0}
+                    onClick={go('/register')}
+                    className="inline-flex cursor-pointer items-center justify-center rounded-md bg-accent-vermilion px-4 py-2 text-sm font-medium text-paper-50 transition hover:bg-accent-vermilion/90"
                   >
                     注册
-                  </Link>
+                  </div>
                 </div>
               )}
 

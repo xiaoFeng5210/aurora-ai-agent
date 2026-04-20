@@ -1,7 +1,7 @@
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
-import { Music } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
+import logoUrl from '@/assets/logo.png'
 
 export function AuthLayout({
   title,
@@ -14,15 +14,24 @@ export function AuthLayout({
   footer?: ReactNode
   children: ReactNode
 }) {
+  const navigate = useNavigate()
   return (
     <div className="min-h-screen bg-paper-50 text-ink-900">
       <div className="mx-auto flex min-h-screen max-w-md flex-col px-6">
         <div className="pt-10">
-          <Link to="/" className="inline-flex items-center gap-2">
-            <Music className="h-6 w-6 text-accent-olive" strokeWidth={2.2} />
+          <div
+            role="link"
+            tabIndex={0}
+            onClick={() => navigate('/')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') navigate('/')
+            }}
+            className="inline-flex w-fit cursor-pointer items-center gap-2 select-none"
+          >
+            <img src={logoUrl} alt="Aurora" className="h-8 w-8" />
             <span className="font-display text-xl font-extrabold text-accent-vermilion">Aurora</span>
             <span className="text-ink-300">·</span>
-          </Link>
+          </div>
         </div>
 
         <div className="flex flex-1 items-center justify-center py-10">

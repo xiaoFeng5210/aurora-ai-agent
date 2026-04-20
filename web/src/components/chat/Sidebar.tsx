@@ -1,6 +1,6 @@
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import useSWR from 'swr'
-import { Music, Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { createDocument, deleteDocument, listDocuments, type Document } from '@/api/documents'
 import type { ApiEnvelope } from '@/api/client'
 import { Button } from '@/components/ui/Button'
@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useToast } from '@/hooks/useToast'
 import { cn } from '@/lib/cn'
 import { useMemo } from 'react'
+import logoUrl from '@/assets/logo.png'
 
 const KEY = '/documents'
 
@@ -56,10 +57,18 @@ export function Sidebar() {
   return (
     <aside className="flex h-screen w-[280px] flex-col border-r border-ink-200/80 bg-paper-100">
       <div className="flex items-center justify-between border-b border-ink-200/60 px-4 py-4">
-        <Link to="/" className="flex items-center gap-2">
-          <Music className="h-5 w-5 text-accent-olive" strokeWidth={2.2} />
+        <div
+          role="link"
+          tabIndex={0}
+          onClick={() => navigate('/')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') navigate('/')
+          }}
+          className="flex w-fit cursor-pointer items-center gap-2 select-none"
+        >
+          <img src={logoUrl} alt="Aurora" className="h-7 w-7" />
           <span className="font-display text-lg font-extrabold text-accent-vermilion">Aurora</span>
-        </Link>
+        </div>
       </div>
 
       <div className="px-3 pt-3">
@@ -82,10 +91,15 @@ export function Sidebar() {
               const active = currentId === doc.id
               return (
                 <li key={doc.id}>
-                  <Link
-                    to={`/chat/${doc.id}`}
+                  <div
+                    role="link"
+                    tabIndex={0}
+                    onClick={() => navigate(`/chat/${doc.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') navigate(`/chat/${doc.id}`)
+                    }}
                     className={cn(
-                      'group relative flex items-center gap-2 rounded-md px-3 py-2 text-sm transition',
+                      'group relative flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm transition',
                       active
                         ? 'bg-paper-200/80 text-ink-950'
                         : 'text-ink-700 hover:bg-paper-200/50 hover:text-ink-950',
@@ -100,7 +114,7 @@ export function Sidebar() {
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
-                  </Link>
+                  </div>
                 </li>
               )
             })}
