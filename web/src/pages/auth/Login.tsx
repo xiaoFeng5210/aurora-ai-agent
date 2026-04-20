@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AuthLayout } from '@/components/layout/AuthLayout'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -63,9 +63,17 @@ export function Login() {
       footer={
         <span>
           还没有账号？
-          <Link to="/register" className="ml-1 text-accent-vermilion hover:underline">
+          <span
+            role="link"
+            tabIndex={0}
+            onClick={() => navigate('/register')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') navigate('/register')
+            }}
+            className="ml-1 cursor-pointer text-accent-vermilion hover:underline"
+          >
             前往注册
-          </Link>
+          </span>
         </span>
       }
     >
