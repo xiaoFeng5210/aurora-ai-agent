@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/Button'
 const NAV = [
   { label: '功能', href: '#features' },
   { label: '展示', href: '#showcase' },
-  { label: 'Agent', href: '#agent' },
+  // { label: 'Agent', href: '#agent' },
   { label: '博客', href: '#blog' },
 ]
 
