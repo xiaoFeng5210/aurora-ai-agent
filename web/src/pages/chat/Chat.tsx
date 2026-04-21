@@ -86,10 +86,12 @@ export function Chat() {
     const updateAssistant = (patch: Partial<DisplayMessage>) =>
       setPending((prev) => prev.map((m) => (m.key === assistantKey ? { ...m, ...patch } : m)))
 
-    const prompt: ChatPromptItem[] = [
-      ...messages.map<ChatPromptItem>((m) => ({ role: m.role, content: m.content })),
-      { role: 'user', content: text },
-    ]
+    // 历史由后端按 document/session 维护，前端不再把整个列表塞进请求体
+    // const prompt: ChatPromptItem[] = [
+    //   ...messages.map<ChatPromptItem>((m) => ({ role: m.role, content: m.content })),
+    //   { role: 'user', content: text },
+    // ]
+    const prompt: ChatPromptItem[] = [{ role: 'user', content: text }]
 
     let accumulated = ''
     const toolCalls: ToolCallTrace[] = []
