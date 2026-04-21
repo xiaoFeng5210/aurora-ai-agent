@@ -13,7 +13,11 @@ import logoUrl from '@/assets/logo.png'
 
 const KEY = '/documents'
 
-export function Sidebar() {
+export function Sidebar({
+  onDeleteCurrentDocument,
+}: {
+  onDeleteCurrentDocument?: (id: number) => void | Promise<void>
+}) {
   const navigate = useNavigate()
   const { documentId } = useParams<{ documentId?: string }>()
   const currentId = documentId ? Number(documentId) : null
@@ -37,8 +41,14 @@ export function Sidebar() {
 
   const onDelete = async (id: number) => {
     try {
+      if (currentId === id && onDeleteCurrentDocument) {
+        await onDeleteCurrentDocument(id)
+        await mutate()
+        return
+      }
       await deleteDocument(id)
       await mutate()
+      show('文档已删除', 'success')
       if (currentId === id) navigate('/chat')
     } catch (err) {
       show(err instanceof Error ? err.message : '删除失败', 'error')
@@ -88,7 +98,7 @@ export function Sidebar() {
             {sorted.map((doc) => {
               const active = currentId === doc.id
               return (
-                <li key={doc.id}>
+                <li key={doc.id} className="group relative">
                   <div
                     role="link"
                     tabIndex={0}
@@ -97,18 +107,18 @@ export function Sidebar() {
                       if (e.key === 'Enter' || e.key === ' ') navigate(`/chat/${doc.id}`)
                     }}
                     className={cn(
-                      'group relative flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm transition',
+                      'flex cursor-pointer items-center gap-2 rounded-md py-2 pl-3 pr-9 text-sm transition',
                       active
                         ? 'bg-paper-200/80 text-ink-950'
                         : 'text-ink-700 hover:bg-paper-200/50 hover:text-ink-950',
                     )}
                   >
                     <span className="flex-1 truncate">{doc.display_name}</span>
-                    <DeleteConfirm
-                      docName={doc.display_name}
-                      onConfirm={() => onDelete(doc.id)}
-                    />
                   </div>
+                  <DeleteConfirm
+                    docName={doc.display_name}
+                    onConfirm={() => onDelete(doc.id)}
+                  />
                 </li>
               )
             })}
@@ -131,11 +141,7 @@ function DeleteConfirm({
       <AlertDialog.Trigger>
         <button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            e.preventDefault()
-          }}
-          className="hidden rounded p-1 text-ink-500 hover:bg-paper-300/60 hover:text-danger group-hover:inline-flex"
+          className="absolute right-2 top-1/2 hidden -translate-y-1/2 rounded p-1 text-ink-500 hover:bg-paper-300/60 hover:text-danger group-hover:inline-flex"
           aria-label="删除"
         >
           <Trash2 className="h-3.5 w-3.5" />

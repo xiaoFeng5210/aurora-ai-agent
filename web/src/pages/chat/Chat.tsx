@@ -1,14 +1,16 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import useSWR from 'swr'
+import { useNavigate, useParams } from 'react-router-dom'
+import useSWR, { useSWRConfig } from 'swr'
+import { AlertDialog, Button as RTButton, Flex } from '@radix-ui/themes'
+import { Trash2 } from 'lucide-react'
 import {
   listHistoryMessages,
   updateMessageFeedback,
   type HistoryMessage,
   type MessageFeedback,
 } from '@/api/messages'
-import { getDocument, type Document } from '@/api/documents'
+import { deleteDocument, getDocument, type Document } from '@/api/documents'
 import type { ApiEnvelope } from '@/api/client'
 import { Sidebar } from '@/components/chat/Sidebar'
 import { MessageBubble } from '@/components/chat/MessageBubble'
@@ -34,9 +36,11 @@ const toMessageFeedback = (value: number | undefined): MessageFeedback => {
 }
 
 export function Chat() {
+  const navigate = useNavigate()
   const { documentId } = useParams<{ documentId?: string }>()
   const docId = documentId ? Number(documentId) : null
   const { show } = useToast()
+  const { mutate } = useSWRConfig()
 
   const docKey = docId ? `/documents/${docId}` : null
   const { data: docRes } = useSWR<ApiEnvelope<Document> | null>(
@@ -176,20 +180,39 @@ export function Chat() {
     }
   }
 
+  const onDeleteDocument = async () => {
+    if (!docId) return
+    try {
+      abort()
+      await deleteDocument(docId)
+      await mutate('/documents')
+      show('文档已删除', 'success')
+      navigate('/chat', { replace: true })
+    } catch (err) {
+      show(err instanceof Error ? err.message : '删除失败', 'error')
+    }
+  }
+
   const showNoDoc = !docId
   const showEmpty = !!docId && !historyLoading && messages.length === 0
 
   return (
     <div className="grid h-screen grid-cols-[280px_1fr] bg-paper-50">
-      <Sidebar />
+      <Sidebar onDeleteCurrentDocument={onDeleteDocument} />
       <section className="flex h-screen flex-col">
-        <header className="z-10 flex shrink-0 items-center justify-between border-b border-ink-200/50 bg-paper-50/80 px-6 py-3 backdrop-blur">
+        <header className="z-10 flex shrink-0 items-center justify-between gap-4 border-b border-ink-200/50 bg-paper-50/80 px-6 py-3 backdrop-blur">
           <div className="min-w-0">
             <h1 className="font-display truncate text-base font-semibold text-ink-950">
               {doc?.display_name ?? (docId ? '加载中…' : 'Aurora')}
             </h1>
             {docId ? <p className="text-[11px] text-ink-500">会话 #{docId}</p> : null}
           </div>
+          {docId ? (
+            <DocumentDeleteConfirm
+              docName={doc?.display_name ?? `会话 #${docId}`}
+              onConfirm={onDeleteDocument}
+            />
+          ) : null}
         </header>
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto">
@@ -229,6 +252,46 @@ export function Chat() {
         }
       </section>
     </div>
+  )
+}
+
+function DocumentDeleteConfirm({
+  docName,
+  onConfirm,
+}: {
+  docName: string
+  onConfirm: () => void | Promise<void>
+}) {
+  return (
+    <AlertDialog.Root>
+      <AlertDialog.Trigger>
+        <button
+          type="button"
+          className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-md border border-danger/30 px-2.5 text-xs font-medium text-danger transition hover:bg-danger/10"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          删除
+        </button>
+      </AlertDialog.Trigger>
+      <AlertDialog.Content maxWidth="420px">
+        <AlertDialog.Title>删除文档</AlertDialog.Title>
+        <AlertDialog.Description size="2">
+          确认删除「{docName}」及其全部消息？此操作不可撤销。
+        </AlertDialog.Description>
+        <Flex gap="3" mt="4" justify="end">
+          <AlertDialog.Cancel>
+            <RTButton variant="soft" color="gray">
+              取消
+            </RTButton>
+          </AlertDialog.Cancel>
+          <AlertDialog.Action>
+            <RTButton color="tomato" onClick={() => onConfirm()}>
+              确认删除
+            </RTButton>
+          </AlertDialog.Action>
+        </Flex>
+      </AlertDialog.Content>
+    </AlertDialog.Root>
   )
 }
 
