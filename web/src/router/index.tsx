@@ -3,6 +3,7 @@ import { Home } from '@/pages/home/Home'
 import { Login } from '@/pages/auth/Login'
 import { Register } from '@/pages/auth/Register'
 import { Chat } from '@/pages/chat/Chat'
+import { Profile } from '@/pages/profile/Profile'
 import { AuthGuard } from './AuthGuard'
 
 export const router = createHashRouter([
@@ -22,6 +23,14 @@ export const router = createHashRouter([
     element: (
       <AuthGuard>
         <Chat />
+      </AuthGuard>
+    ),
+  },
+  {
+    path: '/profile',
+    element: (
+      <AuthGuard>
+        <Profile />
       </AuthGuard>
     ),
   },

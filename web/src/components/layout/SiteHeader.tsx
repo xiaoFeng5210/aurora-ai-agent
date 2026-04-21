@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
@@ -41,7 +42,7 @@ export function SiteHeader() {
 
   const goProfile = () => {
     setOpen(false)
-    navigate('/chat')
+    navigate('/profile')
   }
 
   const go = (to: string) => () => {
@@ -138,7 +139,7 @@ export function SiteHeader() {
             <span className="font-medium">GitHub</span>
             <span className="h-3 w-px bg-paper-50/30" />
             <Star className="h-3.5 w-3.5 fill-paper-50 text-paper-50" />
-            <span className="text-xs">569</span>
+            <span className="text-xs">0</span>
           </a>
         </div>
 
