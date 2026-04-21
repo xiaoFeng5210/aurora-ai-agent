@@ -20,7 +20,6 @@ func CommonErrorCodeBaiduNetworkdisk(code int) string {
 	}
 }
 
-
 // precreate upload 错误码
 func PrecreateUploadErrorCodeBaiduNetworkdisk(code int) string {
 	switch code {
@@ -32,6 +31,7 @@ func PrecreateUploadErrorCodeBaiduNetworkdisk(code int) string {
 		return "未知错误" + strconv.Itoa(code)
 	}
 }
+
 // split upload 错误码
 func SplitUploadErrorCodeBaiduNetworkdisk(code int) string {
 	switch code {
@@ -59,5 +59,20 @@ func CreateFileOrDirErrorCodeBaiduNetworkdisk(code int) string {
 		return "创建文件失败"
 	default:
 		return "未知错误" + strconv.Itoa(code)
+	}
+}
+
+func DeleteFileErrorCodeBaiduNetworkdisk(code int) string {
+	switch code {
+	case -3, -9, 31066:
+		return "文件或目录不存在"
+	case -6, 110, 31045:
+		return "百度网盘token无效或已过期"
+	case -7:
+		return "文件或目录名错误或无权访问"
+	case 111:
+		return "有其他异步任务正在执行"
+	default:
+		return CommonErrorCodeBaiduNetworkdisk(code)
 	}
 }
