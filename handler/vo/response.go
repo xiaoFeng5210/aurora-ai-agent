@@ -9,21 +9,22 @@ import (
 )
 
 var (
-	ErrUserNotFound         = errors.New("user not found")
-	ErrDocumentNotFound     = errors.New("document not found")
-	ErrMessageNotFound      = errors.New("message not found")
-	ErrUsernameExists       = errors.New("username already exists")
-	ErrEmailExists          = errors.New("email already exists")
-	ErrInvalidCredentials   = errors.New("invalid email or password")
-	ErrOldPasswordIncorrect = errors.New("old password is incorrect")
-	ErrPasswordTooShort     = errors.New("password must be at least 6 characters")
-	ErrBirthdayFormat       = errors.New("birthday must be in YYYY-MM-DD format")
-	ErrMessageRoleRequired  = errors.New("role is required")
-	ErrMessageOrderInvalid  = errors.New("order must be asc or desc")
-	ErrMessageTimeFormat    = errors.New("time must be in RFC3339 format")
-	ErrMessageTimeRange     = errors.New("start_time must not be after end_time")
-	ErrNoFieldsToUpdate     = errors.New("no fields to update")
-	ErrUnsupportedFileType  = errors.New("unsupported file type, currently supported: .txt, .md, .csv")
+	ErrUserNotFound           = errors.New("user not found")
+	ErrDocumentNotFound       = errors.New("document not found")
+	ErrMessageNotFound        = errors.New("message not found")
+	ErrUsernameExists         = errors.New("username already exists")
+	ErrEmailExists            = errors.New("email already exists")
+	ErrInvalidCredentials     = errors.New("invalid email or password")
+	ErrOldPasswordIncorrect   = errors.New("old password is incorrect")
+	ErrPasswordTooShort       = errors.New("password must be at least 6 characters")
+	ErrBirthdayFormat         = errors.New("birthday must be in YYYY-MM-DD format")
+	ErrMessageRoleRequired    = errors.New("role is required")
+	ErrMessageOrderInvalid    = errors.New("order must be asc or desc")
+	ErrMessageTimeFormat      = errors.New("time must be in RFC3339 format")
+	ErrMessageTimeRange       = errors.New("start_time must not be after end_time")
+	ErrMessageFeedbackInvalid = errors.New("is_liked must be -1, 0, or 1")
+	ErrNoFieldsToUpdate       = errors.New("no fields to update")
+	ErrUnsupportedFileType    = errors.New("unsupported file type, currently supported: .txt, .md, .csv")
 )
 
 func RespondSuccess(ctx *gin.Context, data any) {
@@ -59,6 +60,7 @@ func RespondWithServiceError(ctx *gin.Context, err error) {
 		errors.Is(err, ErrMessageOrderInvalid),
 		errors.Is(err, ErrMessageTimeFormat),
 		errors.Is(err, ErrMessageTimeRange),
+		errors.Is(err, ErrMessageFeedbackInvalid),
 		errors.Is(err, ErrNoFieldsToUpdate),
 		errors.Is(err, gorm.ErrInvalidData):
 		status = http.StatusBadRequest

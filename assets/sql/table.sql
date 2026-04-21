@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS messages (
     tool_calls   JSONB NOT NULL DEFAULT '[]'::jsonb,
     create_time  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_liked     INT NOT NULL DEFAULT 0,   -- 0: 未点赞, 1: 点赞, -1: 点踩
     deleted_at   TIMESTAMPTZ,
 
     CONSTRAINT messages_message_id_not_empty CHECK (message_id <> ''),

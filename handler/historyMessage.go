@@ -130,6 +130,29 @@ func UpdateHistoryMessage(ctx *gin.Context) {
 	vo.RespondSuccess(ctx, message)
 }
 
+func UpdateHistoryMessageFeedback(ctx *gin.Context) {
+	documentID, err := parseHistoryDocumentID(ctx)
+	if err != nil {
+		vo.RespondError(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	var req dto.UpdateHistoryMessageFeedbackRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		vo.RespondError(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	message, err := service.UpdateHistoryMessageFeedback(ctx.GetInt(middleware.UID_IN_CTX), documentID, ctx.Param("message_id"), req)
+	if err != nil {
+		logger.Error("update history message feedback failed", zap.Error(err))
+		vo.RespondWithServiceError(ctx, err)
+		return
+	}
+
+	vo.RespondSuccess(ctx, message)
+}
+
 func DeleteHistoryMessage(ctx *gin.Context) {
 	documentID, err := parseHistoryDocumentID(ctx)
 	if err != nil {

@@ -55,6 +55,7 @@ func SetupRouter() *gin.Engine {
 	documentGroup.GET("/:id/messages/:message_id", handler.GetHistoryMessageByMessageID)
 	documentGroup.POST("/:id/messages/query", handler.QueryHistoryMessages)
 	documentGroup.GET("/:id/messages/proxy/history", handler.ProxyQueryHistoryMessages)
+	documentGroup.PUT("/:id/messages/:message_id/feedback", handler.UpdateHistoryMessageFeedback)
 	documentGroup.PUT("/:id/messages/:message_id", handler.UpdateHistoryMessage)
 	documentGroup.DELETE("/:id/messages/:message_id", handler.DeleteHistoryMessage)
 
@@ -68,10 +69,6 @@ func SetupRouter() *gin.Engine {
 	qdrantGroup.Use(middleware.Auth)
 	qdrantGroup.POST("/upsert", handler.UpsertQdrantTest)
 	qdrantGroup.POST("/query", handler.QueryQdrantVector)
-
-
-
-
 
 	// RAG 个人知识库：上传文件 → 文本提取 → 向量化 → 写入 Qdrant
 	// 每个用户的数据通过 user_id 隔离，互不可见

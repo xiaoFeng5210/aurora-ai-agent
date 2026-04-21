@@ -18,6 +18,10 @@ type UpdateHistoryMessageRequest struct {
 	ToolCalls *[]ai.ToolCall `json:"tool_calls"`
 }
 
+type UpdateHistoryMessageFeedbackRequest struct {
+	IsLiked *int `json:"is_liked"`
+}
+
 type QueryHistoryMessagesRequest struct {
 	Role     string `json:"role"`
 	Keyword  string `json:"keyword"`
@@ -42,6 +46,7 @@ type HistoryMessageResponse struct {
 	Role       string        `json:"role"`
 	Content    string        `json:"content"`
 	ToolCalls  []ai.ToolCall `json:"tool_calls"`
+	IsLiked    int           `json:"is_liked"`
 	CreatedAt  time.Time     `json:"created_at"`
 	UpdatedAt  time.Time     `json:"updated_at"`
 }

@@ -2,7 +2,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import useSWR from 'swr'
-import { listHistoryMessages, type HistoryMessage } from '@/api/messages'
+import {
+  listHistoryMessages,
+  updateMessageFeedback,
+  type HistoryMessage,
+  type MessageFeedback,
+} from '@/api/messages'
 import { getDocument, type Document } from '@/api/documents'
 import type { ApiEnvelope } from '@/api/client'
 import { Sidebar } from '@/components/chat/Sidebar'
@@ -19,6 +24,13 @@ interface DisplayMessage {
   content: string
   streaming?: boolean
   toolCalls?: ToolCallTrace[]
+  messageId?: string
+  feedback?: MessageFeedback
+}
+
+const toMessageFeedback = (value: number | undefined): MessageFeedback => {
+  if (value === 1 || value === -1) return value
+  return 0
 }
 
 export function Chat() {
@@ -35,7 +47,7 @@ export function Chat() {
   const doc = docRes?.data
 
   const historyKey = docId ? `/documents/${docId}/messages/proxy/history?order=asc&pageSize=200` : null
-  const { data: historyRes, isLoading: historyLoading } = useSWR<ApiEnvelope<HistoryMessage[]> | null>(
+  const { data: historyRes, isLoading: historyLoading, mutate: mutateHistory } = useSWR<ApiEnvelope<HistoryMessage[]> | null>(
     historyKey,
     () => (docId ? listHistoryMessages(docId, { order: 'asc', pageSize: 200 }) : null),
     { revalidateOnFocus: false, revalidateIfStale: false },
@@ -43,11 +55,13 @@ export function Chat() {
   const history = useMemo(() => historyRes?.data ?? [], [historyRes])
 
   const [pending, setPending] = useState<DisplayMessage[]>([])
+  const [feedbackByMessageId, setFeedbackByMessageId] = useState<Record<string, MessageFeedback>>({})
   const { send, abort, streaming } = useChatStream()
 
   // 切会话时清空本地消息
   useEffect(() => {
     setPending([])
+    setFeedbackByMessageId({})
   }, [docId])
 
   const messages = useMemo<DisplayMessage[]>(() => {
@@ -55,9 +69,11 @@ export function Chat() {
       key: `db-${m.id}`,
       role: (m.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
       content: m.content,
+      messageId: m.message_id,
+      feedback: feedbackByMessageId[m.message_id] ?? toMessageFeedback(m.is_liked),
     }))
     return [...base, ...pending]
-  }, [history, pending])
+  }, [feedbackByMessageId, history, pending])
 
   const scrollRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -95,6 +111,8 @@ export function Chat() {
 
     let accumulated = ''
     const toolCalls: ToolCallTrace[] = []
+    let completed = false
+    let failed = false
 
     await send(docId, prompt, {
       onDelta: (_chunk, acc) => {
@@ -114,10 +132,12 @@ export function Chat() {
         updateAssistant({ toolCalls: [...toolCalls] })
       },
       onDone: (final) => {
-        // 不再 revalidate history + 清 pending —— 避免后端异步写入造成的空白闪烁
+        // 先保持 pending，等流式请求完全结束后再拿带 message_id 的历史记录替换。
+        completed = true
         updateAssistant({ content: final || accumulated, streaming: false })
       },
       onError: (msg) => {
+        failed = true
         show(msg, 'error')
         setPending((prev) => prev.filter((m) => m.key !== assistantKey && m.key !== userMsg.key))
       },
@@ -125,6 +145,35 @@ export function Chat() {
         updateAssistant({ streaming: false })
       },
     })
+
+    if (completed && !failed) {
+      try {
+        const fresh = await mutateHistory()
+        if ((fresh?.data?.length ?? 0) > history.length) {
+          setPending((prev) => prev.filter((m) => m.key !== assistantKey && m.key !== userMsg.key))
+        }
+      } catch {
+        // 保留 pending，避免保存后刷新失败导致刚生成的回答从 UI 消失。
+      }
+    }
+  }
+
+  const onFeedback = async (messageId: string, feedback: MessageFeedback) => {
+    if (!docId) return
+    const previous = feedbackByMessageId[messageId]
+    setFeedbackByMessageId((prev) => ({ ...prev, [messageId]: feedback }))
+    try {
+      await updateMessageFeedback(docId, messageId, feedback)
+      await mutateHistory()
+    } catch (err) {
+      setFeedbackByMessageId((prev) => {
+        const next = { ...prev }
+        if (previous === undefined) delete next[messageId]
+        else next[messageId] = previous
+        return next
+      })
+      show(err instanceof Error ? err.message : '反馈失败', 'error')
+    }
   }
 
   const showNoDoc = !docId
@@ -164,13 +213,20 @@ export function Chat() {
                   content={m.content}
                   streaming={m.streaming}
                   toolCalls={m.toolCalls}
+                  messageId={m.messageId}
+                  feedback={m.feedback}
+                  onFeedback={onFeedback}
                 />
               ))}
             </div>
           )}
         </div>
 
-        <Composer disabled={!docId} streaming={streaming} onSend={onSend} onStop={abort} />
+        {
+          showNoDoc ? null : (
+            <Composer disabled={!docId} streaming={streaming} onSend={onSend} onStop={abort} />
+          )
+        }
       </section>
     </div>
   )

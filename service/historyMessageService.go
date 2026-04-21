@@ -162,6 +162,35 @@ func UpdateHistoryMessage(uid int, documentID int, messageID string, req dto.Upd
 	return GetHistoryMessageByMessageID(uid, documentID, messageID)
 }
 
+func UpdateHistoryMessageFeedback(uid int, documentID int, messageID string, req dto.UpdateHistoryMessageFeedbackRequest) (dto.HistoryMessageResponse, error) {
+	if err := ensureHistoryDocumentAccessible(uid, documentID); err != nil {
+		return dto.HistoryMessageResponse{}, err
+	}
+
+	messageID = strings.TrimSpace(messageID)
+	if messageID == "" {
+		return dto.HistoryMessageResponse{}, gorm.ErrInvalidData
+	}
+
+	if req.IsLiked == nil {
+		return dto.HistoryMessageResponse{}, vo.ErrNoFieldsToUpdate
+	}
+
+	feedback, err := normalizeHistoryMessageFeedback(*req.IsLiked)
+	if err != nil {
+		return dto.HistoryMessageResponse{}, err
+	}
+
+	if err := database.LikeMessage(documentID, messageID, feedback); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return dto.HistoryMessageResponse{}, vo.ErrMessageNotFound
+		}
+		return dto.HistoryMessageResponse{}, err
+	}
+
+	return GetHistoryMessageByMessageID(uid, documentID, messageID)
+}
+
 func DeleteHistoryMessage(uid int, documentID int, messageID string) error {
 	if err := ensureHistoryDocumentAccessible(uid, documentID); err != nil {
 		return err
@@ -214,6 +243,13 @@ func normalizeHistoryMessageOrder(order string) (string, error) {
 	}
 
 	return "", vo.ErrMessageOrderInvalid
+}
+
+func normalizeHistoryMessageFeedback(value int) (int, error) {
+	if value == -1 || value == 0 || value == 1 {
+		return value, nil
+	}
+	return 0, vo.ErrMessageFeedbackInvalid
 }
 
 func normalizeHistoryMessageID(messageID *string) string {
@@ -269,6 +305,7 @@ func toHistoryMessageResponse(message model.Message) dto.HistoryMessageResponse 
 		Role:       message.Role,
 		Content:    message.Content,
 		ToolCalls:  toAIToolCalls(message.ToolCalls),
+		IsLiked:    message.IsLiked,
 		CreatedAt:  message.CreatedAt,
 		UpdatedAt:  message.UpdatedAt,
 	}

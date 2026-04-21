@@ -58,6 +58,7 @@ type Message struct {
 	ToolCalls  MessageToolCalls `gorm:"type:jsonb;column:tool_calls" json:"tool_calls"`
 	CreatedAt  time.Time        `gorm:"column:create_time" json:"created_at"`
 	UpdatedAt  time.Time        `gorm:"column:update_time" json:"updated_at"`
+	IsLiked    int              `gorm:"column:is_liked" json:"is_liked"`
 	DeletedAt  gorm.DeletedAt   `gorm:"column:deleted_at;index" json:"-"`
 }
 

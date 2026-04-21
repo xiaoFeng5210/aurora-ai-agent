@@ -184,3 +184,18 @@ func normalizeToolCallsUpdate(value any) (model.MessageToolCalls, bool) {
 		return nil, false
 	}
 }
+
+// 消息点赞和点踩
+func LikeMessage(documentID int, messageID string, like int) error {
+	result := db.Model(&model.Message{}).
+		Where("document_id = ? AND message_id = ?", documentID, messageID).
+		Update("is_liked", like)
+
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}

@@ -1,4 +1,4 @@
-import { apiGet, type ApiEnvelope } from './client'
+import { apiGet, apiPut, type ApiEnvelope } from './client'
 
 export interface ToolCallFunction {
   name: string
@@ -18,9 +18,12 @@ export interface HistoryMessage {
   role: 'user' | 'assistant' | 'tool' | 'system'
   content: string
   tool_calls: ToolCall[] | null
+  is_liked: MessageFeedback
   created_at: string
   updated_at: string
 }
+
+export type MessageFeedback = -1 | 0 | 1
 
 export interface HistoryQuery {
   startTime?: string
@@ -40,3 +43,13 @@ export const listHistoryMessages = (documentId: number, query: HistoryQuery = {}
   const path = `/documents/${documentId}/messages/proxy/history${qs ? `?${qs}` : ''}`
   return apiGet<ApiEnvelope<HistoryMessage[]>>(path)
 }
+
+export const updateMessageFeedback = (
+  documentId: number,
+  messageId: string,
+  isLiked: MessageFeedback,
+) =>
+  apiPut<ApiEnvelope<HistoryMessage>>(
+    `/documents/${documentId}/messages/${messageId}/feedback`,
+    { is_liked: isLiked },
+  )
