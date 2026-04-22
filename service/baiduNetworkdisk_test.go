@@ -77,3 +77,27 @@ func TestNormalizeBaiduNetworkdiskDeletePaths(t *testing.T) {
 		})
 	}
 }
+
+func TestBaiduNetworkdiskFilenamesFromPaths(t *testing.T) {
+	got := BaiduNetworkdiskFilenamesFromPaths([]string{
+		"/apps/aurora-ai-agent知识库/super/a.txt",
+		"super/b.md",
+		"super/b.md",
+		"  /apps/aurora-ai-agent知识库/super/folder/  ",
+		" ",
+	})
+	want := []string{"a.txt", "b.md", "folder"}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %#v, want %#v", got, want)
+	}
+}
+
+func TestNormalizeQdrantFilenames(t *testing.T) {
+	got := normalizeQdrantFilenames([]string{" a.txt ", "", "a.txt", "b.md"})
+	want := []string{"a.txt", "b.md"}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %#v, want %#v", got, want)
+	}
+}

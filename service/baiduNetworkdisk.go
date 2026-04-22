@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -138,6 +139,23 @@ func normalizeBaiduNetworkdiskDeletePaths(paths []string) ([]string, error) {
 	}
 
 	return normalized, nil
+}
+
+func BaiduNetworkdiskFilenamesFromPaths(paths []string) []string {
+	filenames := make([]string, 0, len(paths))
+	seen := make(map[string]struct{}, len(paths))
+	for _, path := range paths {
+		filename := filepath.Base(strings.TrimRight(strings.TrimSpace(path), "/"))
+		if filename == "." || filename == "/" || filename == "" {
+			continue
+		}
+		if _, ok := seen[filename]; ok {
+			continue
+		}
+		seen[filename] = struct{}{}
+		filenames = append(filenames, filename)
+	}
+	return filenames
 }
 
 // 通用上传文件或文件夹

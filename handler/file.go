@@ -3,6 +3,7 @@ package handler
 import (
 	"aurora-agent/handler/dto"
 	"aurora-agent/handler/vo"
+	"aurora-agent/middleware"
 	"aurora-agent/service"
 	"errors"
 	"net/http"
@@ -88,5 +89,18 @@ func DeleteBaiduNetworkdiskFile(ctx *gin.Context) {
 		vo.RespondError(ctx, http.StatusInternalServerError, err)
 		return
 	}
-	vo.RespondSuccess(ctx, resp)
+
+	qdrantResult, err := service.DeleteQdrantVectorByFilenames(
+		ctx.GetInt(middleware.UID_IN_CTX),
+		service.BaiduNetworkdiskFilenamesFromPaths(paths),
+	)
+	if err != nil {
+		vo.RespondError(ctx, http.StatusInternalServerError, err)
+		return
+	}
+
+	vo.RespondSuccess(ctx, gin.H{
+		"baidu_networkdisk": resp,
+		"qdrant":            qdrantResult,
+	})
 }

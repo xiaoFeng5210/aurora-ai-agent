@@ -5,6 +5,7 @@ import (
 	"aurora-agent/middleware"
 	"aurora-agent/service/embedding"
 	"fmt"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/qdrant/go-client/qdrant"
@@ -45,4 +46,44 @@ func QueryQdrantVector(ctx *gin.Context, prompt string) ([]*qdrant.ScoredPoint, 
 	}
 	logger.Info("Query Qdrant vector success", zap.Any("searchResult", searchResult))
 	return searchResult, nil
+}
+
+func DeleteQdrantVectorByFilenames(uid int, filenames []string) (*qdrant.UpdateResult, error) {
+	normalizedFilenames := normalizeQdrantFilenames(filenames)
+	if len(normalizedFilenames) == 0 {
+		return nil, fmt.Errorf("filename is required")
+	}
+
+	result, err := qdrant_db.DeleteRagVectorByFilenames(uid, normalizedFilenames)
+	if err != nil {
+		logger.Error("Delete Qdrant vectors by filenames failed",
+			zap.Int("uid", uid),
+			zap.Strings("filenames", normalizedFilenames),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+	logger.Info("Delete Qdrant vectors by filenames success",
+		zap.Int("uid", uid),
+		zap.Strings("filenames", normalizedFilenames),
+		zap.Any("result", result),
+	)
+	return result, nil
+}
+
+func normalizeQdrantFilenames(filenames []string) []string {
+	seen := make(map[string]struct{}, len(filenames))
+	normalized := make([]string, 0, len(filenames))
+	for _, filename := range filenames {
+		filename = strings.TrimSpace(filename)
+		if filename == "" {
+			continue
+		}
+		if _, ok := seen[filename]; ok {
+			continue
+		}
+		seen[filename] = struct{}{}
+		normalized = append(normalized, filename)
+	}
+	return normalized
 }

@@ -12,18 +12,17 @@ import (
 var ragCollectionName = "rag"
 var embeddingModel = "sentence-transformers/all-minilm-l6-v2"
 
-
 // 创建集合
 func CreateRagCollection() error {
 	exists, err := qdrantClient.CollectionExists(context.Background(), ragCollectionName)
-  if err != nil {
-    return err
-  }
-  if !exists {
+	if err != nil {
+		return err
+	}
+	if !exists {
 		err = qdrantClient.CreateCollection(context.Background(), &qdrant.CreateCollection{
 			CollectionName: ragCollectionName,
 			VectorsConfig: qdrant.NewVectorsConfig(&qdrant.VectorParams{
-				Size:     1024,  // Vector size is defined by used model
+				Size:     1024, // Vector size is defined by used model
 				Distance: qdrant.Distance_Cosine,
 			}),
 		})
@@ -37,6 +36,16 @@ func CreateRagCollection() error {
 		FieldName:      "user_id",
 		FieldType:      qdrant.PtrOf(qdrant.FieldType_FieldTypeKeyword),
 	})
+	if err != nil {
+		return err
+	}
+
+	// 为 filename 创建 keyword 索引，支持按文件名清理知识库数据。
+	_, err = qdrantClient.CreateFieldIndex(context.Background(), &qdrant.CreateFieldIndexCollection{
+		CollectionName: ragCollectionName,
+		FieldName:      "filename",
+		FieldType:      qdrant.PtrOf(qdrant.FieldType_FieldTypeKeyword),
+	})
 	return err
 }
 
@@ -48,7 +57,7 @@ func UpsertRagVector(chunks []string, vectors [][]float32, payload map[string]an
 	filename := fmt.Sprintf("%v", payload["filename"])
 	for idx := range chunks {
 		points[idx] = &qdrant.PointStruct{
-			Id: qdrant.NewIDUUID(uuid.New().String()),
+			Id:      qdrant.NewIDUUID(uuid.New().String()),
 			Vectors: qdrant.NewVectors(vectors[idx]...),
 			Payload: qdrant.NewValueMap(map[string]any{
 				"text":     chunks[idx],
@@ -67,6 +76,26 @@ func UpsertRagVector(chunks []string, vectors [][]float32, payload map[string]an
 	return result, nil
 }
 
+// DeleteRagVectorByFilenames 删除当前用户指定文件名对应的所有文本 chunk。
+func DeleteRagVectorByFilenames(userID int, filenames []string) (*qdrant.UpdateResult, error) {
+	filter := &qdrant.Filter{
+		Must: []*qdrant.Condition{
+			qdrant.NewMatch("user_id", strconv.Itoa(userID)),
+			qdrant.NewMatchKeywords("filename", filenames...),
+		},
+	}
+	wait := true
+
+	result, err := qdrantClient.Delete(context.Background(), &qdrant.DeletePoints{
+		CollectionName: ragCollectionName,
+		Points:         qdrant.NewPointsSelectorFilter(filter),
+		Wait:           &wait,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
 
 // query engine
 func QueryRagVector(queryVector []float32, userID int) ([]*qdrant.ScoredPoint, error) {
