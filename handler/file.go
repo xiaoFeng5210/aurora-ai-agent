@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"aurora-agent/database"
 	"aurora-agent/handler/dto"
 	"aurora-agent/handler/vo"
 	"aurora-agent/middleware"
@@ -14,11 +15,19 @@ import (
 func GMBaiduNetworkdiskUpload(ctx *gin.Context) {
 	filename := ctx.PostForm("filename")
 	isdir := ctx.PostForm("isdir")
-
+  
 	fh, err := ctx.FormFile("file")
 	fileParam, err := fh.Open()
 
-	err = service.GMBaiduNetworkdiskUpload(fileParam, filename, isdir)
+	user, err := database.GetUserById(ctx.GetInt(middleware.UID_IN_CTX))
+	if err != nil {
+		vo.RespondError(ctx, http.StatusInternalServerError, err)
+		return
+	}
+
+	username := user.Username
+
+	err = service.GMBaiduNetworkdiskUpload(fileParam, filename, isdir, username)
 	if err != nil {
 		vo.RespondError(ctx, http.StatusInternalServerError, err)
 		return

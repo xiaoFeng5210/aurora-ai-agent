@@ -159,12 +159,12 @@ func BaiduNetworkdiskFilenamesFromPaths(paths []string) []string {
 }
 
 // 通用上传文件或文件夹
-func GMBaiduNetworkdiskUpload(fileParam multipart.File, paramPath string, isdir string) error {
+func GMBaiduNetworkdiskUpload(fileParam multipart.File, paramPath string, isdir string, username string) error {
 	isdirInt, err := strconv.Atoi(isdir)
 	if err != nil {
 		return errors.New("isdir is not a valid integer: " + err.Error())
 	}
-	precreateInfo, fileData, blockList, err := PrecreateUpload(paramPath, isdirInt, fileParam)
+	precreateInfo, fileData, blockList, err := PrecreateUpload(paramPath, isdirInt, fileParam, username)
 	if err != nil {
 		logger.Error("PrecreateUpload failed", zap.Error(err))
 		return err
@@ -296,15 +296,13 @@ func SplitUpload(precreateInfo *vo.PrecreateUploadResponse, fileData []byte, par
 }
 
 // 预上传
-func PrecreateUpload(paramPath string, isdir int, fileParam multipart.File) (*vo.PrecreateUploadResponse, []byte, string, error) {
+func PrecreateUpload(paramPath string, isdir int, fileParam multipart.File, username string) (*vo.PrecreateUploadResponse, []byte, string, error) {
 	access_token, err := GetBaiduNetworkdiskTokenFromRedis()
 	if err != nil {
 		return nil, nil, "", err
 	}
 	httpUrl := baseUrl + "/rest/2.0/xpan/file?" + fmt.Sprintf("method=precreate&access_token=%s", access_token)
-
 	appName := "/aurora-ai-agent知识库"
-	username := "super" // TODO
 	parent := "/apps" + appName + "/" + username + "/"
 	path := parent + paramPath
 
