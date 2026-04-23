@@ -627,7 +627,6 @@ function KnowledgeFileDeleteConfirm({
           className="w-full md:w-auto"
         >
           <Trash2 className="h-4 w-4" />
-          删除
         </Button>
       </AlertDialog.Trigger>
       <AlertDialog.Content className="!rounded-lg" maxWidth="420px">
