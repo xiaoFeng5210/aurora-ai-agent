@@ -22,6 +22,7 @@ func GMBaiduNetworkdiskUpload(ctx *gin.Context) {
 
 	user, err := database.GetUserById(ctx.GetInt(middleware.UID_IN_CTX))
 	if err != nil {
+		logger.Error("get user by id failed", zap.Error(err))
 		vo.RespondError(ctx, http.StatusInternalServerError, err)
 		return
 	}
