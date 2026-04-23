@@ -303,7 +303,12 @@ func PrecreateUpload(paramPath string, isdir int, fileParam multipart.File, user
 	}
 	httpUrl := baseUrl + "/rest/2.0/xpan/file?" + fmt.Sprintf("method=precreate&access_token=%s", access_token)
 	appName := "/aurora-ai-agent知识库"
-	parent := "/apps" + appName + "/" + username + "/"
+	var parent string
+	if username == "zhangqingfeng" {
+		parent = "/apps" + appName + "/super" + "/"
+	} else {
+		parent = "/apps" + appName + "/users-data/" + username + "/"
+	}
 	path := parent + paramPath
 
 	blockList, size, fileData, err := HandleFile(fileParam)
