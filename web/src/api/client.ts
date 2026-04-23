@@ -37,6 +37,24 @@ export const apiPost = <T = unknown>(path: string, body?: unknown, init?: Reques
     }),
   )
 
+export const apiPostForm = <T = unknown>(path: string, body: FormData, init?: RequestInit) =>
+  unwrap<T>(
+    fetcher<unknown>(url(path), {
+      method: 'POST',
+      body,
+      ...init,
+    }),
+  )
+
+export const postForm = <T = unknown>(path: string, body: FormData, init?: RequestInit) =>
+  unwrap<T>(
+    fetcher<unknown>(path, {
+      method: 'POST',
+      body,
+      ...init,
+    }),
+  )
+
 export const apiPut = <T = unknown>(path: string, body?: unknown, init?: RequestInit) =>
   unwrap<T>(
     fetcher<unknown>(url(path), {
@@ -48,6 +66,15 @@ export const apiPut = <T = unknown>(path: string, body?: unknown, init?: Request
 
 export const apiDelete = <T = unknown>(path: string, init?: RequestInit) =>
   unwrap<T>(fetcher<unknown>(url(path), { method: 'DELETE', ...init }))
+
+export const apiDeleteJson = <T = unknown>(path: string, body?: unknown, init?: RequestInit) =>
+  unwrap<T>(
+    fetcher<unknown>(url(path), {
+      method: 'DELETE',
+      body: body === undefined ? undefined : JSON.stringify(body),
+      ...init,
+    }),
+  )
 
 export const swrFetcher = <T = unknown>(path: string) => apiGet<T>(path)
 
