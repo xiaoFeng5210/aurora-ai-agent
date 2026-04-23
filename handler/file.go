@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func GMBaiduNetworkdiskUpload(ctx *gin.Context) {
@@ -29,6 +30,7 @@ func GMBaiduNetworkdiskUpload(ctx *gin.Context) {
 
 	err = service.GMBaiduNetworkdiskUpload(fileParam, filename, isdir, username)
 	if err != nil {
+		logger.Error("baidu networkdisk upload failed", zap.Error(err))
 		vo.RespondError(ctx, http.StatusInternalServerError, err)
 		return
 	}

@@ -27,6 +27,7 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { updateMe, type User } from '@/api/auth'
 import {
+  baiduKnowledgeListDir,
   createRagFromFile,
   deleteKnowledgeFile,
   listKnowledgeFiles,
@@ -102,7 +103,7 @@ export function Profile() {
   const loadKnowledgeFiles = useCallback(async () => {
     setKnowledgeLoading(true)
     try {
-      const res = await listKnowledgeFiles()
+      const res = await listKnowledgeFiles(baiduKnowledgeListDir(user?.username))
       setKnowledgeFiles(res.data?.list ?? [])
     } catch (err) {
       const msg = getErrorMessage(err, '获取知识库文件失败')
@@ -110,7 +111,7 @@ export function Profile() {
     } finally {
       setKnowledgeLoading(false)
     }
-  }, [show])
+  }, [show, user?.username])
 
   const onSelectKnowledgeFile = (e: ChangeEvent<HTMLInputElement>) => {
     setSelectedKnowledgeFile(e.target.files?.[0] ?? null)

@@ -28,7 +28,17 @@ export interface DeleteKnowledgeFileResponse {
   qdrant: unknown
 }
 
-export const listKnowledgeFiles = (dir = 'super/') =>
+/** Same branch as service PrecreateUpload: super user uses /apps…/super/, others /apps…/users-data/{username}/ */
+export const BAIDU_KNOWLEDGE_SUPER_USERNAME = 'zhangqingfeng'
+
+export function baiduKnowledgeListDir(username: string | null | undefined): string {
+  const u = username?.trim()
+  if (!u) return 'super/'
+  if (u === BAIDU_KNOWLEDGE_SUPER_USERNAME) return 'super/'
+  return `users-data/${u}/`
+}
+
+export const listKnowledgeFiles = (dir: string) =>
   apiGet<ApiEnvelope<NetworkdiskFileListResponse>>(
     `/file/baidu_networkdisk/file_list?dir=${encodeURIComponent(dir)}`,
   )
