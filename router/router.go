@@ -75,6 +75,7 @@ func SetupRouter() *gin.Engine {
 	// 每个用户的数据通过 user_id 隔离，互不可见
 	ragGroup := apiv1.Group("/rag")
 	ragGroup.Use(middleware.Auth)
+	ragGroup.POST("", handler.CreateRag)
 	ragGroup.POST("/create", handler.CreateRag)
 
 	registerWebStatic(r)
