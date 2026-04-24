@@ -53,6 +53,11 @@ func StreamChatWithGLMController(ctx *gin.Context) {
 	if writeErr != nil {
 		logger.Error("sse connection failed", zap.Error(writeErr))
 	}
+
+	if ctx.Request.Context().Err() != nil {
+		// 检测到异常终止了
+		logger.Warn("sse connection aborted", zap.Error(ctx.Request.Context().Err()))
+	}
 }
 
 func writeSSEEvent(ctx *gin.Context, event string, data any) error {
