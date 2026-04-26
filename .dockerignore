@@ -1,0 +1,15 @@
+.git
+.gitignore
+.DS_Store
+
+.env
+*.env
+
+log
+tmp
+.gocache
+.pnpm-store
+
+frontend
+
+**/*.log
