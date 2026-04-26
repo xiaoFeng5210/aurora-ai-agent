@@ -18,7 +18,7 @@ import (
 // 不同文件类型实现此接口，将文件二进制数据解析为纯文本
 // 扩展新格式时只需：1. 实现此接口  2. 注册到 fileParsers 即可
 type FileParser interface {
-	Parse(data []byte) (string, error)
+	Parse2String(data []byte) (string, error)
 }
 
 // fileParsers 文件扩展名 → 解析器的注册表
@@ -37,7 +37,7 @@ var fileParsers = map[string]FileParser{
 // TextParser 纯文本解析器，适用于 .txt / .md / .csv 等文本格式
 type TextParser struct{}
 
-func (p *TextParser) Parse(data []byte) (string, error) {
+func (p *TextParser) Parse2String(data []byte) (string, error) {
 	text := strings.TrimSpace(string(data))
 	if text == "" {
 		return "", fmt.Errorf("文件内容为空")
@@ -74,37 +74,44 @@ func CreateRag(ctx *gin.Context, file multipart.File, filename string) (*qdrant.
 	}
 
 	// 3. 通过解析器将文件数据转为纯文本
-	text, err := parser.Parse(data)
+	text, err := parser.Parse2String(data)
 	if err != nil {
 		return nil, fmt.Errorf("文件解析失败: %w", err)
 	}
 
-	// 4. 文本分块 → 向量化
-	md := &embedding.MdDocument{
-		Content: text,
-	}
-	md.Chunk()
+	switch ext {
+	case ".md":
+		// 4. 文本分块 → 向量化
+		md := &embedding.MdDocument{
+			Content: text,
+		}
+		md.Chunk()
+	
+		_, err = md.Embedding()
+		if err != nil {
+			return nil, fmt.Errorf("向量化失败: %w", err)
+		}
+	
+		// 5. 写入 Qdrant，user_id 用于隔离不同用户的知识库
+		logger.Info("RAG 创建: 正在写入知识库",
+			zap.Int("uid", uid),
+			zap.String("filename", filename),
+		)
+		result, err := md.UpsertQdrantVector(uid, filename)
+		if err != nil {
+			logger.Error("RAG 创建: 写入 Qdrant 失败", zap.Error(err))
+			return nil, fmt.Errorf("写入知识库失败: %w", err)
+		}
+	
+		logger.Info("RAG 创建成功",
+			zap.Int("uid", uid),
+			zap.String("filename", filename),
+			zap.Any("result", result),
+		)
+		return result, nil
 
-	_, err = md.Embedding()
-	if err != nil {
-		return nil, fmt.Errorf("向量化失败: %w", err)
+	default:
+		return nil, fmt.Errorf("不支持该文件类型: %s", ext)
 	}
-
-	// 5. 写入 Qdrant，user_id 用于隔离不同用户的知识库
-	logger.Info("RAG 创建: 正在写入知识库",
-		zap.Int("uid", uid),
-		zap.String("filename", filename),
-	)
-	result, err := md.UpsertQdrantVector(uid, filename)
-	if err != nil {
-		logger.Error("RAG 创建: 写入 Qdrant 失败", zap.Error(err))
-		return nil, fmt.Errorf("写入知识库失败: %w", err)
-	}
-
-	logger.Info("RAG 创建成功",
-		zap.Int("uid", uid),
-		zap.String("filename", filename),
-		zap.Any("result", result),
-	)
-	return result, nil
+	
 }
