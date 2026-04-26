@@ -1,0 +1,221 @@
+@import "tailwindcss";
+
+@theme {
+  /* ────── 纸张系（Paper）— 背景 / 容器层 ────── */
+  --color-paper-50:  #fdfaf1; /* 象牙白，最柔和的页面底 */
+  --color-paper-100: #f8efd8; /* 浅米黄，默认页面背景 */
+  --color-paper-200: #f1e3bd; /* 米黄，卡片 / 分区 */
+  --color-paper-300: #e6d29a; /* 旧书页 */
+  --color-paper-400: #d4b974; /* 羊皮纸 */
+  --color-paper-500: #b89856; /* 深米黄，弱强调 */
+
+  /* ────── 墨水系（Ink）— 文字 / 边框 ────── */
+  --color-ink-950: #2b2016; /* 深墨，大标题 */
+  --color-ink-900: #3a2e1f; /* 主文字 */
+  --color-ink-800: #4a3a28;
+  --color-ink-700: #5c4a36;
+  --color-ink-500: #8a7659; /* 次要文字 */
+  --color-ink-300: #c7b79a; /* 分隔线 */
+  --color-ink-200: #ddd0b4; /* 浅边框 */
+
+  /* ────── 点缀色 — 书签 / 章印 ────── */
+  --color-accent-vermilion: #b8452f; /* 朱砂，主强调 / 主按钮 */
+  --color-accent-amber:     #c8852a; /* 琥珀，高亮 / 次强调 */
+  --color-accent-olive:     #7a7a3c; /* 橄榄，链接 / 成功 */
+  --color-accent-indigo:    #3c4a6b; /* 靛蓝，信息 */
+
+  /* ────── 语义色 ────── */
+  --color-danger:  #a8372a;
+  --color-success: #6d8840;
+  --color-warning: #c8852a;
+
+  /* ────── 字体 ────── */
+  --font-display: "Fraunces", "Noto Serif SC", ui-serif, serif;
+  --font-serif:   "Noto Serif SC", "Fraunces", ui-serif, serif;
+  --font-sans:    "Noto Serif SC", system-ui, -apple-system, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-paper-100);
+  color: var(--color-ink-900);
+  font-family: var(--font-serif);
+  font-feature-settings: "kern", "liga", "calt";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Radix Themes should inherit Aurora's warm paper surface and vermilion accent. */
+.radix-themes {
+  --default-font-family: var(--font-serif);
+  --heading-font-family: var(--font-display);
+  --strong-font-family: var(--font-serif);
+  --em-font-family: var(--font-serif);
+  --quote-font-family: var(--font-serif);
+  --default-letter-spacing: 0;
+  --heading-letter-spacing: 0;
+  --cursor-button: pointer;
+  --cursor-checkbox: pointer;
+  --cursor-link: pointer;
+  --cursor-menu-item: pointer;
+  --cursor-radio: pointer;
+  --cursor-switch: pointer;
+
+  --color-background: var(--color-paper-50);
+  --color-panel-solid: var(--color-paper-50);
+  --color-panel-translucent: rgb(253 250 241 / 0.92);
+  --color-surface: rgb(248 239 216 / 0.72);
+  --color-overlay: rgb(43 32 22 / 0.34);
+
+  --gray-1: #fdfaf1;
+  --gray-2: #faf3e3;
+  --gray-3: #f5ead0;
+  --gray-4: #efe0bd;
+  --gray-5: #e7d4a5;
+  --gray-6: #dcc590;
+  --gray-7: #ccb177;
+  --gray-8: #ad8f5f;
+  --gray-9: #8a7659;
+  --gray-10: #735f45;
+  --gray-11: #5c4a36;
+  --gray-12: #2b2016;
+  --gray-a1: rgb(43 32 22 / 0.02);
+  --gray-a2: rgb(43 32 22 / 0.04);
+  --gray-a3: rgb(43 32 22 / 0.08);
+  --gray-a4: rgb(43 32 22 / 0.12);
+  --gray-a5: rgb(43 32 22 / 0.16);
+  --gray-a6: rgb(43 32 22 / 0.22);
+  --gray-a7: rgb(43 32 22 / 0.30);
+  --gray-a8: rgb(43 32 22 / 0.42);
+  --gray-a9: rgb(43 32 22 / 0.52);
+  --gray-a10: rgb(43 32 22 / 0.62);
+  --gray-a11: rgb(43 32 22 / 0.74);
+  --gray-a12: rgb(43 32 22 / 0.88);
+
+  --accent-1: #fffaf7;
+  --accent-2: #fff1eb;
+  --accent-3: #f9ded4;
+  --accent-4: #efc8bb;
+  --accent-5: #e5b19f;
+  --accent-6: #d89683;
+  --accent-7: #c97861;
+  --accent-8: #bb5b43;
+  --accent-9: #b8452f;
+  --accent-10: #a83c29;
+  --accent-11: #8e3122;
+  --accent-12: #4b241b;
+  --accent-a1: rgb(184 69 47 / 0.03);
+  --accent-a2: rgb(184 69 47 / 0.07);
+  --accent-a3: rgb(184 69 47 / 0.15);
+  --accent-a4: rgb(184 69 47 / 0.24);
+  --accent-a5: rgb(184 69 47 / 0.32);
+  --accent-a6: rgb(184 69 47 / 0.42);
+  --accent-a7: rgb(184 69 47 / 0.54);
+  --accent-a8: rgb(184 69 47 / 0.68);
+  --accent-a9: rgb(184 69 47 / 0.92);
+  --accent-a10: rgb(168 60 41 / 0.95);
+  --accent-a11: rgb(142 49 34 / 0.96);
+  --accent-a12: rgb(75 36 27 / 0.96);
+  --accent-contrast: #fdfaf1;
+  --accent-surface: rgb(184 69 47 / 0.11);
+  --accent-indicator: var(--accent-9);
+  --accent-track: var(--accent-9);
+
+  --focus-8: var(--accent-8);
+  --focus-a8: var(--accent-a8);
+  --shadow-1: inset 0 0 0 1px rgb(43 32 22 / 0.10);
+  --shadow-2: 0 1px 2px rgb(90 60 30 / 0.06), 0 0 0 1px rgb(43 32 22 / 0.08);
+  --shadow-3: 0 8px 24px rgb(90 60 30 / 0.10), 0 0 0 1px rgb(43 32 22 / 0.08);
+  --shadow-4: 0 14px 38px rgb(90 60 30 / 0.14), 0 0 0 1px rgb(43 32 22 / 0.08);
+  --shadow-5: 0 20px 56px rgb(90 60 30 / 0.18), 0 0 0 1px rgb(43 32 22 / 0.10);
+  --shadow-6: 0 24px 72px rgb(90 60 30 / 0.22), 0 0 0 1px rgb(43 32 22 / 0.10);
+}
+
+.radix-themes .rt-DialogContent {
+  border: 1px solid rgb(221 208 180 / 0.85);
+}
+
+/* ────── highlight.js token colors (warm palette, paired with ink-950 bg) ────── */
+.markdown-body pre code.hljs,
+.markdown-body code.hljs {
+  background: transparent;
+  color: #e6d29a;
+}
+
+.markdown-body .hljs-comment,
+.markdown-body .hljs-quote {
+  color: #8a7659;
+  font-style: italic;
+}
+
+.markdown-body .hljs-keyword,
+.markdown-body .hljs-selector-tag,
+.markdown-body .hljs-literal,
+.markdown-body .hljs-section,
+.markdown-body .hljs-link {
+  color: #e8a868;
+}
+
+.markdown-body .hljs-string,
+.markdown-body .hljs-regexp,
+.markdown-body .hljs-addition,
+.markdown-body .hljs-attribute,
+.markdown-body .hljs-meta-string {
+  color: #c6d992;
+}
+
+.markdown-body .hljs-number,
+.markdown-body .hljs-symbol,
+.markdown-body .hljs-bullet,
+.markdown-body .hljs-subst {
+  color: #f0c88a;
+}
+
+.markdown-body .hljs-built_in,
+.markdown-body .hljs-builtin-name,
+.markdown-body .hljs-type {
+  color: #e89a88;
+}
+
+.markdown-body .hljs-title,
+.markdown-body .hljs-name,
+.markdown-body .hljs-class .hljs-title,
+.markdown-body .hljs-selector-id,
+.markdown-body .hljs-selector-class {
+  color: #f5d484;
+}
+
+.markdown-body .hljs-variable,
+.markdown-body .hljs-template-variable,
+.markdown-body .hljs-attr,
+.markdown-body .hljs-params {
+  color: #f2e4c4;
+}
+
+.markdown-body .hljs-tag {
+  color: #c7b79a;
+}
+
+.markdown-body .hljs-deletion {
+  color: #d77a6b;
+}
+
+.markdown-body .hljs-doctag,
+.markdown-body .hljs-meta,
+.markdown-body .hljs-meta-keyword {
+  color: #a8bfe0;
+}
+
+.markdown-body .hljs-emphasis {
+  font-style: italic;
+}
+
+.markdown-body .hljs-strong {
+  font-weight: 600;
+}
