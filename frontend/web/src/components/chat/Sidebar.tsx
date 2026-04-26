@@ -30,7 +30,7 @@ export function Sidebar({
 
   const onCreate = async () => {
     try {
-      const name = `新会话 · ${new Date().toLocaleString('zh-CN', { hour12: false })}`
+      const name = `新对话 · ${new Date().toLocaleString('zh-CN', { hour12: false })}`
       const created = await createDocument({ display_name: name })
       await mutate()
       if (created.data) navigate(`/chat/${created.data.id}`)

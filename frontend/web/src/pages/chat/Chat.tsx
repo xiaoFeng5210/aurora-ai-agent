@@ -10,7 +10,7 @@ import {
   type HistoryMessage,
   type MessageFeedback,
 } from '@/api/messages'
-import { deleteDocument, getDocument, type Document } from '@/api/documents'
+import { deleteDocument, getDocument, updateDocument, type Document } from '@/api/documents'
 import type { ApiEnvelope } from '@/api/client'
 import { Sidebar } from '@/components/chat/Sidebar'
 import { MessageBubble } from '@/components/chat/MessageBubble'
@@ -30,9 +30,32 @@ interface DisplayMessage {
   feedback?: MessageFeedback
 }
 
+const DOCUMENTS_KEY = '/documents'
+const DEFAULT_DOCUMENT_TITLE_PREFIXES = ['新对话', '新会话']
+const AUTO_DOCUMENT_TITLE_MAX_LENGTH = 30
+
 const toMessageFeedback = (value: number | undefined): MessageFeedback => {
   if (value === 1 || value === -1) return value
   return 0
+}
+
+const isDefaultDocumentTitle = (title: string | undefined) => {
+  const value = title?.trim()
+  return !!value && DEFAULT_DOCUMENT_TITLE_PREFIXES.some((prefix) => value.startsWith(prefix))
+}
+
+const buildAutoDocumentTitle = (text: string) => {
+  const firstParagraph = text
+    .trim()
+    .split(/\r?\n\s*\r?\n/)
+    .find((paragraph) => paragraph.trim())
+
+  const title = firstParagraph?.replace(/\s+/g, ' ').trim() ?? ''
+  if (!title) return ''
+
+  return title.length > AUTO_DOCUMENT_TITLE_MAX_LENGTH
+    ? `${title.slice(0, AUTO_DOCUMENT_TITLE_MAX_LENGTH)}…`
+    : title
 }
 
 export function Chat() {
@@ -40,7 +63,7 @@ export function Chat() {
   const { documentId } = useParams<{ documentId?: string }>()
   const docId = documentId ? Number(documentId) : null
   const { show } = useToast()
-  const { mutate } = useSWRConfig()
+  const { mutate, cache } = useSWRConfig()
 
   const docKey = docId ? `/documents/${docId}` : null
   const { data: docRes } = useSWR<ApiEnvelope<Document> | null>(
@@ -48,7 +71,9 @@ export function Chat() {
     () => (docId ? getDocument(docId) : null),
     { revalidateOnFocus: false },
   )
-  const doc = docRes?.data
+  const cachedDocuments = cache.get(DOCUMENTS_KEY) as { data?: ApiEnvelope<Document[]> } | undefined
+  const cachedDoc = cachedDocuments?.data?.data?.find((item) => item.id === docId)
+  const doc = docRes?.data ?? cachedDoc
 
   const historyKey = docId ? `/documents/${docId}/messages/proxy/history?order=asc&pageSize=200` : null
   const { data: historyRes, isLoading: historyLoading, mutate: mutateHistory } = useSWR<ApiEnvelope<HistoryMessage[]> | null>(
@@ -92,6 +117,12 @@ export function Chat() {
     }
     if (streaming) return
 
+    const shouldAutoRename =
+      !!doc &&
+      history.length === 0 &&
+      isDefaultDocumentTitle(doc.display_name)
+    const autoTitle = shouldAutoRename ? buildAutoDocumentTitle(text) : ''
+
     const userMsg: DisplayMessage = { key: `tmp-u-${Date.now()}`, role: 'user', content: text }
     const assistantKey = `tmp-a-${Date.now()}`
     const assistantMsg: DisplayMessage = {
@@ -112,6 +143,16 @@ export function Chat() {
     //   { role: 'user', content: text },
     // ]
     const prompt: ChatPromptItem[] = [{ role: 'user', content: text }]
+
+    if (autoTitle && autoTitle !== doc?.display_name) {
+      updateDocument(docId, { display_name: autoTitle })
+        .then(async () => {
+          await Promise.all([mutate(docKey), mutate(DOCUMENTS_KEY)])
+        })
+        .catch((err) => {
+          show(err instanceof Error ? err.message : '标题更新失败', 'error')
+        })
+    }
 
     let accumulated = ''
     const toolCalls: ToolCallTrace[] = []
