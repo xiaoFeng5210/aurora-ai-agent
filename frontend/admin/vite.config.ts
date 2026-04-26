@@ -117,11 +117,10 @@ export default defineConfig({
 		port: 3333,
 		// https://vitejs.dev/config/server-options#server-proxy
 		proxy: {
-			// "/api": {
-			// 	target: "http://191.255.255.123:8888",
-			// 	changeOrigin: true,
-			// 	rewrite: path => isDev ? path.replace(/^\/api/, "") : path,
-			// },
+			"/api/v1": {
+				target: "http://localhost:1119",
+				changeOrigin: true,
+			},
 		},
 	},
 	define: {

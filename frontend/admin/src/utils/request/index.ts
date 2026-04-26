@@ -20,6 +20,7 @@ const API_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 10000;
 const defaultConfig: Options = {
 	// The input argument cannot start with a slash / when using prefixUrl option.
 	prefixUrl: import.meta.env.VITE_API_BASE_URL,
+	credentials: "include",
 	timeout: API_TIMEOUT,
 	retry: {
 		// 当请求失败时，最多重试次数

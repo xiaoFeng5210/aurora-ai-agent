@@ -26,6 +26,7 @@ func SetupRouter() *gin.Engine {
 		apiv1.POST("/register", handler.CreateUser)
 
 		apiv1.POST("/login", handler.Login)
+		apiv1.POST("/logout", handler.Logout)
 		apiv1.POST("/chat/glm/stream/:document_id", middleware.Auth, handler.StreamChatWithGLMController)
 
 		apiv1.GET("/test_jwt", middleware.Auth, func(c *gin.Context) {
@@ -49,6 +50,7 @@ func SetupRouter() *gin.Engine {
 	documentGroup.POST("", handler.CreateDocument)
 	documentGroup.GET("/:id", handler.GetDocumentById)
 	documentGroup.POST("/query", handler.QueryDocument)
+	documentGroup.POST("/query-by-user", handler.QueryUserDocument)
 	documentGroup.PUT("/:id", handler.UpdateDocument)
 	documentGroup.DELETE("/:id", handler.DeleteDocument)
 	documentGroup.POST("/:id/messages", handler.CreateHistoryMessage)

@@ -7,6 +7,8 @@ interface ImportMetaEnv {
 	readonly VITE_BASE_HOME_PATH: string
 	readonly VITE_GLOB_APP_TITLE: string
 	readonly VITE_ROUTER_MODE: string
+	readonly VITE_APP_NAMESPACE: string
+	readonly VITE_API_TIMEOUT?: string
 }
 
 interface ImportMeta {

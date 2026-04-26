@@ -62,6 +62,23 @@ func QueryDocuments(uid int, filter dto.QueryDocumentDTO) ([]dto.DocumentRespons
 	return toDocumentResponses(documents), nil
 }
 
+func QueryDocumentsByUserID(filter dto.QueryUserDocumentDTO) ([]dto.DocumentResponse, error) {
+	page, pageSize := normalizePagination(filter.Page, filter.PageSize)
+
+	documents, err := database.QueryDocumentsByUserID(database.DocumentQueryFilter{
+		UserID:      filter.UserId,
+		DisplayName: strings.TrimSpace(filter.DisplayName),
+		FileName:    strings.TrimSpace(filter.FileName),
+		Page:        page,
+		PageSize:    pageSize,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return toDocumentResponses(documents), nil
+}
+
 func UpdateDocument(uid int, id int, req dto.UpdateDocumentRequest) (dto.DocumentResponse, error) {
 	updates, err := buildDocumentUpdates(req)
 	if err != nil {

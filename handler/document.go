@@ -76,6 +76,27 @@ func QueryDocument(ctx *gin.Context) {
 	})
 }
 
+func QueryUserDocument(ctx *gin.Context) {
+	var filter dto.QueryUserDocumentDTO
+	if err := ctx.ShouldBindJSON(&filter); err != nil {
+		vo.RespondError(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	documents, err := service.QueryDocumentsByUserID(filter)
+	if err != nil {
+		logger.Error("query user document failed", zap.Error(err))
+		vo.RespondWithServiceError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "success",
+		"data":    documents,
+	})
+}
+
 func UpdateDocument(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {

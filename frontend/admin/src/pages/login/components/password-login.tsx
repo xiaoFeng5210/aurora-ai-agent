@@ -1,7 +1,5 @@
 import type { LoginInfo } from "#src/api/user";
 
-import { BasicButton } from "#src/components/basic-button";
-import { PASSWORD_RULES, USERNAME_RULES } from "#src/constants/rules";
 import { useAuthStore } from "#src/store/auth";
 
 import {
@@ -11,15 +9,13 @@ import {
 	message,
 	Space,
 } from "antd";
-import { use, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
 
-import { FormModeContext } from "../form-mode-context";
-
 const FORM_INITIAL_VALUES: LoginInfo = {
-	username: "admin",
-	password: "123456789admin",
+	email: "admin@example.com",
+	password: "123456",
 };
 
 export function PasswordLogin() {
@@ -30,7 +26,6 @@ export function PasswordLogin() {
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 	const login = useAuthStore(state => state.login);
-	const { setFormMode } = use(FormModeContext);
 
 	const handleFinish = async (values: LoginInfo) => {
 		setLoading(true);
@@ -78,59 +73,33 @@ export function PasswordLogin() {
 				onFinish={handleFinish}
 			>
 				<Form.Item
-					label={t("authority.username")}
-					name="username"
-					rules={USERNAME_RULES(t)}
+					label="邮箱"
+					name="email"
+					rules={[
+						{ required: true, message: "请输入邮箱" },
+						{ type: "email", message: "邮箱格式不正确" },
+					]}
 				>
-					<Input placeholder={t("form.username.required")} />
+					<Input placeholder="admin@example.com" />
 				</Form.Item>
 
 				<Form.Item
 					label={t("authority.password")}
 					name="password"
-					rules={PASSWORD_RULES(t)}
+					rules={[{ required: true, message: "请输入密码" }]}
 				>
 					<Input.Password placeholder={t("form.password.required")} />
 				</Form.Item>
 
 				<Form.Item>
 					<div className="flex justify-between mb-5 -mt-1 text-sm">
-						<BasicButton
-							type="link"
-							className="p-0"
-							onPointerDown={() => {
-								setFormMode("codeLogin");
-							}}
-						>
-							{t("authority.codeLogin")}
-						</BasicButton>
-						<BasicButton
-							type="link"
-							className="p-0"
-							onPointerDown={() => {
-								setFormMode("forgotPassword");
-							}}
-						>
-							{t("authority.forgotPassword")}
-						</BasicButton>
+						<span className="text-colorTextSecondary">本地后台默认账号即可</span>
 					</div>
 					<Button block type="primary" htmlType="submit" loading={loading}>
 						{t("authority.login")}
 					</Button>
 				</Form.Item>
 
-				<div className="text-sm text-center">
-					{t("authority.noAccountYet")}
-					<BasicButton
-						type="link"
-						className="px-1"
-						onPointerDown={() => {
-							setFormMode("register");
-						}}
-					>
-						{t("authority.goToRegister")}
-					</BasicButton>
-				</div>
 			</Form>
 		</>
 	);
