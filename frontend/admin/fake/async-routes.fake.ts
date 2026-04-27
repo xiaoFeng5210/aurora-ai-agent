@@ -1,5 +1,5 @@
-import { about, access, home, outside, personalCenter, routeNest, system } from "#/src/router/extra-info";
 import { defineFakeRoute } from "vite-plugin-fake-server/client";
+import { about, access, home, outside, personalCenter, routeNest, system } from "#/src/router/extra-info";
 import { ADMIN_TOKEN } from "./constants";
 import { resultSuccess } from "./utils";
 
@@ -15,7 +15,7 @@ const systemManagementRouter = {
 		icon: "SettingOutlined",
 		title: "common.menu.system",
 		order: system,
-		roles: ["admin"],
+		// roles: ["admin"],
 	},
 	children: [
 		{
@@ -24,12 +24,11 @@ const systemManagementRouter = {
 			handle: {
 				icon: "UserOutlined",
 				title: "common.menu.user",
-				roles: ["admin"],
-				permissions: [
-					"permission:button:add",
-					"permission:button:update",
-					"permission:button:delete",
-				],
+				// permissions: [
+				// 	"permission:button:add",
+				// 	"permission:button:update",
+				// 	"permission:button:delete",
+				// ],
 			},
 		},
 		{

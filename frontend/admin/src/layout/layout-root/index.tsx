@@ -1,17 +1,17 @@
+import { useEffect } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+import { useTranslation } from "react-i18next";
+import { Outlet, useLocation, useMatches } from "react-router";
 import { PageError } from "#src/components/page-error";
 import { usePreferences } from "#src/hooks/use-preferences";
 import { AuthGuard } from "#src/router/guard";
 import { whiteRouteNames } from "#src/router/routes";
 import { useAuthStore } from "#src/store/auth";
+
 import { useUserStore } from "#src/store/user";
 import { isString } from "#src/utils/is";
 import { NProgress } from "#src/utils/progress";
 import { toggleHtmlClass } from "#src/utils/toggle-html-class";
-
-import { useEffect } from "react";
-import { ErrorBoundary } from "react-error-boundary";
-import { useTranslation } from "react-i18next";
-import { Outlet, useLocation, useMatches } from "react-router";
 
 /**
  * @zh 根布局组件
@@ -36,8 +36,8 @@ export default function LayoutRoot() {
 		 */
 		const authGuardDependencies = !whiteRouteNames.includes(location.pathname) && isLogin && !isAuthorized;
 		if (!authGuardDependencies) {
-			const currentRoute = matches[matches.length - 1];
-			const documentTitle = currentRoute.handle?.title as React.ReactElement<{ children: string }> | string;
+			const currentRoute = matches.at(-1);
+			const documentTitle = currentRoute?.handle?.title as React.ReactElement<{ children: string }> | string;
 			const newTitle = isString(documentTitle) ? documentTitle : documentTitle?.props?.children;
 			document.title = t(newTitle) || document.title;
 		}

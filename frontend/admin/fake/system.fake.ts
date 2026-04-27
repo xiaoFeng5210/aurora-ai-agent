@@ -1,6 +1,6 @@
-import { system } from "#/src/router/extra-info";
-
 import { defineFakeRoute } from "vite-plugin-fake-server/client";
+
+import { system } from "#/src/router/extra-info";
 import { resultSuccess } from "./utils";
 
 const systemMenu = [

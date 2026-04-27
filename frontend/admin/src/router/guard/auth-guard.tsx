@@ -80,6 +80,8 @@ export function AuthGuard({ children }: AuthGuardProps) {
 
 			const results = await Promise.allSettled(promises);
 			const [userInfoResult, routeResult] = results;
+			// eslint-disable-next-line no-console
+			console.log("[DEBUG auth-guard] flags:", { enableBackendAccess, enableFrontendAceess, isSendRoutingRequest }, "userInfoResult:", userInfoResult, "routeResult:", routeResult, "accessRoutes(static+dynamic from modules):", accessRoutes);
 			const routes = [];
 			const latestRoles = [];
 			/**

@@ -40,6 +40,8 @@ export const useAccessStore = create<AccessState & AccessAction>(set => ({
 		const newRoutes = ascending([...baseRoutes, ...routes]);
 		/* 添加新的路由到根路由 */
 		router.patchRoutes(ROOT_ROUTE_ID, routes);
+		// eslint-disable-next-line no-console
+		console.log("[DEBUG setAccessStore] dynamic routes:", routes, "merged routeList:", newRoutes);
 		const flatRouteList = flattenRoutes(newRoutes);
 		const wholeMenus = generateMenuItemsFromRoutes(newRoutes);
 		const newState = {

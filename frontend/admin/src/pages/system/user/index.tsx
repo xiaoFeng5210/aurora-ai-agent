@@ -1,9 +1,7 @@
-import type { CreateUserPayload, DocumentRecord, UserRecord } from "#src/api/user";
 import type { ColumnsType } from "antd/es/table";
 import type { Dayjs } from "dayjs";
+import type { CreateUserPayload, DocumentRecord, UserRecord } from "#src/api/user";
 
-import { createUser, fetchUserDocuments, fetchUsers } from "#src/api/user";
-import { BasicContent } from "#src/components/basic-content";
 import {
 	FileTextOutlined,
 	PlusOutlined,
@@ -26,6 +24,8 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 import { useEffect, useMemo, useState } from "react";
+import { createUser, fetchUserDocuments, fetchUsers } from "#src/api/user";
+import { BasicContent } from "#src/components/basic-content";
 
 const { Text, Title } = Typography;
 
