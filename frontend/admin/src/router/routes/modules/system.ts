@@ -1,10 +1,12 @@
 import type { AppRouteRecordRaw } from "#src/router/types";
-import ContainerLayout from "#src/layout/container-layout";
-import { system } from "#src/router/extra-info";
 
 import { lazy } from "react";
 
+import ContainerLayout from "#src/layout/container-layout";
+import { system } from "#src/router/extra-info";
+
 const User = lazy(() => import("#src/pages/system/user"));
+const BaiduNetworkdisk = lazy(() => import("#src/pages/system/baidu-networkdisk"));
 
 const routes: AppRouteRecordRaw[] = [
 	{
@@ -23,6 +25,15 @@ const routes: AppRouteRecordRaw[] = [
 				handle: {
 					icon: "UserOutlined",
 					title: "common.menu.user",
+					roles: ["admin"],
+				},
+			},
+			{
+				path: "/system/baidu-networkdisk",
+				Component: BaiduNetworkdisk,
+				handle: {
+					icon: "CloudOutlined",
+					title: "common.menu.baiduNetworkdisk",
 					roles: ["admin"],
 				},
 			},

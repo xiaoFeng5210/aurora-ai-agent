@@ -64,6 +64,7 @@ func SetupRouter() *gin.Engine {
 	baiduNetworkdiskGroup := apiv1.Group("/file")
 	baiduNetworkdiskGroup.Use(middleware.Auth)
 	baiduNetworkdiskGroup.GET("/baidu_networkdisk/token", handler.GetBaiduNetworkdiskToken)
+	baiduNetworkdiskGroup.POST("/baidu_networkdisk/token", handler.GetBaiduNetworkdiskToken)
 	baiduNetworkdiskGroup.GET("/baidu_networkdisk/capacity", handler.GetBaiduNetworkdiskCapacity)
 	baiduNetworkdiskGroup.GET("/baidu_networkdisk/file_list", handler.GetBaiduNetworkdiskFileList)
 	baiduNetworkdiskGroup.POST("/baidu_networkdisk/upload", handler.GMBaiduNetworkdiskUpload)

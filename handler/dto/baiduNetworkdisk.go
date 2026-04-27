@@ -33,3 +33,7 @@ type DeleteBaiduNetworkdiskFileRequest struct {
 	Paths []string `json:"paths"`
 	Async int      `json:"async"`
 }
+
+type ExchangeBaiduNetworkdiskTokenRequest struct {
+	Code string `json:"code" binding:"required"`
+}

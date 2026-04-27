@@ -3,6 +3,7 @@ package main
 import (
 	"aurora-agent/database"
 	qdrant_db "aurora-agent/database/qdrant"
+	redis_db "aurora-agent/database/redis"
 	"aurora-agent/router"
 	utils "aurora-agent/utils"
 
@@ -13,6 +14,9 @@ import (
 func init() {
 	godotenv.Load()
 	database.DBConnect()
+	if _, err := redis_db.RedisConnect(); err != nil {
+		panic(err)
+	}
 	qdrant_db.QdrantConnect()
 	err := qdrant_db.CreateRagCollection()
 	if err != nil {

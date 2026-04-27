@@ -16,7 +16,7 @@ import (
 func GMBaiduNetworkdiskUpload(ctx *gin.Context) {
 	filename := ctx.PostForm("filename")
 	isdir := ctx.PostForm("isdir")
-  
+
 	fh, err := ctx.FormFile("file")
 	fileParam, err := fh.Open()
 
@@ -48,17 +48,23 @@ func GetBaiduNetworkdiskCapacity(ctx *gin.Context) {
 }
 
 func GetBaiduNetworkdiskToken(ctx *gin.Context) {
-	resp, err := service.GetBaiduNetworkdiskToken()
+	code := ctx.Query("code")
+	if code == "" {
+		var req dto.ExchangeBaiduNetworkdiskTokenRequest
+		if err := ctx.ShouldBindJSON(&req); err != nil {
+			vo.RespondError(ctx, http.StatusBadRequest, err)
+			return
+		}
+		code = req.Code
+	}
+
+	resp, err := service.GetBaiduNetworkdiskToken(code)
 	if err != nil {
 		vo.RespondError(ctx, http.StatusInternalServerError, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"code":    0,
-		"message": "success",
-		"data":    *resp,
-	})
+	vo.RespondSuccess(ctx, resp)
 }
 
 func GetBaiduNetworkdiskFileList(ctx *gin.Context) {

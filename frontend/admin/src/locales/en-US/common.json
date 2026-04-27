@@ -26,6 +26,7 @@
 		"exceptionUnknownComponent": "Unknown Component",
 		"system": "System Management",
 		"user": "User Management",
+		"baiduNetworkdisk": "Baidu Netdisk Token",
 		"role": "Role Management",
 		"menu": "Menu Management",
 		"dept": "Department Management",

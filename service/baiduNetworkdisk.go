@@ -1,9 +1,11 @@
 package service
 
 import (
+	"aurora-agent/database/redis"
 	"aurora-agent/handler/vo"
 	"aurora-agent/utils"
 	"bytes"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -16,22 +18,25 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"crypto/md5"
 
+	goredis "github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
 var (
-	baiduTokenResponse vo.BaiduTokenResponse
-	baseUrl            = "https://pan.baidu.com"
-	headers            = map[string]string{
+	baseUrl = "https://pan.baidu.com"
+	headers = map[string]string{
 		"User-Agent": "pan.baidu.com",
 	}
 	capacityUnit float64 = 1024 * 1024 * 1024
 )
 
 const baiduNetworkdiskAppRoot = "/apps/aurora-ai-agent知识库"
+const baiduNetworkdiskTokenKey = "baidu_networkdisk:token"
+const baiduNetworkdiskTokenTTL = 21 * 24 * time.Hour
 
 type baiduNetworkdiskFileManagerItem struct {
 	Path string `json:"path"`
@@ -421,7 +426,10 @@ func GetBaiduNetworkdiskFileList(dir string) (*vo.BaiduNetworkdiskFileListRespon
 
 // 获取百度网盘容量
 func GetBaiduNetworkdiskCapacity() (*vo.BaiduNetworkdiskCapacityResponse, error) {
-	access_token, _ := GetBaiduNetworkdiskTokenFromRedis()
+	access_token, err := GetBaiduNetworkdiskTokenFromRedis()
+	if err != nil {
+		return nil, err
+	}
 	checkfree := 1
 	url := baseUrl + "/api/quota" + fmt.Sprintf("?access_token=%s&checkfree=%d", access_token, checkfree)
 	resp, err := http.Get(url)
@@ -448,27 +456,52 @@ func GetBaiduNetworkdiskCapacity() (*vo.BaiduNetworkdiskCapacityResponse, error)
 
 // 获取存着的百度网盘token
 func GetBaiduNetworkdiskTokenFromRedis() (string, error) {
-	// TODO
-	return "121.fd4aaafe9c485ee574ede6d425b7dc44.Y3yDmZzKQMW56XOwD8Sg3yXuEci7UV5_aFOPY--.mq6tWg", nil
+	client := redis.Client()
+	if client == nil {
+		return "", errors.New("redis client is not initialized")
+	}
+
+	value, err := client.Get(context.Background(), baiduNetworkdiskTokenKey).Result()
+	if err != nil {
+		if errors.Is(err, goredis.Nil) {
+			return "", errors.New("没有百度网盘token了")
+		}
+		return "", err
+	}
+
+	var token vo.BaiduTokenResponse
+	if err = json.Unmarshal([]byte(value), &token); err == nil && token.AccessToken != "" {
+		return token.AccessToken, nil
+	}
+
+	if strings.TrimSpace(value) == "" {
+		return "", errors.New("没有百度网盘token了")
+	}
+
+	return value, nil
 }
 
-func GetBaiduNetworkdiskToken() (*vo.BaiduTokenResponse, error) {
+func GetBaiduNetworkdiskToken(code string) (*vo.BaiduTokenResponse, error) {
+	code = strings.TrimSpace(code)
+	if code == "" {
+		return nil, errors.New("code is required")
+	}
+
 	clientId := os.Getenv("BAIDU_NETWORKDISK_CLIENT_ID")
-	code := "30cbd944cc1706524de096e358d7c138"
 	clientSecret := os.Getenv("BAIDU_NETWORKDISK_CLIENT_SECRET")
-	url := fmt.Sprintf(`
-	https://openapi.baidu.com/oauth/2.0/token?
-grant_type=authorization_code&
-code=%s&
-client_id=%s&
-client_secret=%s&
-redirect_uri=oob
-`, code, clientId, clientSecret)
+	if clientId == "" || clientSecret == "" {
+		return nil, errors.New("baidu networkdisk client id or client secret is not configured")
+	}
 
-	url = strings.ReplaceAll(url, "\n", "")
-	url = strings.ReplaceAll(url, "\t", "")
+	query := url.Values{}
+	query.Set("grant_type", "authorization_code")
+	query.Set("code", code)
+	query.Set("client_id", clientId)
+	query.Set("client_secret", clientSecret)
+	query.Set("redirect_uri", "oob")
 
-	resp, err := http.Get(strings.TrimSpace(url))
+	tokenURL := "https://openapi.baidu.com/oauth/2.0/token?" + query.Encode()
+	resp, err := http.Get(tokenURL)
 	if err != nil {
 		return nil, err
 	}
@@ -480,10 +513,34 @@ redirect_uri=oob
 		return nil, err
 	}
 
-	err = json.Unmarshal(body, &baiduTokenResponse)
-	if err != nil {
+	var result vo.BaiduTokenResponse
+	if err = json.Unmarshal(body, &result); err != nil {
+		return nil, err
+	}
+	if result.Error != "" {
+		return nil, fmt.Errorf("baidu networkdisk token exchange failed: %s", result.ErrorDescription)
+	}
+	if result.AccessToken == "" {
+		return nil, errors.New("baidu networkdisk token response missing access_token")
+	}
+
+	if err = saveBaiduNetworkdiskTokenToRedis(&result); err != nil {
 		return nil, err
 	}
 
-	return &baiduTokenResponse, nil
+	return &result, nil
+}
+
+func saveBaiduNetworkdiskTokenToRedis(token *vo.BaiduTokenResponse) error {
+	client := redis.Client()
+	if client == nil {
+		return errors.New("redis client is not initialized")
+	}
+
+	value, err := json.Marshal(token)
+	if err != nil {
+		return err
+	}
+
+	return client.Set(context.Background(), baiduNetworkdiskTokenKey, string(value), baiduNetworkdiskTokenTTL).Err()
 }

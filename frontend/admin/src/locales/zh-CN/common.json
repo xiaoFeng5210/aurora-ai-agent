@@ -26,6 +26,7 @@
 		"exceptionUnknownComponent": "未知组件",
 		"system": "系统管理",
 		"user": "用户管理",
+		"baiduNetworkdisk": "百度网盘 Token",
 		"role": "角色管理",
 		"menu": "菜单管理",
 		"dept": "部门管理",
