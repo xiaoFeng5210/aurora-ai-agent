@@ -35,6 +35,5 @@ func QdrantConnect() {
 		panic(err)
 	}
 	qdrantClient = client
-	fmt.Println("Qdrant client created successfully")
 	})
 }
