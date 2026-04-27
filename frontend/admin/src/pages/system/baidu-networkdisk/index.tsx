@@ -2,6 +2,7 @@ import type { BaiduTokenResponse } from "#src/api/baidu-networkdisk";
 
 import {
 	CloudOutlined,
+	ExportOutlined,
 	KeyOutlined,
 	SaveOutlined,
 } from "@ant-design/icons";
@@ -22,6 +23,8 @@ import { BasicContent } from "#src/components/basic-content";
 
 const { Text, Title } = Typography;
 
+const baiduAuthorizeUrl = "https://openapi.baidu.com/oauth/2.0/authorize?response_type=code&client_id=AhdQdE8PIYnUYSFKOMm7LBwIbpqaZpCE&redirect_uri=oob&scope=basic,netdisk";
+
 interface TokenForm {
 	code: string
 }
@@ -41,6 +44,10 @@ export default function BaiduNetworkdisk() {
 	const [saving, setSaving] = useState(false);
 	const [token, setToken] = useState<BaiduTokenResponse>();
 
+	const openAuthorizePage = () => {
+		window.open(baiduAuthorizeUrl, "_blank", "noopener,noreferrer");
+	};
+
 	const handleSubmit = async () => {
 		const values = await form.validateFields();
 		setSaving(true);
@@ -59,14 +66,29 @@ export default function BaiduNetworkdisk() {
 		<BasicContent className="min-h-full">
 			<div className="flex max-w-4xl flex-col gap-4">
 				<div>
-					<Title level={3} className="!mb-1">百度网盘 Token</Title>
-					<Text type="secondary">提交授权 code，后台会换取 token 并写入 Redis。</Text>
+					<Title level={3} className="!mb-1">百度网盘授权</Title>
+					<Text type="secondary">先打开百度授权页获取 code，再在这里换取 token 并写入 Redis。</Text>
 				</div>
 
 				<section className="rounded-md border border-colorBorder bg-colorBgContainer p-4">
+					<div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+						<Space>
+							<CloudOutlined />
+							<Text strong>获取授权 code</Text>
+						</Space>
+						<Button icon={<ExportOutlined />} onClick={openAuthorizePage}>
+							打开授权页
+						</Button>
+					</div>
+					<Alert
+						type="info"
+						showIcon
+						className="mb-4"
+						message="授权页会在新窗口打开，复制页面返回的 code 后粘贴到下方输入框。"
+					/>
 					<div className="mb-4 flex items-center gap-2">
 						<KeyOutlined />
-						<Text strong>授权 code</Text>
+						<Text strong>填写 code 并获取 token</Text>
 					</div>
 					<Form form={form} layout="vertical" onFinish={handleSubmit}>
 						<Form.Item
@@ -84,7 +106,7 @@ export default function BaiduNetworkdisk() {
 						</Form.Item>
 						<Form.Item className="!mb-0">
 							<Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={saving}>
-								保存 token
+								获取 token
 							</Button>
 						</Form.Item>
 					</Form>

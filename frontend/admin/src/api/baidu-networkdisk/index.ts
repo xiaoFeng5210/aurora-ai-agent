@@ -21,7 +21,7 @@ export interface BaiduTokenResponse {
 
 export function exchangeBaiduNetworkdiskToken(code: string) {
 	return request
-		.post("file/baidu_networkdisk/token", { json: { code } })
+		.get("file/baidu_networkdisk/token", { searchParams: { code } })
 		.json<GoApiResponse<BaiduTokenResponse>>()
 		.then(response => getResponseData(response));
 }

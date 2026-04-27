@@ -159,7 +159,7 @@ export default function User() {
 			dataIndex: "display_name",
 			key: "display_name",
 			render: (value: string, record: DocumentRecord) => (
-				<Space direction="vertical" size={0}>
+				<Space orientation="vertical" size={0}>
 					<Text strong>{value}</Text>
 					<Text type="secondary" className="text-xs">{record.file_name || "无文件名"}</Text>
 				</Space>
@@ -211,7 +211,7 @@ export default function User() {
 			<div className="flex flex-col gap-4">
 				<div className="flex flex-wrap items-center justify-between gap-3">
 					<div>
-						<Title level={3} className="!mb-1">用户管理</Title>
+						<Title level={3} className="mb-1!">用户管理</Title>
 						<Text type="secondary">创建用户，选择用户后查看对应 documents。</Text>
 					</div>
 					<Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
