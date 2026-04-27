@@ -16,7 +16,6 @@ const routes: AppRouteRecordRaw[] = [
 			icon: "SettingOutlined",
 			title: "common.menu.system",
 			order: system,
-			roles: ["admin"],
 		},
 		children: [
 			{
@@ -25,7 +24,6 @@ const routes: AppRouteRecordRaw[] = [
 				handle: {
 					icon: "UserOutlined",
 					title: "common.menu.user",
-					roles: ["admin"],
 				},
 			},
 			{
@@ -34,7 +32,6 @@ const routes: AppRouteRecordRaw[] = [
 				handle: {
 					icon: "CloudOutlined",
 					title: "common.menu.baiduNetworkdisk",
-					roles: ["admin"],
 				},
 			},
 		],

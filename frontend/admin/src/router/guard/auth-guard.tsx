@@ -1,8 +1,7 @@
 import { fetchAsyncRoutes } from "#src/api/user";
-import { useCurrentRoute } from "#src/hooks/use-current-route";
 import { hideLoading } from "#src/plugins/hide-loading";
 import { setupLoading } from "#src/plugins/loading";
-import { exception403Path, exception404Path, exception500Path, loginPath } from "#src/router/extra-info";
+import { exception404Path, exception500Path, loginPath } from "#src/router/extra-info";
 import { accessRoutes, whiteRouteNames } from "#src/router/routes";
 import { isSendRoutingRequest } from "#src/router/routes/config";
 import { generateRoutesFromBackend } from "#src/router/utils/generate-routes-from-backend";
@@ -35,12 +34,10 @@ interface AuthGuardProps {
 export function AuthGuard({ children }: AuthGuardProps) {
 	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
-	const currentRoute = useCurrentRoute();
 	const { pathname, search } = useLocation();
 	const isLogin = useAuthStore(state => Boolean(state.token));
 	const isAuthorized = useUserStore(state => Boolean(state.id));
 	const getUserInfo = useUserStore(state => state.getUserInfo);
-	const userRoles = useUserStore(state => state.roles);
 	const { setAccessStore, isAccessChecked, routeList } = useAccessStore();
 	const { enableBackendAccess, enableFrontendAceess } = usePreferencesStore(state => state);
 
@@ -80,8 +77,6 @@ export function AuthGuard({ children }: AuthGuardProps) {
 
 			const results = await Promise.allSettled(promises);
 			const [userInfoResult, routeResult] = results;
-			// eslint-disable-next-line no-console
-			console.log("[DEBUG auth-guard] flags:", { enableBackendAccess, enableFrontendAceess, isSendRoutingRequest }, "userInfoResult:", userInfoResult, "routeResult:", routeResult, "accessRoutes(static+dynamic from modules):", accessRoutes);
 			const routes = [];
 			const latestRoles = [];
 			/**
@@ -276,62 +271,19 @@ export function AuthGuard({ children }: AuthGuardProps) {
 
 	/* --------------- End ------------------ */
 
-	/**
-	 * @zh 路由权限校验逻辑
-	 * @en Route permission verification logic
-	 */
-	const routeRoles = currentRoute?.handle?.roles;
-	const ignoreAccess = currentRoute?.handle?.ignoreAccess;
-
-	/**
-	 * @zh 忽略权限校验
-	 * @en Ignore permission verification
-	 */
-	if (ignoreAccess === true) {
-		return children;
-	}
-
 	const matches = matchRoutes(
 		routeList,
 		pathname,
-		/**
-		 * @zh pathname 返回的是相对 import.meta.env.BASE_URL 的路径，所以不需要指定第三个参数 basename 了
-		 * @en pathname returns the path relative to import.meta.env.BASE_URL, so there is no need to specify the third parameter basename
-		 */
 	) ?? [];
 
 	const hasChildren = matches[matches.length - 1]?.route?.children?.filter(item => !item.index)?.length;
 	/**
 	 * @zh 如果当前路由有子路由，则跳转到 404 页面
-	 * @en If the current route has sub-routes, jump to the 404 page
 	 */
 	if (hasChildren && hasChildren > 0) {
 		return (
 			<Navigate
 				to={exception404Path}
-				replace
-			/>
-		);
-	}
-
-	/**
-	 * @zh 角色权限校验
-	 * @en Role permission verification
-	 */
-	const hasRoutePermission = userRoles.some(role => routeRoles?.includes(role));
-	/**
-	 * @zh 权限校验逻辑：
-	 * 1. 如果路由上没有携带 roles，视为无权限路由，等同于 ignoreAccess 为 true
-	 * 2. 未通过权限校验的路由，取消当前路由导航，并转到 403 页面
-	 *
-	 * @en Role permission verification logic:
-	 * 1. If there is no role on the route, it is considered as a permissionless route, equivalent to ignoreAccess being true
-	 * 2. For routes that do not pass permission verification, cancel the current route navigation and jump to the 403 page
-	 */
-	if (routeRoles && routeRoles.length && !hasRoutePermission) {
-		return (
-			<Navigate
-				to={exception403Path}
 				replace
 			/>
 		);
