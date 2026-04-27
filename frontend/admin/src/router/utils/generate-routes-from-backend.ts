@@ -1,8 +1,8 @@
 import type { AppRouteRecordRaw } from "#src/router/types";
-import { Iframe } from "#src/components/iframe";
-import ContainerLayout from "#src/layout/container-layout";
 import { lazy } from "react";
 import { Outlet } from "react-router";
+import { Iframe } from "#src/components/iframe";
+import ContainerLayout from "#src/layout/container-layout";
 import { addRouteIdByPath } from "./add-route-id-by-path";
 
 const ExceptionUnknownComponent = lazy(() => import("#src/pages/exception/unknown-component"));
@@ -22,12 +22,15 @@ const pageModules = import.meta.glob([
  * @en Get component path based on route
  */
 export function getComponentPathByRoute(route: AppRouteRecordRaw & { component?: string }) {
-	if (route.component) {
-		return `/src/pages${route.component}`;
+	const componentPath = route.component ?? `${route.path}/index.tsx`;
+
+	// 后端既可能返回 "/system/user/index.tsx"，也可能直接返回完整路径 "/src/pages/system/user/index.tsx"
+	// 这里统一归一化，避免前缀被重复拼接导致匹配失败
+	if (componentPath.startsWith("/src/pages/")) {
+		return componentPath;
 	}
-	else {
-		return `/src/pages${route.path}/index.tsx`;
-	}
+
+	return `/src/pages${componentPath.startsWith("/") ? componentPath : `/${componentPath}`}`;
 }
 
 /**
