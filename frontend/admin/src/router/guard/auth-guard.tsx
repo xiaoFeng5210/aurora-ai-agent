@@ -1,14 +1,12 @@
-import { fetchAsyncRoutes } from "#src/api/user";
+import type { UserInfoType } from "#src/api/user/types";
+
 import { hideLoading } from "#src/plugins/hide-loading";
 import { setupLoading } from "#src/plugins/loading";
 import { exception404Path, exception500Path, loginPath } from "#src/router/extra-info";
 import { accessRoutes, whiteRouteNames } from "#src/router/routes";
-import { isSendRoutingRequest } from "#src/router/routes/config";
-import { generateRoutesFromBackend } from "#src/router/utils/generate-routes-from-backend";
 import { generateRoutesByFrontend } from "#src/router/utils/generate-routes-from-frontend";
 import { useAccessStore } from "#src/store/access";
 import { useAuthStore } from "#src/store/auth";
-import { usePreferencesStore } from "#src/store/preferences";
 import { useUserStore } from "#src/store/user";
 
 import { useEffect } from "react";
@@ -39,13 +37,12 @@ export function AuthGuard({ children }: AuthGuardProps) {
 	const isAuthorized = useUserStore(state => Boolean(state.id));
 	const getUserInfo = useUserStore(state => state.getUserInfo);
 	const { setAccessStore, isAccessChecked, routeList } = useAccessStore();
-	const { enableBackendAccess, enableFrontendAceess } = usePreferencesStore(state => state);
 
 	const isPathInNoLoginWhiteList = noLoginWhiteList.includes(pathname);
 
 	/**
-	 * @zh 异步获取用户信息和路由配置
-	 * @en Fetch user information and route configuration asynchronously
+	 * @zh 异步获取用户信息，并使用前端本地路由生成菜单和路由表。
+	 * @en Fetch user information and use frontend local routes to generate menus and routes.
 	 */
 	useEffect(() => {
 		async function fetchUserInfoAndRoutes() {
@@ -55,30 +52,16 @@ export function AuthGuard({ children }: AuthGuardProps) {
 			 */
 			setupLoading();
 
-			/**
-			 * @zh 初始化一个空数组来存放 Promise 对象
-			 * @en Initialize an empty array to hold Promise objects
-			 */
-			const promises = [];
+			type UserInfoResult =
+				| { status: "fulfilled", value: UserInfoType }
+				| { status: "rejected", reason: any };
 
-			/**
-			 * @zh 获取用户信息
-			 * @en Fetch user information
-			 */
-			promises.push(getUserInfo());
+			const userInfoResult: UserInfoResult = await Promise.resolve(getUserInfo()).then(
+				value => ({ status: "fulfilled", value }),
+				reason => ({ status: "rejected", reason }),
+			);
 
-			/**
-			 * @zh 启用了后端路由，且路由从单独接口中获取，则发起请求
-			 * @en If backend routing is enabled and the route is obtained from a separate interface, then initiate a request
-			 */
-			if (enableBackendAccess && isSendRoutingRequest) {
-				promises.push(fetchAsyncRoutes());
-			}
-
-			const results = await Promise.allSettled(promises);
-			const [userInfoResult, routeResult] = results;
-			const routes = [];
-			const latestRoles = [];
+			const latestRoles: string[] = [];
 			/**
 			 * @zh 从用户接口中获取角色信息
 			 * @en Fetch role information from the user interface
@@ -86,39 +69,17 @@ export function AuthGuard({ children }: AuthGuardProps) {
 			if (userInfoResult.status === "fulfilled" && "roles" in userInfoResult.value) {
 				latestRoles.push(...userInfoResult.value?.roles ?? []);
 			}
-			/**
-			 * @zh 启用了后端路由且路由从用户接口中获取
-			 * @en If backend routing is enabled and the route is obtained from the user interface
-			 */
-			if (enableBackendAccess && !isSendRoutingRequest && userInfoResult.status === "fulfilled" && "menus" in userInfoResult.value) {
-				routes.push(...await generateRoutesFromBackend(userInfoResult.value?.menus ?? []));
-			}
-			/**
-			 * @zh 启用了后端路由且路由从单独接口中获取
-			 * @en If backend routing is enabled and the route is obtained from a separate interface
-			 */
-			if (enableBackendAccess && isSendRoutingRequest && routeResult.status === "fulfilled" && "result" in routeResult.value) {
-				routes.push(...await generateRoutesFromBackend(routeResult.value?.result ?? []));
-			}
 
-			/**
-			 * @zh 启用了前端路由
-			 * @en If frontend routing is enabled
-			 */
-			if (enableFrontendAceess) {
-				routes.push(...generateRoutesByFrontend(accessRoutes, latestRoles));
-			}
-
-			const uniqueRoutes = removeDuplicateRoutes(routes);
+			const frontendRoutes = generateRoutesByFrontend(accessRoutes, latestRoles);
+			const uniqueRoutes = removeDuplicateRoutes(frontendRoutes);
 			setAccessStore(uniqueRoutes);
 
-			const hasError = results.some(result => result.status === "rejected");
 			/**
-			 * @zh 网络请求失败，跳转到 500 页面
-			 * @en Network request failed, redirect to 500 page
+			 * @zh 用户信息接口异常，跳转到 500 页面；401 交给登录态逻辑处理。
+			 * @en Redirect to 500 when user info request fails; leave 401 to auth logic.
 			 */
-			if (hasError) {
-				const unAuthorized = results.some((result: any) => result.reason.response.status === 401);
+			if (userInfoResult.status === "rejected") {
+				const unAuthorized = userInfoResult.reason?.response?.status === 401;
 				if (!unAuthorized) {
 					return navigate(exception500Path);
 				}
@@ -162,7 +123,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
 		if (!whiteRouteNames.includes(pathname) && isLogin && !isAuthorized) {
 			fetchUserInfoAndRoutes();
 		}
-	}, [pathname, isLogin, isAuthorized]);
+	}, [pathname, search, isLogin, isAuthorized, getUserInfo, setAccessStore, navigate]);
 
 	/**
 	 * @zh 路由白名单
@@ -277,6 +238,21 @@ export function AuthGuard({ children }: AuthGuardProps) {
 	) ?? [];
 
 	const hasChildren = matches[matches.length - 1]?.route?.children?.filter(item => !item.index)?.length;
+	const isMatchedByRouteList = matches.length > 0 && matches[matches.length - 1]?.route?.path !== "*";
+
+	/**
+	 * @zh 如果当前路径没有匹配到任何业务路由，则优先跳转到首页，避免后端未返回路由时直接落到 404
+	 * @en If the current path does not match any business route, redirect to the home page first to avoid landing on 404 when the backend does not return routes
+	 */
+	if (!isMatchedByRouteList) {
+		return (
+			<Navigate
+				to={import.meta.env.VITE_BASE_HOME_PATH}
+				replace
+			/>
+		);
+	}
+
 	/**
 	 * @zh 如果当前路由有子路由，则跳转到 404 页面
 	 */

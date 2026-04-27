@@ -44,7 +44,7 @@ export function GlobalSpin({ children, className }: GlobalSpinProps) {
 		<Spin
 			delay={300}
 			spinning={loading}
-			wrapperClassName={cn(classes.rootSpin, className)}
+			classNames={{ root: cn(classes.rootSpin, className) }}
 		>
 			{children}
 		</Spin>

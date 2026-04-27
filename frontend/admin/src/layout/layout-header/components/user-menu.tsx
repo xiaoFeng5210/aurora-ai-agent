@@ -19,6 +19,7 @@ export function UserMenu({ ...restProps }: ButtonProps) {
 	const navigate = useNavigate();
 	const { t } = useTranslation();
 	const avatar = useUserStore(state => state.avatar);
+	const avatarSrc = avatar?.trim() ? avatar : undefined;
 	const logout = useAuthStore(state => state.logout);
 
 	const onClick: MenuProps["onClick"] = async ({ key }) => {
@@ -67,7 +68,7 @@ export function UserMenu({ ...restProps }: ButtonProps) {
 				{...restProps}
 				className={cn(restProps.className, "rounded-full px-1")}
 			>
-				<Avatar src={avatar} />
+				<Avatar src={avatarSrc} icon={<RiAccountCircleLine />} />
 			</BasicButton>
 		</Dropdown>
 	);

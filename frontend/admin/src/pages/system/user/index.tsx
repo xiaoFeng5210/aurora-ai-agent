@@ -65,11 +65,11 @@ export default function User() {
 
 	const selectedUserId = selectedUser?.id;
 
-	const loadUsers = async (values: UserSearchForm = searchForm.getFieldsValue()) => {
+	const loadUsers = async (values?: UserSearchForm) => {
 		setUsersLoading(true);
 		try {
 			const nextUsers = await fetchUsers({
-				...values,
+				...(values ?? {}),
 				page: 1,
 				page_size: 100,
 			});
@@ -88,7 +88,7 @@ export default function User() {
 
 	const loadDocuments = async (
 		userId = selectedUserId,
-		values: DocumentSearchForm = documentSearchForm.getFieldsValue(),
+		values?: DocumentSearchForm,
 	) => {
 		if (!userId) {
 			setDocuments([]);
@@ -99,7 +99,7 @@ export default function User() {
 		try {
 			const nextDocuments = await fetchUserDocuments({
 				user_id: userId,
-				...values,
+				...(values ?? {}),
 				page: 1,
 				page_size: 100,
 			});
@@ -124,7 +124,7 @@ export default function User() {
 			dataIndex: "username",
 			key: "username",
 			render: (value: string, record: UserRecord) => (
-				<Space direction="vertical" size={0}>
+				<Space orientation="vertical" size={0}>
 					<Text strong>{value}</Text>
 					<Text type="secondary" className="text-xs">{record.email}</Text>
 				</Space>

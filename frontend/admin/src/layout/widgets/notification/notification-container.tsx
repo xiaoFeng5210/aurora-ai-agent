@@ -10,11 +10,26 @@ export function NotificationContainer({ ...restProps }: ButtonProps) {
 	const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
 	useEffect(() => {
-		fetchNotifications().then((res) => {
-			setNotifications(
-				Array.from({ length: 20 }).flatMap(() => res.result),
-			);
-		});
+		let ignore = false;
+
+		fetchNotifications()
+			.then((res) => {
+				if (ignore) {
+					return;
+				}
+				setNotifications(
+					Array.from({ length: 20 }).flatMap(() => res.result ?? []),
+				);
+			})
+			.catch(() => {
+				if (!ignore) {
+					setNotifications([]);
+				}
+			});
+
+		return () => {
+			ignore = true;
+		};
 	}, []);
 
 	return (

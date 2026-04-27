@@ -3,7 +3,6 @@ import type { AppRouteRecordRaw } from "#src/router/types";
 
 import { rootRoute, router } from "#src/router";
 import { ROOT_ROUTE_ID } from "#src/router/constants";
-import { baseRoutes } from "#src/router/routes";
 import { ascending } from "#src/router/utils/ascending";
 import { flattenRoutes } from "#src/router/utils/flatten-routes";
 import { generateMenuItemsFromRoutes } from "#src/router/utils/generate-menu-items-from-routes";
@@ -22,9 +21,9 @@ interface AccessState {
 }
 
 const initialState: AccessState = {
-	wholeMenus: generateMenuItemsFromRoutes(baseRoutes),
-	routeList: baseRoutes,
-	flatRouteList: flattenRoutes(baseRoutes),
+	wholeMenus: [],
+	routeList: [],
+	flatRouteList: {},
 	isAccessChecked: false,
 };
 
@@ -37,7 +36,7 @@ export const useAccessStore = create<AccessState & AccessAction>(set => ({
 	...initialState,
 
 	setAccessStore: (routes) => {
-		const newRoutes = ascending([...baseRoutes, ...routes]);
+		const newRoutes = ascending(routes);
 		/* 添加新的路由到根路由 */
 		router.patchRoutes(ROOT_ROUTE_ID, routes);
 		const flatRouteList = flattenRoutes(newRoutes);

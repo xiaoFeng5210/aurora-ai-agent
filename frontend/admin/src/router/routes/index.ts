@@ -8,13 +8,13 @@ import { coreRoutes } from "./core";
 
 // 外部路由文件
 export const externalRouteFiles: RouteFileModule = import.meta.glob("./external/**/*.ts", { eager: true });
-// 前端静态路由文件
-export const staticRouteFiles: RouteFileModule = import.meta.glob("./static/**/*.ts", { eager: true });
 
 /**
- * 后端动态路由文件
+ * 前端业务路由文件。
+ * 原模板把 modules 目录命名为“后端动态路由文件”，这里改为纯前端路由来源，
+ * 不再依赖后端返回路由表。
  */
-export const dynamicRouteFiles: RouteFileModule = import.meta.glob("./modules/**/*.ts", { eager: true });
+export const frontendRouteFiles: RouteFileModule = import.meta.glob("./modules/**/*.ts", { eager: true });
 
 /**
  * 外部路由 1. 不进行权限校验， 2. 不会触发请求，例如用户信息接口
@@ -22,11 +22,8 @@ export const dynamicRouteFiles: RouteFileModule = import.meta.glob("./modules/**
  */
 export const externalRoutes: AppRouteRecordRaw[] = mergeRouteModules(externalRouteFiles);
 
-/** 动态路由 */
-export const dynamicRoutes: AppRouteRecordRaw[] = mergeRouteModules(dynamicRouteFiles);
-
-/** 静态路由 */
-export const staticRoutes: AppRouteRecordRaw[] = mergeRouteModules(staticRouteFiles);
+/** 前端业务路由 */
+export const frontendRoutes: AppRouteRecordRaw[] = mergeRouteModules(frontendRouteFiles);
 
 /**
  * 基本路由列表，由核心路由、外部路由组成，会一直存在系统中
@@ -36,10 +33,9 @@ const baseRoutes = ascending([
 	...externalRoutes,
 ]);
 
-/** 权限路由列表，包含动态路由和静态路由 */
+/** 权限路由列表，全部来自前端本地路由文件 */
 const accessRoutes = [
-	...dynamicRoutes,
-	...staticRoutes,
+	...frontendRoutes,
 ];
 
 /**
