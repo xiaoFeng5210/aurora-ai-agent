@@ -5,9 +5,11 @@ import {
 	ShoppingCartOutlined,
 	UserOutlined,
 } from "@ant-design/icons";
-import { Button, Card, Col, Row } from "antd";
+import { Button, Card, Col, Row, Statistic, Typography } from "antd";
 import CountUp from "react-countup";
 import { useTranslation } from "react-i18next";
+
+const { Text } = Typography;
 
 const wrapperCol: ColProps = {
 	xs: 24,
@@ -50,15 +52,16 @@ export default function CardList() {
 			{
 				CARD_LIST.map((cardItem) => {
 					return (
-						<Col {...wrapperCol} key={cardItem.title}>
-							<Card className="">
-								<div className="flex justify-between items-center">
-									<div className="flex flex-col">
-										<h3 className="text-xl">{cardItem.title}</h3>
-										<CountUp end={cardItem.data} separator="," />
-									</div>
+						<Col key={cardItem.title} {...wrapperCol}>
+							<Card>
+								<div className="flex items-center justify-between gap-4">
+									<Statistic
+										title={<Text type="secondary">{cardItem.title}</Text>}
+										value={cardItem.data}
+										formatter={value => <CountUp end={Number(value)} separator="," />}
+									/>
 									<Button
-										className="text-3xl"
+										className="text-2xl"
 										icon={cardItem.icon}
 										type="text"
 									/>

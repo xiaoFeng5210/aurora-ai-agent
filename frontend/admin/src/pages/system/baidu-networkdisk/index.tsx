@@ -9,7 +9,9 @@ import {
 import {
 	Alert,
 	Button,
+	Card,
 	Descriptions,
+	Flex,
 	Form,
 	Input,
 	message,
@@ -64,14 +66,14 @@ export default function BaiduNetworkdisk() {
 
 	return (
 		<BasicContent className="min-h-full">
-			<div className="flex max-w-4xl flex-col gap-4">
-				<div>
+			<Space direction="vertical" size={16} className="w-full max-w-4xl">
+				<Card>
 					<Title level={3} className="!mb-1">百度网盘授权</Title>
 					<Text type="secondary">先打开百度授权页获取 code，再在这里换取 token 并写入 Redis。</Text>
-				</div>
+				</Card>
 
-				<section className="rounded-md border border-colorBorder bg-colorBgContainer p-4">
-					<div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+				<Card>
+					<Flex className="mb-4" wrap gap={12} align="center" justify="space-between">
 						<Space>
 							<CloudOutlined />
 							<Text strong>获取授权 code</Text>
@@ -79,7 +81,7 @@ export default function BaiduNetworkdisk() {
 						<Button icon={<ExportOutlined />} onClick={openAuthorizePage}>
 							打开授权页
 						</Button>
-					</div>
+					</Flex>
 					<Alert
 						type="info"
 						showIcon
@@ -110,13 +112,13 @@ export default function BaiduNetworkdisk() {
 							</Button>
 						</Form.Item>
 					</Form>
-				</section>
+				</Card>
 
-				<section className="rounded-md border border-colorBorder bg-colorBgContainer p-4">
-					<div className="mb-4 flex items-center gap-2">
+				<Card>
+					<Space className="mb-4">
 						<CloudOutlined />
 						<Text strong>保存结果</Text>
-					</div>
+					</Space>
 					{token
 						? (
 							<Space direction="vertical" className="w-full" size={12}>
@@ -133,8 +135,8 @@ export default function BaiduNetworkdisk() {
 							</Space>
 						)
 						: <Text type="secondary">尚未保存新的 token。</Text>}
-				</section>
-			</div>
+				</Card>
+			</Space>
 		</BasicContent>
 	);
 }

@@ -1,8 +1,8 @@
 import type { AppRouteRecordRaw } from "#src/router/types";
 
 import { lazy } from "react";
-import { Outlet } from "react-router";
 
+import ContainerLayout from "#src/layout/container-layout";
 import { personalCenter } from "#src/router/extra-info";
 
 const MyProfile = lazy(() => import("#src/pages/personal-center/my-profile"));
@@ -11,7 +11,7 @@ const Settings = lazy(() => import("#src/pages/personal-center/settings"));
 const routes: AppRouteRecordRaw[] = [
 	{
 		path: "/personal-center",
-		Component: Outlet,
+		Component: ContainerLayout,
 		handle: {
 			order: personalCenter,
 			title: "common.menu.personalCenter",

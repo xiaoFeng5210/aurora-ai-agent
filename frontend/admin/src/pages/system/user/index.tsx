@@ -11,13 +11,18 @@ import {
 } from "@ant-design/icons";
 import {
 	Button,
+	Card,
+	Col,
 	DatePicker,
 	Empty,
+	Flex,
 	Form,
 	Input,
 	message,
 	Modal,
+	Row,
 	Space,
+	Statistic,
 	Table,
 	Tag,
 	Typography,
@@ -208,120 +213,135 @@ export default function User() {
 
 	return (
 		<BasicContent className="min-h-full">
-			<div className="flex flex-col gap-4">
-				<div className="flex flex-wrap items-center justify-between gap-3">
-					<div>
-						<Title level={3} className="mb-1!">用户管理</Title>
-						<Text type="secondary">创建用户，选择用户后查看对应 documents。</Text>
-					</div>
-					<Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
-						创建用户
-					</Button>
-				</div>
+			<Space direction="vertical" size={16} className="w-full">
+				<Card>
+					<Flex wrap gap={16} align="center" justify="space-between">
+						<Space direction="vertical" size={2}>
+							<Title level={3} className="mb-1!">用户管理</Title>
+							<Text type="secondary">创建用户，选择用户后查看对应 documents。</Text>
+						</Space>
+						<Space size={24} wrap>
+							<Statistic title="用户数" value={users.length} />
+							<Statistic title="当前用户文档" value={documents.length} />
+							<Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
+								创建用户
+							</Button>
+						</Space>
+					</Flex>
+				</Card>
 
-				<div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(560px,1fr)_minmax(460px,0.85fr)]">
-					<section className="rounded-md border border-colorBorder bg-colorBgContainer p-4">
-						<div className="mb-3 flex items-center gap-2">
-							<UserOutlined />
-							<Text strong>用户列表</Text>
-						</div>
-						<Form
-							form={searchForm}
-							layout="inline"
-							className="mb-4 gap-y-2"
-							onFinish={loadUsers}
-						>
-							<Form.Item name="username">
-								<Input allowClear placeholder="用户名" />
-							</Form.Item>
-							<Form.Item name="email">
-								<Input allowClear placeholder="邮箱" />
-							</Form.Item>
-							<Form.Item name="phone">
-								<Input allowClear placeholder="手机号" />
-							</Form.Item>
-							<Form.Item>
+				<Row gutter={[16, 16]}>
+					<Col xs={24} xl={14}>
+						<Card
+							title={(
 								<Space>
-									<Button htmlType="submit" type="primary" icon={<SearchOutlined />}>查询</Button>
-									<Button
-										icon={<ReloadOutlined />}
-										onClick={() => {
-											searchForm.resetFields();
-											loadUsers({});
-										}}
-									>
-										重置
-									</Button>
+									<UserOutlined />
+									<span>用户列表</span>
 								</Space>
-							</Form.Item>
-						</Form>
-						<Table<UserRecord>
-							rowKey="id"
-							size="middle"
-							loading={usersLoading}
-							columns={userColumns}
-							dataSource={users}
-							pagination={false}
-							rowClassName={record => record.id === selectedUserId ? "ant-table-row-selected" : ""}
-							onRow={record => ({
-								onClick: () => setSelectedUser(record),
-							})}
-						/>
-					</section>
+							)}
+							extra={<Text type="secondary">点击行切换用户</Text>}
+						>
+							<Form
+								form={searchForm}
+								layout="inline"
+								className="mb-4 gap-y-2"
+								onFinish={loadUsers}
+							>
+								<Form.Item name="username">
+									<Input allowClear placeholder="用户名" />
+								</Form.Item>
+								<Form.Item name="email">
+									<Input allowClear placeholder="邮箱" />
+								</Form.Item>
+								<Form.Item name="phone">
+									<Input allowClear placeholder="手机号" />
+								</Form.Item>
+								<Form.Item>
+									<Space>
+										<Button htmlType="submit" type="primary" icon={<SearchOutlined />}>查询</Button>
+										<Button
+											icon={<ReloadOutlined />}
+											onClick={() => {
+												searchForm.resetFields();
+												loadUsers({});
+											}}
+										>
+											重置
+										</Button>
+									</Space>
+								</Form.Item>
+							</Form>
+							<Table<UserRecord>
+								rowKey="id"
+								size="middle"
+								loading={usersLoading}
+								columns={userColumns}
+								dataSource={users}
+								pagination={false}
+								rowClassName={record => record.id === selectedUserId ? "ant-table-row-selected" : ""}
+								onRow={record => ({
+									onClick: () => setSelectedUser(record),
+								})}
+							/>
+						</Card>
+					</Col>
 
-					<section className="rounded-md border border-colorBorder bg-colorBgContainer p-4">
-						<div className="mb-3 flex items-center justify-between gap-3">
-							<Space>
-								<FileTextOutlined />
-								<Text strong>用户 Documents</Text>
-							</Space>
-							{selectedUser ? <Tag color="blue">{selectedUser.username}</Tag> : null}
-						</div>
+					<Col xs={24} xl={10}>
+						<Card
+							title={(
+								<Space>
+									<FileTextOutlined />
+									<span>用户 Documents</span>
+								</Space>
+							)}
+							extra={selectedUser ? <Tag color="blue">{selectedUser.username}</Tag> : null}
+						>
 
-						{selectedUser
-							? (
-								<>
-									<Form
-										form={documentSearchForm}
-										layout="inline"
-										className="mb-4 gap-y-2"
-										onFinish={values => loadDocuments(selectedUser.id, values)}
-									>
-										<Form.Item name="display_name">
-											<Input allowClear placeholder="Document 名称" />
-										</Form.Item>
-										<Form.Item name="file_name">
-											<Input allowClear placeholder="文件名" />
-										</Form.Item>
-										<Form.Item>
-											<Space>
-												<Button htmlType="submit" type="primary" icon={<SearchOutlined />}>查询</Button>
-												<Button
-													icon={<ReloadOutlined />}
-													onClick={() => {
-														documentSearchForm.resetFields();
-														loadDocuments(selectedUser.id, {});
-													}}
-												>
-													重置
-												</Button>
-											</Space>
-										</Form.Item>
-									</Form>
-									<Table<DocumentRecord>
-										rowKey="id"
-										size="middle"
-										loading={documentsLoading}
-										columns={documentColumns}
-										dataSource={documents}
-										pagination={false}
-									/>
-								</>
-							)
-							: <Empty description="先选择一个用户" />}
-					</section>
-				</div>
-			</div>
+							{selectedUser
+								? (
+									<>
+										<Form
+											form={documentSearchForm}
+											layout="inline"
+											className="mb-4 gap-y-2"
+											onFinish={values => loadDocuments(selectedUser.id, values)}
+										>
+											<Form.Item name="display_name">
+												<Input allowClear placeholder="Document 名称" />
+											</Form.Item>
+											<Form.Item name="file_name">
+												<Input allowClear placeholder="文件名" />
+											</Form.Item>
+											<Form.Item>
+												<Space>
+													<Button htmlType="submit" type="primary" icon={<SearchOutlined />}>查询</Button>
+													<Button
+														icon={<ReloadOutlined />}
+														onClick={() => {
+															documentSearchForm.resetFields();
+															loadDocuments(selectedUser.id, {});
+														}}
+													>
+														重置
+													</Button>
+												</Space>
+											</Form.Item>
+										</Form>
+										<Table<DocumentRecord>
+											rowKey="id"
+											size="middle"
+											loading={documentsLoading}
+											columns={documentColumns}
+											dataSource={documents}
+											pagination={false}
+										/>
+									</>
+								)
+								: <Empty description="先选择一个用户" />}
+						</Card>
+					</Col>
+				</Row>
+			</Space>
 
 			<Modal
 				title="创建用户"
