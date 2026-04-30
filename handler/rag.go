@@ -21,6 +21,16 @@ var allowedFileExtensions = map[string]bool{
 	// ".docx": true,
 }
 
+// 上传文件并且将文件向量化上传到qdrant, 只是将任务发送给消息队列
+func RagTask(ctx *gin.Context) {
+
+}
+
+
+
+
+
+
 // CreateRag 上传文件并写入个人 RAG 知识库
 // 流程：接收文件 → 校验类型 → 读取文本内容 → 分块+向量化 → 写入 Qdrant
 // 每个用户的知识库通过 user_id 隔离，互不可见
