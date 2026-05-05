@@ -8,6 +8,7 @@ import { generateRoutesByFrontend } from "#src/router/utils/generate-routes-from
 import { useAccessStore } from "#src/store/access";
 import { useAuthStore } from "#src/store/auth";
 import { useUserStore } from "#src/store/user";
+import { goLogin } from "#src/utils/request/go-login";
 
 import { useEffect } from "react";
 import { matchRoutes, Navigate, useLocation, useNavigate, useSearchParams } from "react-router";
@@ -75,14 +76,16 @@ export function AuthGuard({ children }: AuthGuardProps) {
 			setAccessStore(uniqueRoutes);
 
 			/**
-			 * @zh 用户信息接口异常，跳转到 500 页面；401 交给登录态逻辑处理。
-			 * @en Redirect to 500 when user info request fails; leave 401 to auth logic.
+			 * @zh 用户信息接口异常：401/403 视为登录失效，跳转登录页；其他跳转 500。
+			 * @en Handle user info request failure: 401/403 treated as auth failure (go login); others → 500.
 			 */
 			if (userInfoResult.status === "rejected") {
-				const unAuthorized = userInfoResult.reason?.response?.status === 401;
-				if (!unAuthorized) {
-					return navigate(exception500Path);
+				const status = userInfoResult.reason?.response?.status;
+				if (status === 401 || status === 403) {
+					goLogin();
+					return;
 				}
+				return navigate(exception500Path);
 			}
 
 			/**
