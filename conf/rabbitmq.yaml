@@ -1,0 +1,2 @@
+rabbitmq:
+  url: amqp://aurora:aurora123@localhost:5672/
