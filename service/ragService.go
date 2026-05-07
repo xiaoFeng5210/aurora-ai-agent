@@ -126,7 +126,7 @@ func CreateRag(ctx *gin.Context, file multipart.File, filename string) (*qdrant.
 }
 
 
-func SendRagTask() {
+func SendRagTask(msg []byte) {
 	conn, err := rabbitmq_module.Connect()
 	if err != nil {
 		panic("connect to rabbitmq failed: " + err.Error())
@@ -165,9 +165,12 @@ func SendRagTask() {
 		false,
 		amqp.Publishing{
 			ContentType: "text/plain",
-			Body: []byte("test message"),
+			Body: msg,
 		},
 	)
+	if err != nil {
+		panic("publish message failed: " + err.Error())
+	}
 }
 
 func ConsumeRagTask() {
@@ -175,6 +178,7 @@ func ConsumeRagTask() {
 	if err != nil {
 		panic("connect to rabbitmq failed: " + err.Error())
 	}
+
 	defer conn.Close()
 
 	ch, err := conn.Channel()
@@ -185,10 +189,10 @@ func ConsumeRagTask() {
 
 	// 声明队列
 	q, err := ch.QueueDeclare(
-		"",
+		"upload_and_vectorize_queue",
 		true, // durable
 		false, // delete when unused
-		true,  // exclusive
+		false,  // exclusive
 		false, // no-wait
 		nil,   // arguments
 	)
@@ -226,7 +230,4 @@ func ConsumeRagTask() {
 		fmt.Printf("Received message: %s\n", delivery.Body)
 		delivery.Ack(false)
 	}
-
-
-	
 }

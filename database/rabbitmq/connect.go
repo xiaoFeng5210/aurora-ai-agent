@@ -17,18 +17,16 @@ var (
 )
 
 func Connect() (*amqp.Connection, error) {
-	once.Do(func() {
 		conf := utils.InitViper("conf", "rabbitmq", "yaml")
 		url := conf.GetString("rabbitmq.url")
-		Conn, ConnectErr = amqp.Dial(url)
+		conn, ConnectErr := amqp.Dial(url)
 		if ConnectErr != nil {
 			utils.Logger.Error("Failed to connect to rabbitmq.", zap.Error(ConnectErr))
-			return
+			return nil, ConnectErr
 		}
 		utils.Logger.Info("Connected to rabbitmq successfully.")
-	})
 
-	return Conn, ConnectErr
+	return conn, ConnectErr
 }
 
 
