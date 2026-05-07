@@ -1,4 +1,4 @@
-package rabbitmq
+package rabbitmq_module
 
 import (
 	"aurora-agent/utils"
@@ -11,23 +11,24 @@ import (
 )
 
 var (
-	conn *amqp.Connection
-	connectErr error
+	Conn *amqp.Connection
+	ConnectErr error
 	once sync.Once
 )
 
 func Connect() (*amqp.Connection, error) {
 	once.Do(func() {
 		conf := utils.InitViper("conf", "rabbitmq", "yaml")
-
 		url := conf.GetString("rabbitmq.url")
-		conn, connectErr = amqp.Dial(url)
-		if connectErr != nil {
-			utils.Logger.Error("Failed to connect to rabbitmq.", zap.Error(connectErr))
+		Conn, ConnectErr = amqp.Dial(url)
+		if ConnectErr != nil {
+			utils.Logger.Error("Failed to connect to rabbitmq.", zap.Error(ConnectErr))
 			return
 		}
 		utils.Logger.Info("Connected to rabbitmq successfully.")
 	})
 
-	return conn, connectErr
+	return Conn, ConnectErr
 }
+
+

@@ -3,6 +3,7 @@ package main
 import (
 	"aurora-agent/database"
 	qdrant_db "aurora-agent/database/qdrant"
+	rabbitmq_module "aurora-agent/database/rabbitmq"
 	redis_db "aurora-agent/database/redis"
 	"aurora-agent/router"
 	utils "aurora-agent/utils"
@@ -20,6 +21,9 @@ func init() {
 	qdrant_db.QdrantConnect()
 	err := qdrant_db.CreateRagCollection()
 	if err != nil {
+		panic(err)
+	}
+	if _, err = rabbitmq_module.Connect(); err != nil {
 		panic(err)
 	}
 }

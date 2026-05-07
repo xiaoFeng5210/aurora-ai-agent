@@ -1,4 +1,4 @@
-package rabbitmq
+package rabbitmq_module
 
 import (
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -6,3 +6,4 @@ import (
 
 func produce(msg string, ch *amqp.Channel, exg, key string) {
 }
+

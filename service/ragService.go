@@ -3,15 +3,24 @@ package service
 import (
 	"aurora-agent/middleware"
 	"aurora-agent/service/embedding"
+	"context"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/qdrant/go-client/qdrant"
 	"go.uber.org/zap"
+
+	rabbitmq_module "aurora-agent/database/rabbitmq"
+
+	amqp "github.com/rabbitmq/amqp091-go"
+)
+var (
+	exg = "rag"
 )
 
 // FileParser 文件解析器接口
@@ -113,5 +122,111 @@ func CreateRag(ctx *gin.Context, file multipart.File, filename string) (*qdrant.
 	default:
 		return nil, fmt.Errorf("不支持该文件类型: %s", ext)
 	}
+	
+}
+
+
+func SendRagTask() {
+	conn, err := rabbitmq_module.Connect()
+	if err != nil {
+		panic("connect to rabbitmq failed: " + err.Error())
+	}
+	defer conn.Close()
+
+	ch, err := conn.Channel()
+	if err != nil {
+		panic("open channel failed: " + err.Error())
+	}
+	defer ch.Close()
+
+	err = ch.ExchangeDeclare(
+		exg,
+		"direct",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+
+	if err != nil {
+		panic("declare exchange failed: " + err.Error())
+	}
+
+	// 发送消息
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	err = ch.PublishWithContext(
+		ctx,
+		exg,
+		"upload_and_vectorize_key",
+		false,
+		false,
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body: []byte("test message"),
+		},
+	)
+}
+
+func ConsumeRagTask() {
+	conn, err := rabbitmq_module.Connect()
+	if err != nil {
+		panic("connect to rabbitmq failed: " + err.Error())
+	}
+	defer conn.Close()
+
+	ch, err := conn.Channel()
+	if err != nil {
+		panic("open channel failed: " + err.Error())
+	}
+	defer ch.Close()
+
+	// 声明队列
+	q, err := ch.QueueDeclare(
+		"",
+		true, // durable
+		false, // delete when unused
+		true,  // exclusive
+		false, // no-wait
+		nil,   // arguments
+	)
+
+	if err != nil {
+		panic("declare queue failed: " + err.Error())
+	}
+
+	err = ch.QueueBind(
+		q.Name,
+		"upload_and_vectorize_key",
+		exg,
+		false,
+		nil,
+	)
+	if err != nil {
+		panic("bind queue failed: " + err.Error())
+	}
+
+	deliverCh, err := ch.Consume(
+		q.Name,
+		"",
+		false,  // auto-ack
+		false,
+		false,
+		false,
+		nil,
+	)
+
+	if err != nil {
+		panic("consume failed: " + err.Error())
+	}
+
+	for delivery := range deliverCh {
+		fmt.Printf("Received message: %s\n", delivery.Body)
+		delivery.Ack(false)
+	}
+
+
 	
 }
