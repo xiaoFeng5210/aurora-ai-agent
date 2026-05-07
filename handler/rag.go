@@ -2,6 +2,7 @@ package handler
 
 import (
 	"aurora-agent/handler/vo"
+	"aurora-agent/middleware"
 	"aurora-agent/service"
 	"net/http"
 	"path/filepath"
@@ -22,8 +23,34 @@ var allowedFileExtensions = map[string]bool{
 }
 
 // 上传文件并且将文件向量化上传到qdrant, 只是将任务发送给消息队列
-func RagTask(ctx *gin.Context) {
+func RagVectorizeTask(ctx *gin.Context) {
+  fh, err := ctx.FormFile("file")
+	if err != nil {
+		vo.RespondError(ctx, http.StatusBadRequest, err)
+		return
+	}
 
+	ext := strings.ToLower(filepath.Ext(fh.Filename))
+	if !allowedFileExtensions[ext] {
+		vo.RespondError(ctx, http.StatusBadRequest,
+			vo.ErrUnsupportedFileType)
+		return
+	}
+
+	file, err := fh.Open()
+	if err != nil {
+		vo.RespondError(ctx, http.StatusInternalServerError, err)
+		return
+	}
+	defer file.Close()
+
+	uid := ctx.GetInt(middleware.UID_IN_CTX)
+
+	err = service.SendRagVectorizeTask(uid, file, fh.Filename)
+	if err != nil {
+		vo.RespondError(ctx, http.StatusInternalServerError, err)
+		return
+	}
 }
 
 
@@ -42,7 +69,6 @@ func CreateRag(ctx *gin.Context) {
 		return
 	}
 
-	// TODO 2. 校验文件扩展名，只允许文本类文件
 	ext := strings.ToLower(filepath.Ext(fh.Filename))
 	if !allowedFileExtensions[ext] {
 		vo.RespondError(ctx, http.StatusBadRequest,
@@ -59,7 +85,8 @@ func CreateRag(ctx *gin.Context) {
 	defer file.Close()
 
 	// 4. 调用 service 层完成：文本提取 → 分块 → 向量化 → 写入 Qdrant
-	result, err := service.CreateRag(ctx, file, fh.Filename)
+	uid := ctx.GetInt(middleware.UID_IN_CTX)
+	result, err := service.CreateRag(uid, file, fh.Filename)
 	if err != nil {
 		vo.RespondError(ctx, http.StatusInternalServerError, err)
 		return

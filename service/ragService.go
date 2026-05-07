@@ -1,9 +1,9 @@
 package service
 
 import (
-	"aurora-agent/middleware"
 	"aurora-agent/service/embedding"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/qdrant/go-client/qdrant"
 	"go.uber.org/zap"
 
@@ -21,6 +20,7 @@ import (
 )
 var (
 	exg = "rag"
+	routingKey = "vectorize_key"
 )
 
 // FileParser 文件解析器接口
@@ -28,6 +28,12 @@ var (
 // 扩展新格式时只需：1. 实现此接口  2. 注册到 fileParsers 即可
 type FileParser interface {
 	Parse2String(data []byte) (string, error)
+}
+
+type RagVectorizeMsg struct {
+	Uid int
+	File multipart.File
+	Filename string
 }
 
 // fileParsers 文件扩展名 → 解析器的注册表
@@ -66,9 +72,7 @@ func (p *TextParser) Parse2String(data []byte) (string, error) {
 
 // CreateRag 将上传的文件写入当前用户的个人 RAG 知识库
 // 流程：根据扩展名选择解析器 → 解析为文本 → 分块 → 向量化 → 按 user_id 写入 Qdrant
-func CreateRag(ctx *gin.Context, file multipart.File, filename string) (*qdrant.UpdateResult, error) {
-	uid := ctx.GetInt(middleware.UID_IN_CTX)
-
+func CreateRag(uid int, file multipart.File, filename string) (*qdrant.UpdateResult, error) {
 	// 1. 根据文件扩展名匹配解析器
 	ext := strings.ToLower(filepath.Ext(filename))
 	parser, ok := fileParsers[ext]
@@ -126,31 +130,31 @@ func CreateRag(ctx *gin.Context, file multipart.File, filename string) (*qdrant.
 }
 
 
-func SendRagTask(msg []byte) {
+func SendRagVectorizeTask(uid int, file multipart.File, filename string) error {
+	msg := &RagVectorizeMsg{
+		Uid: uid,
+		File: file,
+		Filename: filename,
+	}
+	jsonMsg, err := json.Marshal(msg)
+	if err != nil {
+		return fmt.Errorf("marshal message failed: %w", err)
+	}
 	conn, err := rabbitmq_module.Connect()
 	if err != nil {
-		panic("connect to rabbitmq failed: " + err.Error())
+		return fmt.Errorf("connect to rabbitmq failed: %w", err)
 	}
 	defer conn.Close()
 
 	ch, err := conn.Channel()
 	if err != nil {
-		panic("open channel failed: " + err.Error())
+		return fmt.Errorf("open channel failed: %w", err)
 	}
 	defer ch.Close()
 
-	err = ch.ExchangeDeclare(
-		exg,
-		"direct",
-		true,
-		false,
-		false,
-		false,
-		nil,
-	)
-
+	err = rabbitmq_module.DeclareExchange(ch, exg)
 	if err != nil {
-		panic("declare exchange failed: " + err.Error())
+		return err
 	}
 
 	// 发送消息
@@ -160,20 +164,21 @@ func SendRagTask(msg []byte) {
 	err = ch.PublishWithContext(
 		ctx,
 		exg,
-		"upload_and_vectorize_key",
+		routingKey,
 		false,
 		false,
 		amqp.Publishing{
 			ContentType: "text/plain",
-			Body: msg,
+			Body: jsonMsg,
 		},
 	)
 	if err != nil {
-		panic("publish message failed: " + err.Error())
+		return fmt.Errorf("publish message failed: %w", err)
 	}
+	return nil
 }
 
-func ConsumeRagTask() {
+func ConsumeRagVectorizeTask() {
 	conn, err := rabbitmq_module.Connect()
 	if err != nil {
 		panic("connect to rabbitmq failed: " + err.Error())
@@ -186,6 +191,11 @@ func ConsumeRagTask() {
 		panic("open channel failed: " + err.Error())
 	}
 	defer ch.Close()
+
+	err = rabbitmq_module.DeclareExchange(ch, exg)
+	if err != nil {
+		panic("declare exchange failed: " + err.Error())
+	}
 
 	// 声明队列
 	q, err := ch.QueueDeclare(
@@ -203,7 +213,7 @@ func ConsumeRagTask() {
 
 	err = ch.QueueBind(
 		q.Name,
-		"upload_and_vectorize_key",
+		routingKey,
 		exg,
 		false,
 		nil,
