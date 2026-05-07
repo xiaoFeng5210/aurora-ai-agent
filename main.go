@@ -1,6 +1,7 @@
 package main
 
 import (
+	"aurora-agent/bootstrap"
 	"aurora-agent/database"
 	qdrant_db "aurora-agent/database/qdrant"
 	redis_db "aurora-agent/database/redis"
@@ -26,6 +27,7 @@ func init() {
 }
 
 func main() {
+	bootstrap.StartConsumer()
 	r := router.SetupRouter()
 	utils.Logger.Info("Server started on port 1119")
 	err := r.Run(":1119")
