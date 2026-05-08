@@ -15,6 +15,7 @@ import (
 	"go.uber.org/zap"
 
 	rabbitmq_module "aurora-agent/database/rabbitmq"
+	"aurora-agent/database/redis"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -175,6 +176,20 @@ func SendRagVectorizeTask(uid int, file multipart.File, filename string) error {
 	if err != nil {
 		return fmt.Errorf("publish message failed: %w", err)
 	}
+
+	// 需要存进redis里
+	client := redis.Client()
+	pipe := client.TxPipeline()
+	key := fmt.Sprintf("rag_vectorize.%d", uid)
+	redisData := map[string]interface{}{
+		"filename": filename,
+		"status": "pending",
+	}
+	pipe.Expire(context.Background(), key, 3 * time.Hour)
+	err = pipe.HSet(context.Background(), key, redisData).Err()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -237,7 +252,28 @@ func ConsumeRagVectorizeTask() {
 	}
 
 	for delivery := range deliverCh {
-		fmt.Printf("Received message: %s\n", delivery.Body)
+		logger.Info("Received message: %s", zap.String("message", string(delivery.Body)))
+		var message RagVectorizeMsg
+		err := json.Unmarshal(delivery.Body, &message)
+		if err != nil {
+			logger.Error("unmarshal message failed: " + err.Error())
+			delivery.Nack(false, true)
+			continue
+		}
+		_, err = CreateRag(message.Uid, message.File, message.Filename)
+		if err != nil {
+			logger.Error("create rag failed: " + err.Error())
+			delivery.Nack(false, true)
+			continue
+		}
+
+		// 更新redis状态
+		client := redis.Client()
+		key := fmt.Sprintf("rag_vectorize.%d", message.Uid)
+		err =client.Del(context.Background(), key).Err()
+		if err != nil {
+			logger.Error("delete redis key failed: " + err.Error())
+		}
 		delivery.Ack(false)
 	}
 }
