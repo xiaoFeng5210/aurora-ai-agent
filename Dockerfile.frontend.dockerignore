@@ -1,0 +1,11 @@
+**
+
+!frontend
+!frontend/web
+!frontend/web/**
+
+frontend/web/node_modules
+frontend/web/dist
+frontend/web/.git
+**/.DS_Store
+**/*.log
