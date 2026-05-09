@@ -31,15 +31,16 @@ export interface DeleteKnowledgeFileResponse {
 
 export type RagVectorizeApiVersion = 'v1' | 'v2'
 
-const DEFAULT_RAG_VECTORIZE_API_VERSION: RagVectorizeApiVersion = 'v2'
+// TODO: v1 v2版本的向量化传参。
+const DEFAULT_RAG_VECTORIZE_API_VERSION: RagVectorizeApiVersion = 'v1'
 
 export const RAG_VECTORIZE_API_VERSION: RagVectorizeApiVersion =
   import.meta.env.VITE_RAG_VECTORIZE_API_VERSION === 'v1'
     ? 'v1'
     : DEFAULT_RAG_VECTORIZE_API_VERSION
 
-export const RAG_VECTORIZE_MODE_LABEL =
-  RAG_VECTORIZE_API_VERSION === 'v2' ? 'v2 消息队列' : 'v1 同步向量化'
+// export const RAG_VECTORIZE_MODE_LABEL =
+//   RAG_VECTORIZE_API_VERSION === 'v2' ? 'v2 消息队列' : 'v1 同步向量化'
 
 const RAG_VECTORIZE_ENDPOINTS: Record<RagVectorizeApiVersion, string> = {
   // v1 是旧的同步向量化接口，保留在这里方便回切。
