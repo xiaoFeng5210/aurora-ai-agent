@@ -24,7 +24,7 @@ var allowedFileExtensions = map[string]bool{
 
 // 上传文件并且将文件向量化上传到qdrant, 只是将任务发送给消息队列
 func RagVectorizeTask(ctx *gin.Context) {
-  fh, err := ctx.FormFile("file")
+	fh, err := ctx.FormFile("file")
 	if err != nil {
 		vo.RespondError(ctx, http.StatusBadRequest, err)
 		return
@@ -51,12 +51,12 @@ func RagVectorizeTask(ctx *gin.Context) {
 		vo.RespondError(ctx, http.StatusInternalServerError, err)
 		return
 	}
+
+	vo.RespondSuccess(ctx, gin.H{
+		"filename": fh.Filename,
+		"status":   "pending",
+	})
 }
-
-
-
-
-
 
 // CreateRag 上传文件并写入个人 RAG 知识库
 // 流程：接收文件 → 校验类型 → 读取文本内容 → 分块+向量化 → 写入 Qdrant

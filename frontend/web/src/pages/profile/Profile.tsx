@@ -27,6 +27,8 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { updateMe, type User } from '@/api/auth'
 import {
+  RAG_VECTORIZE_API_VERSION,
+  RAG_VECTORIZE_MODE_LABEL,
   baiduKnowledgeListDir,
   createRagFromFile,
   deleteKnowledgeFile,
@@ -124,7 +126,12 @@ export function Profile() {
     try {
       await uploadKnowledgeFileToNetworkdisk(selectedKnowledgeFile)
       await createRagFromFile(selectedKnowledgeFile)
-      show('文件已上传并写入知识库', 'success')
+      show(
+        RAG_VECTORIZE_API_VERSION === 'v2'
+          ? '文件已上传，向量化任务已提交'
+          : '文件已上传并写入知识库',
+        'success',
+      )
       setSelectedKnowledgeFile(null)
       if (knowledgeInputRef.current) knowledgeInputRef.current.value = ''
       await loadKnowledgeFiles()
@@ -354,6 +361,7 @@ export function Profile() {
               uploading={uploadingKnowledge}
               deletingPath={deletingKnowledgePath}
               selectedFile={selectedKnowledgeFile}
+              vectorizeModeLabel={RAG_VECTORIZE_MODE_LABEL}
               inputRef={knowledgeInputRef}
               onSelectFile={onSelectKnowledgeFile}
               onUpload={onUploadKnowledgeFile}
@@ -442,6 +450,7 @@ function KnowledgePanel({
   uploading,
   deletingPath,
   selectedFile,
+  vectorizeModeLabel,
   inputRef,
   onSelectFile,
   onUpload,
@@ -453,6 +462,7 @@ function KnowledgePanel({
   uploading: boolean
   deletingPath: string | null
   selectedFile: File | null
+  vectorizeModeLabel: string
   inputRef: RefObject<HTMLInputElement | null>
   onSelectFile: (e: ChangeEvent<HTMLInputElement>) => void
   onUpload: () => void
@@ -472,7 +482,7 @@ function KnowledgePanel({
               <h2 className="text-base font-semibold text-ink-950">知识库文件</h2>
             </div>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-500">
-              上传后会通过 RAG 接口写入网盘并生成向量。
+              上传后会写入网盘，并通过 {vectorizeModeLabel} 接口提交向量化。
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-end">
@@ -487,13 +497,16 @@ function KnowledgePanel({
         </div>
 
         <div className="mt-6 grid gap-3 rounded-lg border border-dashed border-ink-300 bg-paper-100/40 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
-          <input
-            ref={inputRef}
-            type="file"
-            accept=".txt,.md,.csv,text/plain,text/markdown,text/csv"
-            onChange={onSelectFile}
-            className="block w-full min-w-0 rounded-md border border-ink-200 bg-paper-50 px-3 py-2 text-sm text-ink-700 file:mr-3 file:rounded-md file:border-0 file:bg-paper-200 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-ink-900 hover:file:bg-paper-300"
-          />
+          <div className="min-w-0">
+            <input
+              ref={inputRef}
+              type="file"
+              accept=".txt,.md,.csv,text/plain,text/markdown,text/csv"
+              onChange={onSelectFile}
+              className="block w-full min-w-0 rounded-md border border-ink-200 bg-paper-50 px-3 py-2 text-sm text-ink-700 file:mr-3 file:rounded-md file:border-0 file:bg-paper-200 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-ink-900 hover:file:bg-paper-300"
+            />
+            <p className="mt-2 text-xs text-ink-500">当前向量化：{vectorizeModeLabel}</p>
+          </div>
           <Button
             type="button"
             onClick={onUpload}

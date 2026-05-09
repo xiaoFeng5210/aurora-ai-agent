@@ -2,11 +2,11 @@ package service
 
 import (
 	"aurora-agent/service/embedding"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"mime/multipart"
 	"path/filepath"
 	"strings"
 	"time"
@@ -19,8 +19,9 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
+
 var (
-	exg = "rag"
+	exg        = "rag"
 	routingKey = "vectorize_key"
 )
 
@@ -32,9 +33,9 @@ type FileParser interface {
 }
 
 type RagVectorizeMsg struct {
-	Uid int
-	File multipart.File
-	Filename string
+	Uid         int    `json:"uid"`
+	Filename    string `json:"filename"`
+	FileContent []byte `json:"file_content"`
 }
 
 // fileParsers 文件扩展名 → 解析器的注册表
@@ -73,7 +74,7 @@ func (p *TextParser) Parse2String(data []byte) (string, error) {
 
 // CreateRag 将上传的文件写入当前用户的个人 RAG 知识库
 // 流程：根据扩展名选择解析器 → 解析为文本 → 分块 → 向量化 → 按 user_id 写入 Qdrant
-func CreateRag(uid int, file multipart.File, filename string) (*qdrant.UpdateResult, error) {
+func CreateRag(uid int, file io.Reader, filename string) (*qdrant.UpdateResult, error) {
 	// 1. 根据文件扩展名匹配解析器
 	ext := strings.ToLower(filepath.Ext(filename))
 	parser, ok := fileParsers[ext]
@@ -93,49 +94,46 @@ func CreateRag(uid int, file multipart.File, filename string) (*qdrant.UpdateRes
 		return nil, fmt.Errorf("文件解析失败: %w", err)
 	}
 
-	switch ext {
-	case ".md":
-		// 4. 文本分块 → 向量化
-		md := &embedding.MdDocument{
-			Content: text,
-		}
-		md.Chunk()
-	
-		_, err = md.Embedding()
-		if err != nil {
-			return nil, fmt.Errorf("向量化失败: %w", err)
-		}
-	
-		// 5. 写入 Qdrant，user_id 用于隔离不同用户的知识库
-		logger.Info("RAG 创建: 正在写入知识库",
-			zap.Int("uid", uid),
-			zap.String("filename", filename),
-		)
-		result, err := md.UpsertQdrantVector(uid, filename)
-		if err != nil {
-			logger.Error("RAG 创建: 写入 Qdrant 失败", zap.Error(err))
-			return nil, fmt.Errorf("写入知识库失败: %w", err)
-		}
-	
-		logger.Info("RAG 创建成功",
-			zap.Int("uid", uid),
-			zap.String("filename", filename),
-			zap.Any("result", result),
-		)
-		return result, nil
-
-	default:
-		return nil, fmt.Errorf("不支持该文件类型: %s", ext)
+	// 4. 文本分块 → 向量化
+	doc := &embedding.MdDocument{
+		Content: text,
 	}
-	
+	doc.Chunk()
+
+	_, err = doc.Embedding()
+	if err != nil {
+		return nil, fmt.Errorf("向量化失败: %w", err)
+	}
+
+	// 5. 写入 Qdrant，user_id 用于隔离不同用户的知识库
+	logger.Info("RAG 创建: 正在写入知识库",
+		zap.Int("uid", uid),
+		zap.String("filename", filename),
+	)
+	result, err := doc.UpsertQdrantVector(uid, filename)
+	if err != nil {
+		logger.Error("RAG 创建: 写入 Qdrant 失败", zap.Error(err))
+		return nil, fmt.Errorf("写入知识库失败: %w", err)
+	}
+
+	logger.Info("RAG 创建成功",
+		zap.Int("uid", uid),
+		zap.String("filename", filename),
+		zap.Any("result", result),
+	)
+	return result, nil
 }
 
+func SendRagVectorizeTask(uid int, file io.Reader, filename string) error {
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return fmt.Errorf("读取文件失败: %w", err)
+	}
 
-func SendRagVectorizeTask(uid int, file multipart.File, filename string) error {
 	msg := &RagVectorizeMsg{
-		Uid: uid,
-		File: file,
-		Filename: filename,
+		Uid:         uid,
+		Filename:    filename,
+		FileContent: data,
 	}
 	jsonMsg, err := json.Marshal(msg)
 	if err != nil {
@@ -170,7 +168,7 @@ func SendRagVectorizeTask(uid int, file multipart.File, filename string) error {
 		false,
 		amqp.Publishing{
 			ContentType: "text/plain",
-			Body: jsonMsg,
+			Body:        jsonMsg,
 		},
 	)
 	if err != nil {
@@ -179,15 +177,16 @@ func SendRagVectorizeTask(uid int, file multipart.File, filename string) error {
 
 	// 需要存进redis里
 	client := redis.Client()
+	redisCtx := context.Background()
 	pipe := client.TxPipeline()
 	key := fmt.Sprintf("rag_vectorize.%d", uid)
 	redisData := map[string]interface{}{
 		"filename": filename,
-		"status": "pending",
+		"status":   "pending",
 	}
-	pipe.Expire(context.Background(), key, 3 * time.Hour)
-	err = pipe.HSet(context.Background(), key, redisData).Err()
-	if err != nil {
+	pipe.HSet(redisCtx, key, redisData)
+	pipe.Expire(redisCtx, key, 3*time.Hour)
+	if _, err = pipe.Exec(redisCtx); err != nil {
 		return err
 	}
 	return nil
@@ -215,9 +214,9 @@ func ConsumeRagVectorizeTask() {
 	// 声明队列
 	q, err := ch.QueueDeclare(
 		"upload_and_vectorize_queue",
-		true, // durable
+		true,  // durable
 		false, // delete when unused
-		false,  // exclusive
+		false, // exclusive
 		false, // no-wait
 		nil,   // arguments
 	)
@@ -240,7 +239,7 @@ func ConsumeRagVectorizeTask() {
 	deliverCh, err := ch.Consume(
 		q.Name,
 		"",
-		false,  // auto-ack
+		false, // auto-ack
 		false,
 		false,
 		false,
@@ -260,7 +259,7 @@ func ConsumeRagVectorizeTask() {
 			delivery.Nack(false, true)
 			continue
 		}
-		_, err = CreateRag(message.Uid, message.File, message.Filename)
+		_, err = CreateRag(message.Uid, bytes.NewReader(message.FileContent), message.Filename)
 		if err != nil {
 			logger.Error("create rag failed: " + err.Error())
 			delivery.Nack(false, true)
@@ -270,7 +269,7 @@ func ConsumeRagVectorizeTask() {
 		// 更新redis状态
 		client := redis.Client()
 		key := fmt.Sprintf("rag_vectorize.%d", message.Uid)
-		err =client.Del(context.Background(), key).Err()
+		err = client.Del(context.Background(), key).Err()
 		if err != nil {
 			logger.Error("delete redis key failed: " + err.Error())
 		}

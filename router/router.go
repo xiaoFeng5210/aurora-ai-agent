@@ -83,10 +83,9 @@ func SetupRouter() *gin.Engine {
 	ragGroup.POST("/create", handler.CreateRag)
 	registerWebStatic(r)
 
-
 	ragGroup2 := apiv2.Group("/rag")
 	ragGroup2.Use(middleware.Auth)
-	ragGroup2.POST("", handler.CreateRag)
+	ragGroup2.POST("", handler.RagVectorizeTask)
 
 	return r
 }
