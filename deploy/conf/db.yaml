@@ -1,0 +1,6 @@
+postgres:
+  host: postgres
+  port: 5432
+  user: aurora
+  password: aurora_postgres_change_me
+  dbname: aurora_ai_agent

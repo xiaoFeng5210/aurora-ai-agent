@@ -1,0 +1,112 @@
+services:
+  frontend:
+    build:
+      context: ./frontend/web
+      dockerfile: Dockerfile
+    image: aurora-frontend:compose
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "80:8080"
+    volumes:
+      - ./deploy/data/nginx/log:/var/log/nginx
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - aurora
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: aurora-backend:compose
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - ./deploy/conf:/app/conf:ro
+      - ./deploy/data/backend/log:/app/log
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:1119/ping >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - aurora
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: aurora_ai_agent
+      POSTGRES_USER: aurora
+      POSTGRES_PASSWORD: aurora_postgres_change_me
+      TZ: Asia/Shanghai
+    volumes:
+      - ./deploy/data/postgres:/var/lib/postgresql/data
+      - ./assets/sql/table.sql:/docker-entrypoint-initdb.d/001-table.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aurora -d aurora_ai_agent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - aurora
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - aurora_redis_change_me
+    volumes:
+      - ./deploy/data/redis:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a aurora_redis_change_me ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - aurora
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: aurora
+      RABBITMQ_DEFAULT_PASS: aurora_rabbitmq_change_me
+    ports:
+      - "127.0.0.1:15672:15672"
+    volumes:
+      - ./deploy/data/rabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - aurora
+
+networks:
+  aurora:
+    driver: bridge

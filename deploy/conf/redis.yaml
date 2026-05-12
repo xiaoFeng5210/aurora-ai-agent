@@ -1,0 +1,6 @@
+redis:
+  host: redis
+  port: 6379
+  username: ""
+  password: aurora_redis_change_me
+  db: 0

@@ -1,0 +1,2 @@
+rabbitmq:
+  url: amqp://aurora:aurora_rabbitmq_change_me@rabbitmq:5672/
