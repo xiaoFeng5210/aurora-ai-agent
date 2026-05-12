@@ -9,6 +9,8 @@ log
 tmp
 .gocache
 .pnpm-store
+deploy/data
+deploy/conf/*.yaml
 
 frontend
 

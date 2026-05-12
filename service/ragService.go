@@ -28,7 +28,7 @@ var (
 // FileParser 文件解析器接口
 // 不同文件类型实现此接口，将文件二进制数据解析为纯文本
 // 扩展新格式时只需：1. 实现此接口  2. 注册到 fileParsers 即可
-type FileParser interface {
+type FileParserTrait interface {
 	Parse2String(data []byte) (string, error)
 }
 
@@ -40,7 +40,7 @@ type RagVectorizeMsg struct {
 
 // fileParsers 文件扩展名 → 解析器的注册表
 // 新增格式在此注册，handler 层的白名单也需同步更新
-var fileParsers = map[string]FileParser{
+var fileParsers = map[string]FileParserTrait{
 	".txt": &TextParser{},
 	".md":  &TextParser{},
 	".csv": &TextParser{},
