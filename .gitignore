@@ -40,9 +40,7 @@ Thumbs.db
 .env.local
 .env.*.local
 
-# Production deploy secrets and runtime data
-deploy/conf/*.yaml
-!deploy/conf/*.yaml.example
+# Production deploy runtime data
 deploy/data/
 
 # Logs
