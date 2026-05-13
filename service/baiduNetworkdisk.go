@@ -164,15 +164,15 @@ func BaiduNetworkdiskFilenamesFromPaths(paths []string) []string {
 }
 
 // 通用上传文件或文件夹
-func GMBaiduNetworkdiskUpload(fileParam multipart.File, paramPath string, isdir string, username string) error {
+func GMBaiduNetworkdiskUpload(fileParam multipart.File, paramPath string, isdir string, username string) (*vo.CreateFileOrDirResponse, error) {
 	isdirInt, err := strconv.Atoi(isdir)
 	if err != nil {
-		return errors.New("isdir is not a valid integer: " + err.Error())
+		return nil, errors.New("isdir is not a valid integer: " + err.Error())
 	}
 	precreateInfo, fileData, blockList, err := PrecreateUpload(paramPath, isdirInt, fileParam, username)
 	if err != nil {
 		logger.Error("PrecreateUpload failed", zap.Error(err))
-		return err
+		return nil, err
 	}
 
 	const chunkSize = 1024 * 1024 * 4
@@ -186,22 +186,22 @@ func GMBaiduNetworkdiskUpload(fileParam multipart.File, paramPath string, isdir 
 		_, err = SplitUpload(precreateInfo, partData, blockIdx)
 		if err != nil {
 			logger.Error("Upload failed", zap.Error(err))
-			return err
+			return nil, err
 		}
 	}
 
-	err = CreateFileOrDir(precreateInfo.Path, 0, precreateInfo.Uploadid, blockList, precreateInfo.Size)
+	result, err := CreateFileOrDir(precreateInfo.Path, 0, precreateInfo.Uploadid, blockList, precreateInfo.Size)
 	if err != nil {
 		logger.Error("CreateFileOrDir failed", zap.Error(err))
-		return err
+		return nil, err
 	}
-	return nil
+	return result, nil
 }
 
-func CreateFileOrDir(path string, isdir int, uploadid string, blockList string, size int) error {
+func CreateFileOrDir(path string, isdir int, uploadid string, blockList string, size int) (*vo.CreateFileOrDirResponse, error) {
 	access_token, err := GetBaiduNetworkdiskTokenFromRedis()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	method := "create"
 
@@ -222,28 +222,28 @@ func CreateFileOrDir(path string, isdir int, uploadid string, blockList string, 
 
 	req, err := http.NewRequest(http.MethodPost, httpUrl, strings.NewReader(encodedFormData))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	req.Header.Set("User-Agent", headers["User-Agent"])
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var result vo.CreateFileOrDirResponse
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if result.Errno != 0 {
-		return errors.New(utils.CreateFileOrDirErrorCodeBaiduNetworkdisk(result.Errno))
+		return nil, errors.New(utils.CreateFileOrDirErrorCodeBaiduNetworkdisk(result.Errno))
 	}
-	return nil
+	return &result, nil
 }
 
 // 分片上传

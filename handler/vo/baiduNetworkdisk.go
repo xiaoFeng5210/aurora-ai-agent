@@ -61,6 +61,8 @@ type UploadResponse struct {
 type CreateFileOrDirResponse struct {
 	Errno int `json:"errno"`
 	FsId  int `json:"fs_id"`
+	Path  string `json:"path"`
+	Name  string `json:"name"`
 }
 
 type BaiduNetworkdiskFileManagerInfo struct {

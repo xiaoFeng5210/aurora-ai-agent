@@ -29,13 +29,13 @@ func GMBaiduNetworkdiskUpload(ctx *gin.Context) {
 
 	username := user.Username
 
-	err = service.GMBaiduNetworkdiskUpload(fileParam, filename, isdir, username)
+	result, err := service.GMBaiduNetworkdiskUpload(fileParam, filename, isdir, username)
 	if err != nil {
 		logger.Error("baidu networkdisk upload failed", zap.Error(err))
 		vo.RespondError(ctx, http.StatusInternalServerError, err)
 		return
 	}
-	vo.RespondSuccess(ctx, nil)
+	vo.RespondSuccess(ctx, result)
 }
 
 func GetBaiduNetworkdiskCapacity(ctx *gin.Context) {
