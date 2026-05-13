@@ -2,7 +2,8 @@ FROM golang:1.25-alpine AS build
 
 ENV GOPROXY=https://mirrors.aliyun.com/goproxy/
 
-RUN apk add --no-cache ca-certificates git
+# RUN apk --no-cache add ca-certificates tzdata
+RUN apk --no-cache add tzdata
 
 WORKDIR /src
 
