@@ -14,7 +14,8 @@ FROM alpine:3.22
 
 WORKDIR /app
 
-RUN apk add --no-cache ca-certificates tzdata
+# RUN apk add --no-cache ca-certificates tzdata
+RUN apk add tzdata
 
 COPY --from=build /out/aurora-agent /app/aurora-agent
 
