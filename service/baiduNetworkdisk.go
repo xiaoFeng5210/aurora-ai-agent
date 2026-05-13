@@ -544,3 +544,7 @@ func saveBaiduNetworkdiskTokenToRedis(token *vo.BaiduTokenResponse) error {
 
 	return client.Set(context.Background(), baiduNetworkdiskTokenKey, string(value), baiduNetworkdiskTokenTTL).Err()
 }
+
+
+// 下载文件到本地临时文件夹下
+// func DownloadFile2

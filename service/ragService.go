@@ -35,7 +35,8 @@ type FileParserTrait interface {
 type RagVectorizeMsg struct {
 	Uid         int    `json:"uid"`
 	Filename    string `json:"filename"`
-	FileContent []byte `json:"file_content"`
+	// FileContent []byte `json:"file_content"`
+	FileCloudPath string `json:"file_cloud_path"`
 }
 
 // fileParsers 文件扩展名 → 解析器的注册表
@@ -125,15 +126,10 @@ func CreateRag(uid int, file io.Reader, filename string) (*qdrant.UpdateResult, 
 }
 
 func SendRagVectorizeTask(uid int, file io.Reader, filename string, fileCloudPath string) error {
-	data, err := io.ReadAll(file)
-	if err != nil {
-		return fmt.Errorf("读取文件失败: %w", err)
-	}
-
 	msg := &RagVectorizeMsg{
 		Uid:         uid,
 		Filename:    filename,
-		FileContent: data,
+		FileCloudPath: fileCloudPath,
 	}
 	jsonMsg, err := json.Marshal(msg)
 	if err != nil {
@@ -260,6 +256,14 @@ func ConsumeRagVectorizeTask() {
 			delivery.Nack(false, true)
 			continue
 		}
+		// TODO: 从百度网盘获取文件数据
+		fileData, err := GetBaiduNetworkdiskFileData(message.FileCloudPath)
+		if err != nil {
+			logger.Error("get baidu networkdisk file data failed: " + err.Error())
+			delivery.Nack(false, true)
+			continue
+		}
+
 		_, err = CreateRag(message.Uid, bytes.NewReader(message.FileContent), message.Filename)
 		if err != nil {
 			logger.Error("create rag failed: " + err.Error())
