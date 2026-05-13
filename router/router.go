@@ -68,7 +68,7 @@ func SetupRouter() *gin.Engine {
 	baiduNetworkdiskGroup.POST("/baidu_networkdisk/token", handler.GetBaiduNetworkdiskToken)
 	baiduNetworkdiskGroup.GET("/baidu_networkdisk/capacity", handler.GetBaiduNetworkdiskCapacity)
 	baiduNetworkdiskGroup.GET("/baidu_networkdisk/file_list", handler.GetBaiduNetworkdiskFileList)
-	baiduNetworkdiskGroup.POST("/baidu_networkdisk/upload", handler.GMBaiduNetworkdiskUpload)
+baiduNetworkdiskGroup.POST("/baidu_networkdisk/upload", handler.GMBaiduNetworkdiskUpload)
 	baiduNetworkdiskGroup.DELETE("/baidu_networkdisk/file", handler.DeleteBaiduNetworkdiskFile)
 	qdrantGroup := apiv1.Group("/qdrant")
 	qdrantGroup.Use(middleware.Auth)

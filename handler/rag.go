@@ -4,6 +4,7 @@ import (
 	"aurora-agent/handler/vo"
 	"aurora-agent/middleware"
 	"aurora-agent/service"
+	"errors"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -25,6 +26,13 @@ var allowedFileExtensions = map[string]bool{
 // 上传文件并且将文件向量化上传到qdrant, 只是将任务发送给消息队列
 func RagVectorizeTask(ctx *gin.Context) {
 	fh, err := ctx.FormFile("file")
+	fileCloudPath := ctx.PostForm("file_cloud_path")
+
+	if fileCloudPath == "" {
+		vo.RespondError(ctx, http.StatusBadRequest, errors.New("file cloud path is required"))
+		return
+	}
+
 	if err != nil {
 		vo.RespondError(ctx, http.StatusBadRequest, err)
 		return
@@ -46,7 +54,7 @@ func RagVectorizeTask(ctx *gin.Context) {
 
 	uid := ctx.GetInt(middleware.UID_IN_CTX)
 
-	err = service.SendRagVectorizeTask(uid, file, fh.Filename)
+	err = service.SendRagVectorizeTask(uid, file, fh.Filename, fileCloudPath)
 	if err != nil {
 		vo.RespondError(ctx, http.StatusInternalServerError, err)
 		return

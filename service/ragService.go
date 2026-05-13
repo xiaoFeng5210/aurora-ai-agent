@@ -124,7 +124,7 @@ func CreateRag(uid int, file io.Reader, filename string) (*qdrant.UpdateResult, 
 	return result, nil
 }
 
-func SendRagVectorizeTask(uid int, file io.Reader, filename string) error {
+func SendRagVectorizeTask(uid int, file io.Reader, filename string, fileCloudPath string) error {
 	data, err := io.ReadAll(file)
 	if err != nil {
 		return fmt.Errorf("读取文件失败: %w", err)
