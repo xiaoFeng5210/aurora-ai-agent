@@ -261,7 +261,6 @@ func ConsumeRagVectorizeTask() {
 			delivery.Nack(false, true)
 			continue
 		}
-
 		_, err = CreateRag(message.Uid, bytes.NewReader(fileData), message.Filename)
 		if err != nil {
 			logger.Error("create rag failed: " + err.Error())

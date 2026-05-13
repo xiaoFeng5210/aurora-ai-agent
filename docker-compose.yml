@@ -9,11 +9,11 @@ services:
       backend:
         condition: service_started
     ports:
-      - "80:8080"
+      - "5019:8080"
     volumes:
       - ./deploy/data/nginx/log:/var/log/nginx
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5019/healthz >/dev/null 2>&1 || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
