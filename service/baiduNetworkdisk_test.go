@@ -1,6 +1,7 @@
 package service
 
 import (
+	"os"
 	"reflect"
 	"testing"
 
@@ -100,4 +101,16 @@ func TestNormalizeQdrantFilenames(t *testing.T) {
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %#v, want %#v", got, want)
 	}
+}
+
+func TestDownloadFile2TempFolder(t *testing.T) {
+	fileName, err := DownloadFile2TempFolder("/apps/aurora-ai-agent知识库/users-data/admin_test/CHANGELOG.md")
+
+	defer os.Remove(fileName)
+
+	if err != nil {
+		t.Fatalf("DownloadFile2TempFolder failed: %v", err)
+	}
+	t.Logf("fileName: %s", fileName)
+
 }

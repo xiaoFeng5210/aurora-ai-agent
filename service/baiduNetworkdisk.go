@@ -568,9 +568,18 @@ func DownloadFile2TempFolder(fileCloudPath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	fileCloudPathSlice := strings.Split(fileCloudPath, "/")
+	tempFile, err := os.CreateTemp("", fileCloudPathSlice[len(fileCloudPathSlice)-1])
+	if err != nil {
+		return "", err
+	}
 
-	fmt.Println(fileData)
-	return "", nil
+	_, err = tempFile.Write(fileData)
+	if err != nil {
+		return "", err
+	}
+
+	return tempFile.Name(), nil
 }
 
 func DonwloadFileFromBaiduNetworkdisk(fileCloudPath string) ([]byte, error) {
