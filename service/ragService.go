@@ -255,10 +255,9 @@ func ConsumeRagVectorizeTask() {
 			delivery.Nack(false, true)
 			continue
 		}
-		// TODO: 从百度网盘获取文件数据
-		fileData, err := GetBaiduNetworkdiskFileData(message.FileCloudPath)
+		fileData, err := DonwloadFileFromBaiduNetworkdisk(message.FileCloudPath)
 		if err != nil {
-			logger.Error("get baidu networkdisk file data failed: " + err.Error())
+			logger.Error("download file from baidu networkdisk failed: " + err.Error())
 			delivery.Nack(false, true)
 			continue
 		}

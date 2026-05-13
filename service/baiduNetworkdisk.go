@@ -574,6 +574,8 @@ func DownloadFile2TempFolder(fileCloudPath string) (string, error) {
 		return "", err
 	}
 
+	defer tempFile.Close()
+
 	_, err = tempFile.Write(fileData)
 	if err != nil {
 		return "", err
