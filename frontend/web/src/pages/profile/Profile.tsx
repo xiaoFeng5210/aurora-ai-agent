@@ -124,8 +124,8 @@ export function Profile() {
 
     setUploadingKnowledge(true)
     try {
-      await uploadKnowledgeFileToNetworkdisk(selectedKnowledgeFile)
-      await createRagFromFile(selectedKnowledgeFile)
+      const uploadResult = await uploadKnowledgeFileToNetworkdisk(selectedKnowledgeFile)
+      await createRagFromFile(selectedKnowledgeFile, uploadResult.data?.path)
       show(
         RAG_VECTORIZE_API_VERSION === 'v2'
           ? '文件已上传，向量化任务已提交'

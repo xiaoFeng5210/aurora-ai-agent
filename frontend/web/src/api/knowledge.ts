@@ -29,14 +29,20 @@ export interface DeleteKnowledgeFileResponse {
   qdrant: unknown
 }
 
+export interface CreateNetworkdiskFileResponse {
+  errno: number
+  fs_id: number
+  path: string
+  name: string
+}
+
 export type RagVectorizeApiVersion = 'v1' | 'v2'
 
-// TODO: v1 v2版本的向量化传参。
-const DEFAULT_RAG_VECTORIZE_API_VERSION: RagVectorizeApiVersion = 'v1'
+const DEFAULT_RAG_VECTORIZE_API_VERSION: RagVectorizeApiVersion = 'v2'
 
 export const RAG_VECTORIZE_API_VERSION: RagVectorizeApiVersion =
-  import.meta.env.VITE_RAG_VECTORIZE_API_VERSION === 'v2'
-    ? 'v2'
+  import.meta.env.VITE_RAG_VECTORIZE_API_VERSION === 'v1'
+    ? 'v1'
     : DEFAULT_RAG_VECTORIZE_API_VERSION
 
 export const RAG_VECTORIZE_MODE_LABEL =
@@ -69,12 +75,18 @@ export const uploadKnowledgeFileToNetworkdisk = (file: File) => {
   form.append('filename', file.name)
   form.append('isdir', '0')
   form.append('file', file)
-  return apiPostForm<ApiEnvelope<null>>('/file/baidu_networkdisk/upload', form)
+  return apiPostForm<ApiEnvelope<CreateNetworkdiskFileResponse>>('/file/baidu_networkdisk/upload', form)
 }
 
-export const createRagFromFile = (file: File) => {
+export const createRagFromFile = (file: File, fileCloudPath?: string) => {
   const form = new FormData()
   form.append('file', file)
+  if (RAG_VECTORIZE_API_VERSION === 'v2') {
+    if (!fileCloudPath) {
+      throw new Error('缺少百度网盘文件路径，无法提交 v2 向量化任务')
+    }
+    form.append('file_cloud_path', fileCloudPath)
+  }
   const endpoint = RAG_VECTORIZE_ENDPOINTS[RAG_VECTORIZE_API_VERSION]
   return postForm<ApiEnvelope<unknown>>(endpoint, form)
 }
