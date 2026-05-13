@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -40,6 +41,22 @@ const baiduNetworkdiskTokenTTL = 21 * 24 * time.Hour
 
 type baiduNetworkdiskFileManagerItem struct {
 	Path string `json:"path"`
+}
+
+type baiduNetworkdiskFileMetaResponse struct {
+	Errno  int                        `json:"errno"`
+	Errmsg string                     `json:"errmsg,omitempty"`
+	List   []baiduNetworkdiskFileMeta `json:"list"`
+}
+
+type baiduNetworkdiskFileMeta struct {
+	Category int    `json:"category"`
+	Dlink    string `json:"dlink"`
+	FsId     int64  `json:"fs_id"`
+	Filename string `json:"filename"`
+	Isdir    int    `json:"isdir"`
+	Path     string `json:"path"`
+	Size     int64  `json:"size"`
 }
 
 var ErrBaiduNetworkdiskInvalidDeleteRequest = errors.New("invalid baidu networkdisk delete request")
@@ -545,6 +562,207 @@ func saveBaiduNetworkdiskTokenToRedis(token *vo.BaiduTokenResponse) error {
 	return client.Set(context.Background(), baiduNetworkdiskTokenKey, string(value), baiduNetworkdiskTokenTTL).Err()
 }
 
-
 // 下载文件到本地临时文件夹下
-// func DownloadFile2
+func DownloadFile2TempFolder(fileCloudPath string) (string, error) {
+	fileData, err := DonwloadFileFromBaiduNetworkdisk(fileCloudPath)
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Println(fileData)
+	return "", nil
+}
+
+func DonwloadFileFromBaiduNetworkdisk(fileCloudPath string) ([]byte, error) {
+	cloudPath, err := normalizeBaiduNetworkdiskFilePath(fileCloudPath)
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, err := GetBaiduNetworkdiskTokenFromRedis()
+	if err != nil {
+		return nil, err
+	}
+
+	fileInfo, err := getBaiduNetworkdiskFileInfoByPath(accessToken, cloudPath)
+	if err != nil {
+		return nil, err
+	}
+	if fileInfo.Isdir == 1 {
+		return nil, fmt.Errorf("baidu networkdisk path is a directory: %s", cloudPath)
+	}
+
+	fileMeta, err := getBaiduNetworkdiskFileMeta(accessToken, fileInfo.FsId)
+	if err != nil {
+		return nil, err
+	}
+	if fileMeta.Dlink == "" {
+		return nil, fmt.Errorf("baidu networkdisk file dlink is empty: %s", cloudPath)
+	}
+
+	downloadURL, err := appendBaiduNetworkdiskAccessToken(fileMeta.Dlink, accessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, downloadURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", headers["User-Agent"])
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, fmt.Errorf("baidu networkdisk download failed: status=%d body=%s", resp.StatusCode, string(body))
+	}
+
+	return body, nil
+}
+
+func GetBaiduNetworkdiskFileData(fileCloudPath string) ([]byte, error) {
+	return DonwloadFileFromBaiduNetworkdisk(fileCloudPath)
+}
+
+func normalizeBaiduNetworkdiskFilePath(fileCloudPath string) (string, error) {
+	fileCloudPath = strings.TrimSpace(fileCloudPath)
+	if fileCloudPath == "" {
+		return "", errors.New("baidu networkdisk file path is required")
+	}
+
+	if strings.HasPrefix(fileCloudPath, "/") {
+		cleanPath := path.Clean(fileCloudPath)
+		if cleanPath == baiduNetworkdiskAppRoot {
+			return "", errors.New("baidu networkdisk file path cannot be app root")
+		}
+		if !strings.HasPrefix(cleanPath, baiduNetworkdiskAppRoot+"/") {
+			return "", fmt.Errorf("baidu networkdisk file path must be under %s", baiduNetworkdiskAppRoot)
+		}
+		return cleanPath, nil
+	}
+
+	cleanPath := path.Clean(baiduNetworkdiskAppRoot + "/" + strings.TrimLeft(fileCloudPath, "/"))
+	if !strings.HasPrefix(cleanPath, baiduNetworkdiskAppRoot+"/") {
+		return "", fmt.Errorf("baidu networkdisk file path must be under %s", baiduNetworkdiskAppRoot)
+	}
+	return cleanPath, nil
+}
+
+func getBaiduNetworkdiskFileInfoByPath(accessToken string, fileCloudPath string) (*vo.Info, error) {
+	dir := path.Dir(fileCloudPath)
+	fileList, err := getBaiduNetworkdiskFileListByAbsoluteDir(accessToken, dir)
+	if err != nil {
+		return nil, err
+	}
+
+	for idx := range fileList.List {
+		item := fileList.List[idx]
+		if item.Path == fileCloudPath {
+			return &item, nil
+		}
+	}
+
+	return nil, fmt.Errorf("baidu networkdisk file not found: %s", fileCloudPath)
+}
+
+func getBaiduNetworkdiskFileListByAbsoluteDir(accessToken string, dir string) (*vo.BaiduNetworkdiskFileListResponse, error) {
+	query := url.Values{}
+	query.Set("access_token", accessToken)
+	query.Set("method", "list")
+	query.Set("dir", dir)
+
+	req, err := http.NewRequest(http.MethodGet, baseUrl+"/rest/2.0/xpan/file?"+query.Encode(), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", headers["User-Agent"])
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, fmt.Errorf("baidu networkdisk file list failed: status=%d body=%s", resp.StatusCode, string(body))
+	}
+
+	var result vo.BaiduNetworkdiskFileListResponse
+	if err = json.Unmarshal(body, &result); err != nil {
+		return nil, err
+	}
+	if result.Errno != 0 {
+		return nil, errors.New(utils.CommonErrorCodeBaiduNetworkdisk(result.Errno))
+	}
+
+	return &result, nil
+}
+
+func getBaiduNetworkdiskFileMeta(accessToken string, fsID int) (*baiduNetworkdiskFileMeta, error) {
+	query := url.Values{}
+	query.Set("method", "filemetas")
+	query.Set("access_token", accessToken)
+	query.Set("fsids", fmt.Sprintf("[%d]", fsID))
+	query.Set("dlink", "1")
+
+	req, err := http.NewRequest(http.MethodGet, baseUrl+"/rest/2.0/xpan/multimedia?"+query.Encode(), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", headers["User-Agent"])
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, fmt.Errorf("baidu networkdisk file meta failed: status=%d body=%s", resp.StatusCode, string(body))
+	}
+
+	var result baiduNetworkdiskFileMetaResponse
+	if err = json.Unmarshal(body, &result); err != nil {
+		return nil, err
+	}
+	if result.Errno != 0 {
+		if result.Errmsg != "" {
+			return nil, fmt.Errorf("baidu networkdisk file meta failed: errno=%d errmsg=%s", result.Errno, result.Errmsg)
+		}
+		return nil, errors.New(utils.CommonErrorCodeBaiduNetworkdisk(result.Errno))
+	}
+	if len(result.List) == 0 {
+		return nil, fmt.Errorf("baidu networkdisk file meta not found: fs_id=%d", fsID)
+	}
+
+	return &result.List[0], nil
+}
+
+func appendBaiduNetworkdiskAccessToken(dlink string, accessToken string) (string, error) {
+	downloadURL, err := url.Parse(dlink)
+	if err != nil {
+		return "", err
+	}
+
+	query := downloadURL.Query()
+	query.Set("access_token", accessToken)
+	downloadURL.RawQuery = query.Encode()
+
+	return downloadURL.String(), nil
+}

@@ -33,8 +33,8 @@ type FileParserTrait interface {
 }
 
 type RagVectorizeMsg struct {
-	Uid         int    `json:"uid"`
-	Filename    string `json:"filename"`
+	Uid      int    `json:"uid"`
+	Filename string `json:"filename"`
 	// FileContent []byte `json:"file_content"`
 	FileCloudPath string `json:"file_cloud_path"`
 }
@@ -127,8 +127,8 @@ func CreateRag(uid int, file io.Reader, filename string) (*qdrant.UpdateResult, 
 
 func SendRagVectorizeTask(uid int, file io.Reader, filename string, fileCloudPath string) error {
 	msg := &RagVectorizeMsg{
-		Uid:         uid,
-		Filename:    filename,
+		Uid:           uid,
+		Filename:      filename,
 		FileCloudPath: fileCloudPath,
 	}
 	jsonMsg, err := json.Marshal(msg)
@@ -201,7 +201,6 @@ func ConsumeRagVectorizeTask() {
 		panic("open channel failed: " + err.Error())
 	}
 	defer ch.Close()
-  
 	// 声明exchange,这个很关键，最好都声明下保证exchange存在
 	err = rabbitmq_module.DeclareExchange(ch, exg)
 	if err != nil {
@@ -264,7 +263,7 @@ func ConsumeRagVectorizeTask() {
 			continue
 		}
 
-		_, err = CreateRag(message.Uid, bytes.NewReader(message.FileContent), message.Filename)
+		_, err = CreateRag(message.Uid, bytes.NewReader(fileData), message.Filename)
 		if err != nil {
 			logger.Error("create rag failed: " + err.Error())
 			delivery.Nack(false, true)
