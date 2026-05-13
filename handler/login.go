@@ -66,7 +66,7 @@ func Login(ctx *gin.Context) {
 		token,
 		int(3*24*time.Hour/time.Second),
 		"/",
-		"localhost",
+		"",
 		false,
 		true,
 	)
@@ -82,7 +82,7 @@ func Logout(ctx *gin.Context) {
 		"",
 		-1,
 		"/",
-		"localhost",
+		"",
 		false,
 		true,
 	)

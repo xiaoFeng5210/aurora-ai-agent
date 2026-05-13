@@ -13,7 +13,29 @@ services:
     volumes:
       - ./deploy/data/nginx/log:/var/log/nginx
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:5019/healthz >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - aurora
+
+  admin:
+    build:
+      context: ./frontend/admin
+      dockerfile: Dockerfile
+    image: aurora-admin:compose
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "50190:8080"
+    volumes:
+      - ./deploy/data/admin-nginx/log:/var/log/nginx
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz >/dev/null 2>&1 || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3

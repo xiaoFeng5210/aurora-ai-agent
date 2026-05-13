@@ -3,6 +3,7 @@
 这套部署用于单机生产或准生产环境，包含：
 
 - `frontend`: Nginx 托管 `frontend/web` 构建产物，并代理 `/api/` 到后端
+- `admin`: Nginx 托管 `frontend/admin` 构建产物，并代理 `/api/` 到后端
 - `backend`: Go 后端服务
 - `postgres`: 业务数据库
 - `redis`: 缓存和百度网盘 token 存储
@@ -97,6 +98,7 @@ deploy/data/redis          Redis AOF/RDB 数据
 deploy/data/rabbitmq       RabbitMQ 数据
 deploy/data/backend/log    后端 zap/db 日志
 deploy/data/nginx/log      Nginx access/error 日志
+deploy/data/admin-nginx/log Admin Nginx access/error 日志
 ```
 
 这些目录不要删除。删除后对应服务数据会丢失。
@@ -129,24 +131,54 @@ docker compose ps
 docker compose logs -f backend
 ```
 
-## 5. 验证
+## 5. 端口说明
 
-检查前端 Nginx：
+Compose 默认只把前端入口暴露到宿主机：
+
+```text
+frontend  宿主机 5019  -> 容器 8080
+admin     宿主机 50190 -> 容器 8080
+rabbitmq  宿主机 127.0.0.1:15672 -> 容器 15672
+```
+
+`backend` 在 Docker 内部网络监听 `1119`，没有直接暴露到宿主机；`frontend` 和 `admin` 都通过服务名 `backend:1119` 访问它。
+
+如果宿主机端口冲突，只改冒号左边的宿主机端口。例如 admin 改成 `50191`：
+
+```yaml
+admin:
+  ports:
+    - "50191:8080"
+```
+
+访问地址也相应变成 `http://服务器IP:50191`。
+
+## 6. 验证
+
+检查 Web 前端 Nginx：
 
 ```bash
-curl http://localhost/healthz
+curl http://localhost:5019/healthz
+```
+
+检查 Admin 前端 Nginx：
+
+```bash
+curl http://localhost:50190/healthz
 ```
 
 检查后端是否通过 Nginx 可访问：
 
 ```bash
-curl http://localhost/ping
+curl http://localhost:5019/ping
+curl http://localhost:50190/ping
 ```
 
 浏览器访问：
 
 ```text
-http://localhost/
+Web 前端:   http://localhost:5019/
+Admin 前端: http://localhost:50190/
 ```
 
 RabbitMQ 管理后台默认只绑定本机：
@@ -157,7 +189,7 @@ http://127.0.0.1:15672
 
 账号密码见 `docker-compose.yml`，生产环境建议替换。
 
-## 6. 常用运维命令
+## 7. 常用运维命令
 
 重启全部服务：
 
@@ -190,7 +222,7 @@ docker compose up -d --build
 docker stats
 ```
 
-## 7. 备份和恢复
+## 8. 备份和恢复
 
 备份 Postgres：
 
@@ -229,7 +261,7 @@ deploy/data/backend/log
 deploy/data/nginx/log
 ```
 
-## 8. 安全注意
+## 9. 安全注意
 
 - `.env` 不要提交。
 - `deploy/conf/*.yaml` 已按 Docker Compose 部署提供默认值；如果你在服务器上改成真实生产密钥，注意不要把敏感值提交到公开仓库。
@@ -238,7 +270,7 @@ deploy/data/nginx/log
 - 生产环境必须替换示例密码和 JWT secret。
 - 不建议把 Postgres、Redis、RabbitMQ 的业务端口直接暴露到公网。
 
-## 9. 常见问题
+## 10. 常见问题
 
 后端启动失败并提示数据库连接失败：
 

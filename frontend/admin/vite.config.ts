@@ -26,7 +26,7 @@ const isDev = process.env.NODE_ENV === "development";
 // https://vitejs.dev/config/
 export default defineConfig({
 
-	base: isDev ? "./" : "./",
+	base: "./",
 	resolve: {
 		alias: {
 			"@": path.resolve(__dirname, "src"),
@@ -35,7 +35,7 @@ export default defineConfig({
 	plugins: [
 		vitePluginFakeServer({
 			basename: "/api",
-			enableProd: true,
+			enableProd: false,
 			timeout: 1000,
 		}),
 		// https://github.com/pd4d10/vite-plugin-svgr#options
