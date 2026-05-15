@@ -20,7 +20,7 @@
 	},
 	"scripts": {
 		"dev": "vite",
-		"build": "NODE_OPTIONS=--max-old-space-size=8192 vite build",
+		"build": "NODE_OPTIONS=--max-old-space-size=4096 vite build",
 		"preview": "vite preview",
 		"typecheck": "tsc --noEmit",
 		"analyzer": "vite-bundle-visualizer --output analyzer/stats.html",

@@ -1,5 +1,5 @@
+# 注意：dist 为本机预构建产物，需进入构建上下文，不能忽略
 node_modules
-dist
 .env
 .env.*
 *.log

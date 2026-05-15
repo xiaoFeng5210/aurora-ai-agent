@@ -1,18 +1,8 @@
-FROM node:22-alpine AS build
-
-WORKDIR /app
-
-RUN corepack enable && corepack prepare pnpm@8.15.9 --activate
-
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
-
-COPY . .
-RUN pnpm build
-
+# web 静态产物由本机脚本预先构建（部署服务器跑 pnpm build 会崩）。
+# 构建镜像前请先执行：bash scripts/build-frontend.sh web
 FROM nginx:1.27-alpine
 
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY dist /usr/share/nginx/html
 
 EXPOSE 8080
