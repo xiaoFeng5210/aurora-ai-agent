@@ -1,24 +1,15 @@
-FROM golang:1.25-alpine AS build
+# aurora-agent 二进制由本机脚本 scripts/build-backend.sh 预先交叉编译生成，
+# 不在镜像内编译（部署服务器 CPU 编译 Go 过于吃力）。
+# 构建镜像前请先执行：bash scripts/build-backend.sh
+FROM alpine:3.22
 
 ENV GOPROXY=https://mirrors.aliyun.com/goproxy/
-
-# RUN apk --no-cache add ca-certificates tzdata
-
-WORKDIR /src
-
-COPY go.mod go.sum ./
-RUN go mod download
-
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/aurora-agent .
-
-FROM alpine:3.22
 
 RUN apk --no-cache add tzdata
 
 WORKDIR /app
 
-COPY --from=build /out/aurora-agent /app/aurora-agent
+COPY bin/aurora-agent /app/aurora-agent
 
 RUN mkdir -p /app/conf /app/log
 

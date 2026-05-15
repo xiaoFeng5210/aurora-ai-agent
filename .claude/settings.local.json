@@ -7,7 +7,11 @@
       "Bash(pnpm add *)",
       "Bash(pnpm exec *)",
       "Bash(echo \"EXIT=$?\")",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(mkdir -p /Users/xiaofeng/Documents/github/aurora-ai-agent/scripts)",
+      "Bash(go version *)",
+      "Bash(chmod +x scripts/build-backend.sh)",
+      "Bash(bash scripts/build-backend.sh)"
     ]
   }
 }
