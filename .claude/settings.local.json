@@ -14,7 +14,10 @@
       "Bash(bash scripts/build-backend.sh)",
       "Bash(echo \"pnpm: $\\(pnpm -v || echo 'NOT FOUND'\\)\")",
       "Bash(corepack --version)",
-      "Bash(echo \"corepack: $\\(corepack --version || echo 'NOT FOUND'\\)\")"
+      "Bash(echo \"corepack: $\\(corepack --version || echo 'NOT FOUND'\\)\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }

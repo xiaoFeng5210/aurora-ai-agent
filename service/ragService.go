@@ -247,7 +247,7 @@ func ConsumeRagVectorizeTask() {
 	}
 
 	for delivery := range deliverCh {
-		logger.Info("VectorizeTaskConsumer Received message: %s", zap.String("message", string(delivery.Body)))
+		logger.Info("VectorizeTaskConsumer Received message: ", zap.String("message", string(delivery.Body)))
 		var message RagVectorizeMsg
 		err := json.Unmarshal(delivery.Body, &message)
 		if err != nil {
