@@ -58,6 +58,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    ports:
+      - "1119:1119"
     volumes:
       - ./deploy/conf:/app/conf:ro
       - ./deploy/data/backend/log:/app/log
