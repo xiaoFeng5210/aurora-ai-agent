@@ -84,9 +84,19 @@ func CreateRag(uid int, file io.Reader, filename string) (*qdrant.UpdateResult, 
 	}
 
 	// 2. 读取文件二进制数据
-	data, err := io.ReadAll(file)
-	if err != nil {
-		return nil, fmt.Errorf("读取文件失败: %w", err)
+	var data []byte
+  
+	buffer := make([]byte, 1024*4)
+	for {
+		n, err := file.Read(buffer)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("读取文件失败: %w", err)
+		}
+
+		data = append(data, buffer[:n]...)
 	}
 
 	// 3. 通过解析器将文件数据转为纯文本
