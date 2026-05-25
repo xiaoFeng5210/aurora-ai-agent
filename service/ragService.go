@@ -1,6 +1,8 @@
 package service
 
 import (
+	"aurora-agent/database"
+	"aurora-agent/database/model"
 	"aurora-agent/service/embedding"
 	"bytes"
 	"context"
@@ -15,7 +17,6 @@ import (
 	"go.uber.org/zap"
 
 	rabbitmq_module "aurora-agent/database/rabbitmq"
-	"aurora-agent/database/redis"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -76,6 +77,30 @@ func (p *TextParser) Parse2String(data []byte) (string, error) {
 // CreateRag 将上传的文件写入当前用户的个人 RAG 知识库
 // 流程：根据扩展名选择解析器 → 解析为文本 → 分块 → 向量化 → 按 user_id 写入 Qdrant
 func CreateRag(uid int, file io.Reader, filename string) (*qdrant.UpdateResult, error) {
+	return CreateRagWithPath(uid, file, filename, filename)
+}
+
+func CreateRagWithPath(uid int, file io.Reader, filename string, filePath string) (*qdrant.UpdateResult, error) {
+	if err := setRagVectorizationStatus(uid, filename, filePath, model.RagVectorStatusVectorizing, nil); err != nil {
+		return nil, err
+	}
+
+	result, err := createRagVector(uid, file, filename)
+	if err != nil {
+		errMsg := err.Error()
+		if statusErr := setRagVectorizationStatus(uid, filename, filePath, model.RagVectorStatusFailed, &errMsg); statusErr != nil {
+			logger.Error("update rag vectorization failed status failed", zap.Error(statusErr))
+		}
+		return nil, err
+	}
+
+	if err := setRagVectorizationStatus(uid, filename, filePath, model.RagVectorStatusCompleted, nil); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func createRagVector(uid int, file io.Reader, filename string) (*qdrant.UpdateResult, error) {
 	// 1. 根据文件扩展名匹配解析器
 	ext := strings.ToLower(filepath.Ext(filename))
 	parser, ok := fileParsers[ext]
@@ -85,7 +110,7 @@ func CreateRag(uid int, file io.Reader, filename string) (*qdrant.UpdateResult, 
 
 	// 2. 读取文件二进制数据
 	var data []byte
-  
+
 	buffer := make([]byte, 1024*4)
 	for {
 		n, err := file.Read(buffer)
@@ -135,6 +160,13 @@ func CreateRag(uid int, file io.Reader, filename string) (*qdrant.UpdateResult, 
 	return result, nil
 }
 
+func setRagVectorizationStatus(uid int, filename string, filePath string, status string, errorMessage *string) error {
+	if strings.TrimSpace(filePath) == "" {
+		filePath = filename
+	}
+	return database.UpsertRagVectorizationStatus(uid, filename, filePath, status, errorMessage)
+}
+
 func SendRagVectorizeTask(uid int, file io.Reader, filename string, fileCloudPath string) error {
 	msg := &RagVectorizeMsg{
 		Uid:           uid,
@@ -181,18 +213,7 @@ func SendRagVectorizeTask(uid int, file io.Reader, filename string, fileCloudPat
 		return fmt.Errorf("publish message failed: %w", err)
 	}
 
-	// 需要存进redis里
-	client := redis.Client()
-	redisCtx := context.Background()
-	pipe := client.TxPipeline()
-	key := fmt.Sprintf("rag_vectorize.%d", uid)
-	redisData := map[string]interface{}{
-		"filename": filename,
-		"status":   "pending",
-	}
-	pipe.HSet(redisCtx, key, redisData)
-	pipe.Expire(redisCtx, key, 3*time.Hour)
-	if _, err = pipe.Exec(redisCtx); err != nil {
+	if err = setRagVectorizationStatus(uid, filename, fileCloudPath, model.RagVectorStatusVectorizing, nil); err != nil {
 		return err
 	}
 	return nil
@@ -262,29 +283,29 @@ func ConsumeRagVectorizeTask() {
 		err := json.Unmarshal(delivery.Body, &message)
 		if err != nil {
 			logger.Error("unmarshal message failed: " + err.Error())
-			delivery.Nack(false, true)
+			delivery.Nack(false, false)
 			continue
+		}
+		if err = setRagVectorizationStatus(message.Uid, message.Filename, message.FileCloudPath, model.RagVectorStatusVectorizing, nil); err != nil {
+			logger.Error("update rag vectorization vectorizing status failed: " + err.Error())
 		}
 		fileData, err := DonwloadFileFromBaiduNetworkdisk(message.FileCloudPath)
 		if err != nil {
 			logger.Error("download file from baidu networkdisk failed: " + err.Error())
-			delivery.Nack(false, true)
+			errMsg := err.Error()
+			if statusErr := setRagVectorizationStatus(message.Uid, message.Filename, message.FileCloudPath, model.RagVectorStatusFailed, &errMsg); statusErr != nil {
+				logger.Error("update rag vectorization failed status failed: " + statusErr.Error())
+			}
+			delivery.Ack(false)
 			continue
 		}
-		_, err = CreateRag(message.Uid, bytes.NewReader(fileData), message.Filename)
+		_, err = CreateRagWithPath(message.Uid, bytes.NewReader(fileData), message.Filename, message.FileCloudPath)
 		if err != nil {
 			logger.Error("create rag failed: " + err.Error())
-			delivery.Nack(false, true)
+			delivery.Ack(false)
 			continue
 		}
 
-		// 更新redis状态
-		client := redis.Client()
-		key := fmt.Sprintf("rag_vectorize.%d", message.Uid)
-		err = client.Del(context.Background(), key).Err()
-		if err != nil {
-			logger.Error("delete redis key failed: " + err.Error())
-		}
 		delivery.Ack(false)
 	}
 }
