@@ -1,6 +1,8 @@
 package service
 
 import (
+	"aurora-agent/database"
+	"aurora-agent/database/model"
 	"aurora-agent/database/redis"
 	"aurora-agent/handler/vo"
 	"aurora-agent/utils"
@@ -414,7 +416,7 @@ func HandleFile(fileParam multipart.File) (blockList []string, size int64, fileD
 }
 
 // 获取文件或文件夹列表
-func GetBaiduNetworkdiskFileList(dir string) (*vo.BaiduNetworkdiskFileListResponse, error) {
+func GetBaiduNetworkdiskFileList(uid int, dir string) (*vo.BaiduNetworkdiskFileListResponse, error) {
 	access_token, err := GetBaiduNetworkdiskTokenFromRedis()
 	if err != nil {
 		return nil, err
@@ -438,7 +440,48 @@ func GetBaiduNetworkdiskFileList(dir string) (*vo.BaiduNetworkdiskFileListRespon
 	if err != nil {
 		return nil, err
 	}
+	if err = fillBaiduNetworkdiskVectorStatus(uid, &result); err != nil {
+		return nil, err
+	}
 	return &result, nil
+}
+
+func fillBaiduNetworkdiskVectorStatus(uid int, result *vo.BaiduNetworkdiskFileListResponse) error {
+	filePaths := make([]string, 0, len(result.List))
+	for _, item := range result.List {
+		if item.Isdir == 1 || item.Path == "" {
+			continue
+		}
+		filePaths = append(filePaths, item.Path)
+	}
+
+	statuses, err := database.QueryRagVectorizationsByPaths(uid, filePaths)
+	if err != nil {
+		return err
+	}
+
+	for idx := range result.List {
+		status := model.RagVectorStatusNotVectorized
+		if record, ok := statuses[result.List[idx].Path]; ok && record.Status != "" {
+			status = record.Status
+		}
+		result.List[idx].VectorStatus = status
+		result.List[idx].VectorStatusLabel = RagVectorStatusLabel(status)
+	}
+	return nil
+}
+
+func RagVectorStatusLabel(status string) string {
+	switch status {
+	case model.RagVectorStatusVectorizing:
+		return "入库中"
+	case model.RagVectorStatusCompleted:
+		return "已入库"
+	case model.RagVectorStatusFailed:
+		return "入库失败"
+	default:
+		return "待入库"
+	}
 }
 
 // 获取百度网盘容量

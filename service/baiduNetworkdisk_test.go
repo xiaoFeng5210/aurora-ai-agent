@@ -13,7 +13,7 @@ func init() {
 }
 
 func TestGetBaiduNetworkdiskFileList(t *testing.T) {
-	resp, err := GetBaiduNetworkdiskFileList("/oss/")
+	resp, err := GetBaiduNetworkdiskFileList(0, "/oss/")
 	if err != nil {
 		t.Fatalf("GetBaiduNetworkdiskFileList failed: %v", err)
 	}
