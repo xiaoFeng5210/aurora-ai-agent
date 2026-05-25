@@ -9,6 +9,10 @@ import {
   type ReactNode,
 } from 'react'
 import {
+  AlertTriangle,
+  CheckCircle2,
+  Circle,
+  Clock,
   Database,
   FileText,
   HardDrive,
@@ -530,8 +534,9 @@ function KnowledgePanel({
         </div>
 
         <div className="overflow-hidden rounded-lg border border-ink-200 bg-paper-50">
-          <div className="grid grid-cols-[minmax(0,1fr)_96px_128px_72px] gap-3 border-b border-ink-200 bg-paper-100/70 px-4 py-3 text-xs font-semibold text-ink-500 max-md:hidden">
+          <div className="grid grid-cols-[minmax(0,1fr)_104px_96px_128px_72px] gap-3 border-b border-ink-200 bg-paper-100/70 px-4 py-3 text-xs font-semibold text-ink-500 max-md:hidden">
             <span>名称</span>
+            <span>状态</span>
             <span>大小</span>
             <span>更新时间</span>
             <span className="text-right">操作</span>
@@ -591,7 +596,7 @@ function KnowledgeFileRow({
   const isDirectory = file.isdir === 1
 
   return (
-    <li className="grid gap-3 px-4 py-3 text-sm transition hover:bg-paper-100/50 md:grid-cols-[minmax(0,1fr)_96px_128px_72px] md:items-center">
+    <li className="grid gap-3 px-4 py-3 text-sm transition hover:bg-paper-100/50 md:grid-cols-[minmax(0,1fr)_104px_96px_128px_72px] md:items-center">
       <div className="flex min-w-0 items-center gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-ink-200 bg-paper-100 text-ink-500">
           <FileText className="h-4 w-4" />
@@ -599,7 +604,13 @@ function KnowledgeFileRow({
         <div className="min-w-0">
           <p className="truncate font-medium text-ink-950">{file.server_filename}</p>
           <p className="mt-0.5 truncate text-xs text-ink-500">{file.path}</p>
+          <div className="mt-2 md:hidden">
+            <KnowledgeVectorStatusBadge file={file} />
+          </div>
         </div>
+      </div>
+      <div className="hidden md:block">
+        <KnowledgeVectorStatusBadge file={file} />
       </div>
       <span className="text-xs text-ink-500 md:text-sm">
         {isDirectory ? '文件夹' : formatBytes(file.size)}
@@ -614,6 +625,53 @@ function KnowledgeFileRow({
         />
       </div>
     </li>
+  )
+}
+
+function KnowledgeVectorStatusBadge({ file }: { file: NetworkdiskFile }) {
+  if (file.isdir === 1) {
+    return <StatusBadge status="not_vectorized" label="文件夹" />
+  }
+  return (
+    <StatusBadge
+      status={file.vector_status ?? 'not_vectorized'}
+      label={file.vector_status_label || '待入库'}
+    />
+  )
+}
+
+function StatusBadge({
+  status,
+  label,
+}: {
+  status: NonNullable<NetworkdiskFile['vector_status']> | 'not_vectorized'
+  label: string
+}) {
+  const styles = {
+    not_vectorized: 'border-ink-200 bg-paper-100 text-ink-500',
+    vectorizing: 'border-accent-vermilion/25 bg-accent-vermilion/10 text-accent-vermilion',
+    completed: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    failed: 'border-rose-200 bg-rose-50 text-rose-700',
+  }[status]
+
+  const Icon = {
+    not_vectorized: Circle,
+    vectorizing: Clock,
+    completed: CheckCircle2,
+    failed: AlertTriangle,
+  }[status]
+
+  return (
+    <span
+      className={cn(
+        'inline-flex h-7 max-w-full items-center gap-1.5 rounded-md border px-2 text-xs font-medium',
+        styles,
+      )}
+      title={label}
+    >
+      <Icon className="h-3.5 w-3.5 shrink-0" />
+      <span className="truncate">{label}</span>
+    </span>
   )
 }
 

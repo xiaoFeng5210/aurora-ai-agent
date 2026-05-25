@@ -17,6 +17,8 @@ export interface NetworkdiskFile {
   server_ctime: number
   server_mtime: number
   size: number
+  vector_status?: 'not_vectorized' | 'vectorizing' | 'completed' | 'failed'
+  vector_status_label?: string
 }
 
 export interface NetworkdiskFileListResponse {
