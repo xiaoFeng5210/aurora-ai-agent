@@ -27,16 +27,18 @@ const (
 )
 
 type Info struct {
-	Category       int    `json:"category"`
-	FsId           int    `json:"fs_id"`
-	Path           string `json:"path"`            // 绝对路径
-	ServerFilename string `json:"server_filename"` // 文件名称
-	Isdir          int    `json:"isdir"`
-	LocalCtime     int    `json:"local_ctime"`
-	LocalMtime     int    `json:"local_mtime"`
-	ServerCtime    int    `json:"server_ctime"`
-	ServerMtime    int    `json:"server_mtime"`
-	Size           int    `json:"size"`
+	Category          int    `json:"category"`
+	FsId              int    `json:"fs_id"`
+	Path              string `json:"path"`            // 绝对路径
+	ServerFilename    string `json:"server_filename"` // 文件名称
+	Isdir             int    `json:"isdir"`
+	LocalCtime        int    `json:"local_ctime"`
+	LocalMtime        int    `json:"local_mtime"`
+	ServerCtime       int    `json:"server_ctime"`
+	ServerMtime       int    `json:"server_mtime"`
+	Size              int    `json:"size"`
+	VectorStatus      string `json:"vector_status"`
+	VectorStatusLabel string `json:"vector_status_label"`
 }
 
 type BaiduNetworkdiskFileListResponse struct {
@@ -59,8 +61,8 @@ type UploadResponse struct {
 }
 
 type CreateFileOrDirResponse struct {
-	Errno int `json:"errno"`
-	FsId  int `json:"fs_id"`
+	Errno int    `json:"errno"`
+	FsId  int    `json:"fs_id"`
 	Path  string `json:"path"`
 	Name  string `json:"name"`
 }

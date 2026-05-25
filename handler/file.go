@@ -69,7 +69,7 @@ func GetBaiduNetworkdiskToken(ctx *gin.Context) {
 
 func GetBaiduNetworkdiskFileList(ctx *gin.Context) {
 	dir := ctx.Query("dir")
-	resp, err := service.GetBaiduNetworkdiskFileList(dir)
+	resp, err := service.GetBaiduNetworkdiskFileList(ctx.GetInt(middleware.UID_IN_CTX), dir)
 	if err != nil {
 		vo.RespondError(ctx, http.StatusInternalServerError, err)
 		return
@@ -113,6 +113,11 @@ func DeleteBaiduNetworkdiskFile(ctx *gin.Context) {
 		service.BaiduNetworkdiskFilenamesFromPaths(paths),
 	)
 	if err != nil {
+		vo.RespondError(ctx, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err = database.SoftDeleteRagVectorizationsByPaths(ctx.GetInt(middleware.UID_IN_CTX), paths); err != nil {
 		vo.RespondError(ctx, http.StatusInternalServerError, err)
 		return
 	}
