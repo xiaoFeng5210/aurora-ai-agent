@@ -111,3 +111,39 @@ CREATE INDEX IF NOT EXISTS idx_messages_deleted_at
 CREATE OR REPLACE TRIGGER trg_messages_update_time
 BEFORE UPDATE ON messages
 FOR EACH ROW EXECUTE FUNCTION set_update_time();
+
+
+
+
+
+
+
+
+
+-- Aurora AI Agent - RAG Vectorization Status
+CREATE TABLE IF NOT EXISTS rag_vectorization (
+    id            SERIAL          PRIMARY KEY,
+    user_id       INT             NOT NULL,
+    file_name     VARCHAR(255)    NOT NULL,
+    file_path     VARCHAR(1024)   NOT NULL,
+    status        VARCHAR(32)     NOT NULL DEFAULT 'not_vectorized',
+    error_message TEXT,
+    create_time   TIMESTAMPTZ     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time   TIMESTAMPTZ     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at    TIMESTAMPTZ,
+
+    CONSTRAINT rag_vectorization_file_name_not_empty CHECK (file_name <> ''),
+    CONSTRAINT rag_vectorization_file_path_not_empty CHECK (file_path <> ''),
+    CONSTRAINT rag_vectorization_status_valid CHECK (status IN ('not_vectorized', 'vectorizing', 'completed', 'failed'))
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_rag_vectorization_user_file_path
+    ON rag_vectorization (user_id, file_path);
+
+CREATE INDEX IF NOT EXISTS idx_rag_vectorization_user_id ON rag_vectorization (user_id);
+CREATE INDEX IF NOT EXISTS idx_rag_vectorization_status ON rag_vectorization (status);
+CREATE INDEX IF NOT EXISTS idx_rag_vectorization_deleted_at ON rag_vectorization (deleted_at);
+
+CREATE OR REPLACE TRIGGER trg_rag_vectorization_update_time
+BEFORE UPDATE ON rag_vectorization
+FOR EACH ROW EXECUTE FUNCTION set_update_time();
