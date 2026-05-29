@@ -335,7 +335,7 @@ func PrecreateUpload(paramPath string, isdir int, fileParam multipart.File, user
 	}
 	path := parent + paramPath
 
-	blockList, size, fileData, err := HandleFile(fileParam)
+	blockList, size, fileData, err := ReadFile(fileParam)
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -385,7 +385,7 @@ func PrecreateUpload(paramPath string, isdir int, fileParam multipart.File, user
 	return &result, fileData, string(blockListBytes), nil
 }
 
-func HandleFile(fileParam multipart.File) (blockList []string, size int64, fileData []byte, err error) {
+func ReadFile(fileParam multipart.File) (blockList []string, size int64, fileData []byte, err error) {
 	fileData = []byte{}
 
 	var buffer = make([]byte, 1024*1024*4)
@@ -397,6 +397,7 @@ func HandleFile(fileParam multipart.File) (blockList []string, size int64, fileD
 			copy(md5DataContainer, md5Data[:])
 			block := hex.EncodeToString(md5DataContainer)
 			blockList = append(blockList, block)
+			// TODO: 这里需要优化
 			fileData = append(fileData, buffer[:n]...)
 		}
 
