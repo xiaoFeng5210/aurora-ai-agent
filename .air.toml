@@ -19,7 +19,8 @@ tmp_dir = "tmp"
     "testdata",
     "tmp",
     "vendor",
-    "web",
+    "frontend",
+    "deploy",
   ]
   exclude_file = []
   # 测试文件不触发重建（与 exclude_dir 中的 .claude/.cursor 等目录排除配合）
@@ -66,3 +67,6 @@ tmp_dir = "tmp"
 [screen]
   clear_on_rebuild = false
   keep_scroll = true
+
+
+
