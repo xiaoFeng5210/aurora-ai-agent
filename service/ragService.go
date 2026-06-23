@@ -232,7 +232,7 @@ func ConsumeRagVectorizeTask() {
 		panic("open channel failed: " + err.Error())
 	}
 	defer ch.Close()
-	// 声明exchange,这个很关键，最好都声明下保证exchange存在
+	// * 声明exchange,这个很关键，最好都声明下保证exchange存在
 	err = rabbitmq_module.DeclareExchange(ch, exg)
 	if err != nil {
 		panic("declare exchange failed: " + err.Error())

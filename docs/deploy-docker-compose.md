@@ -55,7 +55,7 @@ POSTGRES_USER: aurora
 POSTGRES_PASSWORD: aurora_postgres_change_me
 ```
 
-默认 Redis：
+默认 Redis:
 
 ```yaml
 redis:
