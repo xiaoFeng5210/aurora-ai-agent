@@ -18,20 +18,18 @@ export function Home() {
       <main className="mx-auto flex max-w-5xl flex-col items-center px-6 pt-[18vh] text-center">
         <span className="inline-flex items-center gap-2 rounded-full bg-accent-vermilion/10 px-4 py-1.5 text-sm font-medium text-accent-vermilion">
           <span className="text-xs">●</span>
-          The Agent Harness
+          Ariadne · 卡片笔记仓库
         </span>
 
         <h1 className="font-display mt-8 text-6xl font-black leading-[1.05] tracking-tight text-ink-950 md:text-8xl">
-          搭建属于你自己的 <br className="hidden md:block" />
-          <span className="font-display font-black tracking-tight text-ink-700">
-            AI
-          </span>{' '}
-          <span className="text-accent-vermilion">知识库</span>
+          把灵感、资料与想法，<br className="hidden md:block" />
+          <span className="text-accent-vermilion">都装进卡片里</span>
         </h1>
 
-        <p className="mt-8 max-w-2xl text-lg leading-relaxed text-ink-500">
-          Aurora 让你把私有文档、笔记与资料沉淀为可检索、可对话的知识库 ——
-          与模型协作回答问题、生成内容，真正拥有一份专属于你的 AI 大脑。
+        <p className="mt-8 max-w-3xl text-lg leading-relaxed text-ink-500 md:text-xl">
+          Ariadne 是一款卡片笔记仓库，让你把灵感、摘录、任务、链接和零散记录
+          统一沉淀成可打标签、可整理、可复用的卡片。AI 会持续吸收这些卡片，
+          帮你归纳、联想与检索，逐步形成你的知识库与记忆库。
         </p>
 
         <div className="mt-10 flex flex-wrap justify-center gap-4">
@@ -39,7 +37,7 @@ export function Home() {
             立即开始
           </Button>
           <Button size="lg" variant="ghost">
-            观看演示
+            了解 Ariadne
           </Button>
         </div>
       </main>
