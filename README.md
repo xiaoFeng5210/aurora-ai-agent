@@ -1,4 +1,4 @@
-# aurora-ai-agent
+# Ariadne
 
 > 新的产品名称：Ariadne
 
@@ -14,13 +14,13 @@ air
 
 ## 部署
 ### 后端
-docker build -f Dockerfile.backend -t aurora-backend:v0.0.1 .
+docker build -f Dockerfile.backend -t ariadne-backend:v0.0.1 .
 
-docker run -d --name aurora-backend \
+docker run -d --name ariadne-backend \
   -p 1119:1119 \
   -v "$(pwd)/log:/log" \
   --env-file .env \
-  aurora-backend:v0.0.1
+  ariadne-backend:v0.0.1
 
 ### 前端
 镜像采用多阶段构建：`node:22-alpine` 里 `pnpm install` + `pnpm build`，再把 `dist/` 拷到 `nginx:1.27-alpine` 由 nginx 渲染。
@@ -29,10 +29,10 @@ docker run -d --name aurora-backend \
 
 ```bash
 # 构建（根目录执行）
-docker build -f Dockerfile.frontend -t aurora-frontend:v0.0.1 .
+docker build -f Dockerfile.frontend -t ariadne-frontend:v0.0.1 .
 
 # 本地运行验证
-docker run -d --name aurora-frontend -p 8080:8080 aurora-frontend:v0.0.1
+docker run -d --name ariadne-frontend -p 8080:8080 ariadne-frontend:v0.0.1
 # 访问 http://localhost:8080
 ```
 
@@ -45,21 +45,21 @@ export IMAGE_TAG=v0.0.1
 
 docker login --username=<your-acr-username> ${ACR_REGISTRY}
 
-docker tag aurora-frontend:${IMAGE_TAG} \
-  ${ACR_REGISTRY}/${ACR_NAMESPACE}/aurora-frontend:${IMAGE_TAG}
+docker tag ariadne-frontend:${IMAGE_TAG} \
+  ${ACR_REGISTRY}/${ACR_NAMESPACE}/ariadne-frontend:${IMAGE_TAG}
 
-docker push ${ACR_REGISTRY}/${ACR_NAMESPACE}/aurora-frontend:${IMAGE_TAG}
+docker push ${ACR_REGISTRY}/${ACR_NAMESPACE}/ariadne-frontend:${IMAGE_TAG}
 ```
 
 如需多架构镜像（ACK 节点常见 amd64，本地 Mac 是 arm64），用 buildx：
 
 ```bash
-docker buildx create --use --name aurora-builder 2>/dev/null || true
+docker buildx create --use --name ariadne-builder 2>/dev/null || true
 
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
   -f Dockerfile.frontend \
-  -t ${ACR_REGISTRY}/${ACR_NAMESPACE}/aurora-frontend:${IMAGE_TAG} \
+  -t ${ACR_REGISTRY}/${ACR_NAMESPACE}/ariadne-frontend:${IMAGE_TAG} \
   --push .
 ```
 
