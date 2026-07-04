@@ -17,6 +17,13 @@ func CreateCard(uid int, req dto.CreateCardRequest) (dto.CardResponse, error) {
 		return dto.CardResponse{}, err
 	}
 
+	tagIDs := normalizeIDList(req.TagIds)
+	for _, tagID := range tagIDs {
+		if err := ensureTagAccessible(uid, tagID); err != nil {
+			return dto.CardResponse{}, err
+		}
+	}
+
 	card, err := database.CreateCard(model.Card{
 		UserId:        uid,
 		Content:       content,
@@ -28,7 +35,13 @@ func CreateCard(uid int, req dto.CreateCardRequest) (dto.CardResponse, error) {
 		return dto.CardResponse{}, err
 	}
 
-	return toCardResponse(card), nil
+	if len(tagIDs) > 0 {
+		if _, err := ReplaceCardTags(uid, card.Id, tagIDs); err != nil {
+			return dto.CardResponse{}, err
+		}
+	}
+
+	return buildCardResponse(uid, card), nil
 }
 
 func GetCardByID(uid int, id int) (dto.CardResponse, error) {
@@ -40,7 +53,7 @@ func GetCardByID(uid int, id int) (dto.CardResponse, error) {
 		return dto.CardResponse{}, err
 	}
 
-	return toCardResponse(card), nil
+	return buildCardResponse(uid, card), nil
 }
 
 func QueryCards(uid int, filter dto.QueryCardDTO) ([]dto.CardResponse, error) {
@@ -50,6 +63,7 @@ func QueryCards(uid int, filter dto.QueryCardDTO) ([]dto.CardResponse, error) {
 		UserID:   uid,
 		Content:  strings.TrimSpace(filter.Content),
 		Tags:     normalizeStringList(filter.Tags),
+		TagIDs:   normalizeIDList(filter.TagIds),
 		Page:     page,
 		PageSize: pageSize,
 	})
@@ -61,16 +75,38 @@ func QueryCards(uid int, filter dto.QueryCardDTO) ([]dto.CardResponse, error) {
 }
 
 func UpdateCard(uid int, id int, req dto.UpdateCardRequest) (dto.CardResponse, error) {
+	var tagIDs []int
+	if req.TagIds != nil {
+		tagIDs = normalizeIDList(*req.TagIds)
+		for _, tagID := range tagIDs {
+			if err := ensureTagAccessible(uid, tagID); err != nil {
+				return dto.CardResponse{}, err
+			}
+		}
+	}
+
 	updates, err := buildCardUpdates(req)
 	if err != nil {
+		if !errors.Is(err, vo.ErrNoFieldsToUpdate) || req.TagIds == nil {
+			return dto.CardResponse{}, err
+		}
+	}
+
+	if len(updates) > 0 {
+		if err := database.UpdateCardByIDAndUserID(id, uid, updates); err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return dto.CardResponse{}, vo.ErrCardNotFound
+			}
+			return dto.CardResponse{}, err
+		}
+	} else if err := ensureCardAccessible(uid, id); err != nil {
 		return dto.CardResponse{}, err
 	}
 
-	if err := database.UpdateCardByIDAndUserID(id, uid, updates); err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return dto.CardResponse{}, vo.ErrCardNotFound
+	if req.TagIds != nil {
+		if _, err := ReplaceCardTags(uid, id, tagIDs); err != nil {
+			return dto.CardResponse{}, err
 		}
-		return dto.CardResponse{}, err
 	}
 
 	return GetCardByID(uid, id)
@@ -83,7 +119,7 @@ func DeleteCard(uid int, id int) error {
 		}
 		return err
 	}
-	return nil
+	return database.SoftDeleteCardTagsByCardIDAndUserID(uid, id)
 }
 
 func normalizeCardContent(value string) (string, error) {
@@ -149,8 +185,27 @@ func buildCardUpdates(req dto.UpdateCardRequest) (map[string]any, error) {
 func toCardResponses(cards []model.Card) []dto.CardResponse {
 	resp := make([]dto.CardResponse, 0, len(cards))
 	for _, card := range cards {
-		resp = append(resp, toCardResponse(card))
+		resp = append(resp, buildCardResponse(card.UserId, card))
 	}
+	return resp
+}
+
+func buildCardResponse(uid int, card model.Card) dto.CardResponse {
+	resp := toCardResponse(card)
+
+	cardTags, err := database.QueryCardTagsByUserID(database.CardTagQueryFilter{
+		UserID: uid,
+		CardID: card.Id,
+	})
+	if err != nil {
+		return resp
+	}
+
+	resp.TagIds = make([]int, 0, len(cardTags))
+	for _, cardTag := range cardTags {
+		resp.TagIds = append(resp.TagIds, cardTag.TagId)
+	}
+
 	return resp
 }
 
