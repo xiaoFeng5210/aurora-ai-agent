@@ -1,24 +1,15 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import {
-  ChevronDown,
-  Container,
-  Globe,
-  Menu,
-  Star,
-  UserRound,
-  X,
-} from 'lucide-react'
+import { Database, LayoutGrid, Menu, UserRound, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
+import { cn } from '@/lib/cn'
 import logoUrl from '@/assets/logo.png'
 
 const NAV = [
-  { label: '功能', href: '#features' },
-  { label: '展示', href: '#showcase' },
-  // { label: 'Agent', href: '#agent' },
-  { label: '博客', href: '#blog' },
+  { label: '卡片', href: '/cards', icon: LayoutGrid },
+  { label: '知识库', href: '/knowledge', icon: Database },
 ]
 
 export function SiteHeader() {
@@ -40,6 +31,8 @@ export function SiteHeader() {
     }
   }, [open])
 
+  const isActive = (href: string) => location.pathname.startsWith(href)
+
   const goProfile = () => {
     setOpen(false)
     navigate('/profile')
@@ -47,6 +40,10 @@ export function SiteHeader() {
 
   const go = (to: string) => () => {
     setOpen(false)
+    if (!user && to !== '/') {
+      navigate(`/login?redirect=${encodeURIComponent(to)}`)
+      return
+    }
     navigate(to)
   }
 
@@ -64,18 +61,24 @@ export function SiteHeader() {
         >
           <img src={logoUrl} alt="Aurora" className="h-8 w-8" />
           <span className="font-display text-xl font-extrabold text-accent-vermilion">Aurora</span>
-          <span className="hidden text-ink-300 md:inline">·</span>
         </div>
 
-        <nav className="hidden items-center justify-center gap-10 md:flex">
+        <nav className="hidden items-center justify-center gap-2 md:flex">
           {NAV.map((item) => (
-            <a
+            <button
               key={item.label}
-              href={item.href}
-              className="text-sm font-medium text-ink-700 transition hover:text-ink-950"
+              type="button"
+              onClick={go(item.href)}
+              className={cn(
+                'inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition',
+                isActive(item.href)
+                  ? 'bg-ink-950 text-paper-50'
+                  : 'text-ink-700 hover:bg-paper-200/70 hover:text-ink-950',
+              )}
             >
+              <item.icon className="h-4 w-4" />
               {item.label}
-            </a>
+            </button>
           ))}
         </nav>
 
@@ -110,37 +113,6 @@ export function SiteHeader() {
               </div>
             </>
           )}
-
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 rounded-full border border-ink-200 bg-paper-50 px-3 py-1.5 text-sm text-ink-800 transition hover:border-ink-300"
-          >
-            <Globe className="h-4 w-4" />
-            中文
-            <ChevronDown className="h-3.5 w-3.5 text-ink-500" />
-          </button>
-
-          <a
-            href="https://hub.docker.com/"
-            target="_blank"
-            rel="noreferrer noopener"
-            className="text-ink-500 transition hover:text-ink-800"
-            aria-label="Docker"
-          >
-            <Container className="h-5 w-5" />
-          </a>
-
-          <a
-            href="https://github.com/"
-            target="_blank"
-            rel="noreferrer noopener"
-            className="inline-flex items-center gap-2 rounded-full bg-ink-950 px-3 py-1.5 text-sm text-paper-50 transition hover:bg-ink-900"
-          >
-            <span className="font-medium">GitHub</span>
-            <span className="h-3 w-px bg-paper-50/30" />
-            <Star className="h-3.5 w-3.5 fill-paper-50 text-paper-50" />
-            <span className="text-xs">0</span>
-          </a>
         </div>
 
         <button
@@ -157,16 +129,22 @@ export function SiteHeader() {
       {open ? (
         <div className="border-t border-ink-200/60 bg-paper-50 md:hidden">
           <div className="mx-auto max-w-7xl px-4 py-4">
-            <nav className="flex flex-col">
+            <nav className="flex flex-col gap-1">
               {NAV.map((item) => (
-                <a
+                <button
                   key={item.label}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className="border-b border-ink-200/50 py-3 text-base font-medium text-ink-800 transition hover:text-accent-vermilion"
+                  type="button"
+                  onClick={go(item.href)}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-3 text-left text-base font-medium transition',
+                    isActive(item.href)
+                      ? 'bg-ink-950 text-paper-50'
+                      : 'text-ink-800 hover:bg-paper-200/70',
+                  )}
                 >
+                  <item.icon className="h-4.5 w-4.5" />
                   {item.label}
-                </a>
+                </button>
               ))}
             </nav>
 
@@ -196,40 +174,6 @@ export function SiteHeader() {
                   </div>
                 </div>
               )}
-
-              <div className="flex items-center justify-between pt-2">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-ink-200 bg-paper-50 px-3 py-1.5 text-sm text-ink-800 transition hover:border-ink-300"
-                >
-                  <Globe className="h-4 w-4" />
-                  中文
-                  <ChevronDown className="h-3.5 w-3.5 text-ink-500" />
-                </button>
-
-                <div className="flex items-center gap-3">
-                  <a
-                    href="https://hub.docker.com/"
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="text-ink-500 transition hover:text-ink-800"
-                    aria-label="Docker"
-                  >
-                    <Container className="h-5 w-5" />
-                  </a>
-                  <a
-                    href="https://github.com/"
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="inline-flex items-center gap-2 rounded-full bg-ink-950 px-3 py-1.5 text-sm text-paper-50 transition hover:bg-ink-900"
-                  >
-                    <span className="font-medium">GitHub</span>
-                    <span className="h-3 w-px bg-paper-50/30" />
-                    <Star className="h-3.5 w-3.5 fill-paper-50 text-paper-50" />
-                    <span className="text-xs">569</span>
-                  </a>
-                </div>
-              </div>
             </div>
           </div>
         </div>
