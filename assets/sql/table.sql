@@ -180,3 +180,69 @@ CREATE INDEX IF NOT EXISTS idx_card_tags
 CREATE OR REPLACE TRIGGER trg_card_update_time
 BEFORE UPDATE ON card
 FOR EACH ROW EXECUTE FUNCTION set_update_time();
+
+
+
+
+
+
+
+
+
+-- Aurora AI Agent - Tag
+CREATE TABLE IF NOT EXISTS tag (
+    id          SERIAL       PRIMARY KEY,
+    user_id     INT          NOT NULL,
+    name        VARCHAR(64)  NOT NULL,
+    create_time TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at  TIMESTAMPTZ,
+
+    CONSTRAINT tag_name_not_empty CHECK (name <> '')
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tag_user_name_active
+    ON tag (user_id, name)
+    WHERE deleted_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_tag_user_create_time
+    ON tag (user_id, create_time DESC, id DESC);
+
+CREATE OR REPLACE TRIGGER trg_tag_update_time
+BEFORE UPDATE ON tag
+FOR EACH ROW EXECUTE FUNCTION set_update_time();
+
+
+
+
+
+
+
+
+
+-- Aurora AI Agent - Card Tag Mapping
+CREATE TABLE IF NOT EXISTS card_tag (
+    id          SERIAL       PRIMARY KEY,
+    user_id     INT          NOT NULL,
+    card_id     INT          NOT NULL,
+    tag_id      INT          NOT NULL,
+    create_time TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at  TIMESTAMPTZ
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_card_tag_user_card_tag_active
+    ON card_tag (user_id, card_id, tag_id)
+    WHERE deleted_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_card_tag_user_card
+    ON card_tag (user_id, card_id)
+    WHERE deleted_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_card_tag_user_tag
+    ON card_tag (user_id, tag_id)
+    WHERE deleted_at IS NULL;
+
+CREATE OR REPLACE TRIGGER trg_card_tag_update_time
+BEFORE UPDATE ON card_tag
+FOR EACH ROW EXECUTE FUNCTION set_update_time();
