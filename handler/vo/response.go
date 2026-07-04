@@ -14,6 +14,10 @@ var (
 	ErrMessageNotFound        = errors.New("message not found")
 	ErrCardNotFound           = errors.New("card not found")
 	ErrCardContentRequired    = errors.New("content is required")
+	ErrTagNotFound            = errors.New("tag not found")
+	ErrTagNameRequired        = errors.New("tag name is required")
+	ErrTagNameExists          = errors.New("tag name already exists")
+	ErrCardTagNotFound        = errors.New("card tag relation not found")
 	ErrUsernameExists         = errors.New("username already exists")
 	ErrEmailExists            = errors.New("email already exists")
 	ErrInvalidCredentials     = errors.New("invalid email or password")
@@ -51,6 +55,8 @@ func RespondWithServiceError(ctx *gin.Context, err error) {
 		errors.Is(err, ErrDocumentNotFound),
 		errors.Is(err, ErrMessageNotFound),
 		errors.Is(err, ErrCardNotFound),
+		errors.Is(err, ErrTagNotFound),
+		errors.Is(err, ErrCardTagNotFound),
 		errors.Is(err, gorm.ErrRecordNotFound):
 		status = http.StatusNotFound
 	case errors.Is(err, ErrUsernameExists),
@@ -65,6 +71,8 @@ func RespondWithServiceError(ctx *gin.Context, err error) {
 		errors.Is(err, ErrMessageTimeRange),
 		errors.Is(err, ErrMessageFeedbackInvalid),
 		errors.Is(err, ErrCardContentRequired),
+		errors.Is(err, ErrTagNameRequired),
+		errors.Is(err, ErrTagNameExists),
 		errors.Is(err, ErrNoFieldsToUpdate),
 		errors.Is(err, gorm.ErrInvalidData):
 		status = http.StatusBadRequest
