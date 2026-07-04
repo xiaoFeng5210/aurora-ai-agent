@@ -10,6 +10,7 @@ type CardQueryFilter struct {
 	UserID   int
 	Content  string
 	Tags     []string
+	TagIDs   []int
 	Page     int
 	PageSize int
 }
@@ -36,6 +37,14 @@ func QueryCardsByUserID(filter CardQueryFilter) ([]model.Card, error) {
 
 	if len(filter.Tags) > 0 {
 		queryDB = queryDB.Where("tags && ?::text[]", model.StringArray(filter.Tags))
+	}
+
+	if len(filter.TagIDs) > 0 {
+		queryDB = queryDB.Where(
+			"EXISTS (SELECT 1 FROM card_tag ct WHERE ct.card_id = card.id AND ct.user_id = ? AND ct.tag_id IN ? AND ct.deleted_at IS NULL)",
+			filter.UserID,
+			filter.TagIDs,
+		)
 	}
 
 	if filter.Page > 0 && filter.PageSize > 0 {

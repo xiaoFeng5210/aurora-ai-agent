@@ -5,6 +5,7 @@ import "time"
 type CreateCardRequest struct {
 	Content       string   `json:"content" binding:"required"`
 	Tags          []string `json:"tags"`
+	TagIds        []int    `json:"tag_ids"`
 	ExternalLinks []string `json:"external_links"`
 	InternalLinks []string `json:"internal_links"`
 }
@@ -12,6 +13,7 @@ type CreateCardRequest struct {
 type UpdateCardRequest struct {
 	Content       *string   `json:"content"`
 	Tags          *[]string `json:"tags"`
+	TagIds        *[]int    `json:"tag_ids"`
 	ExternalLinks *[]string `json:"external_links"`
 	InternalLinks *[]string `json:"internal_links"`
 }
@@ -19,6 +21,7 @@ type UpdateCardRequest struct {
 type QueryCardDTO struct {
 	Content  string   `json:"content"`
 	Tags     []string `json:"tags"`
+	TagIds   []int    `json:"tag_ids"`
 	Page     int      `json:"page"`
 	PageSize int      `json:"page_size"`
 }
@@ -28,6 +31,7 @@ type CardResponse struct {
 	UserId        int       `json:"user_id"`
 	Content       string    `json:"content"`
 	Tags          []string  `json:"tags"`
+	TagIds        []int     `json:"tag_ids,omitempty"`
 	ExternalLinks []string  `json:"external_links"`
 	InternalLinks []string  `json:"internal_links"`
 	CreatedAt     time.Time `json:"created_at"`
