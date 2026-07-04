@@ -1,0 +1,256 @@
+import { useState, type KeyboardEvent } from 'react'
+import { Dialog } from '@radix-ui/themes'
+import { Plus } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Textarea } from '@/components/ui/Textarea'
+import { TagChip } from './TagChip'
+import {
+  createCard,
+  updateCard,
+  type Card,
+  type CreateCardRequest,
+  type UpdateCardRequest,
+} from '@/api/card'
+import { createTag, type Tag } from '@/api/tag'
+import { useToast } from '@/hooks/useToast'
+import { HttpError } from '@/lib/fetcher'
+
+const CONTENT_MAX_LENGTH = 4000
+
+export interface CardDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  card: Card | null
+  tags: Tag[]
+  onSaved: (card: Card, mode: 'create' | 'edit') => void
+  onTagCreated: (tag: Tag) => void
+}
+
+export function CardDialog({ open, onOpenChange, card, tags, onSaved, onTagCreated }: CardDialogProps) {
+  const isEdit = !!card
+
+  return (
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Content maxWidth="560px" className="!rounded-xl">
+        <Dialog.Title className="font-display">{isEdit ? '编辑卡片' : '写一张新卡片'}</Dialog.Title>
+        <Dialog.Description size="2" className="text-ink-500">
+          {isEdit ? '修改内容与标签，写好后保存即可。' : '记录一段灵感、摘录或想法，贴上标签方便以后检索。'}
+        </Dialog.Description>
+
+        {/* key 随卡片切换重新挂载表单，天然重置初始值，无需额外的同步 effect */}
+        {open ? (
+          <CardDialogForm
+            key={card ? `edit-${card.id}` : 'create'}
+            card={card}
+            tags={tags}
+            onCancel={() => onOpenChange(false)}
+            onSaved={(savedCard, mode) => {
+              onSaved(savedCard, mode)
+              onOpenChange(false)
+            }}
+            onTagCreated={onTagCreated}
+          />
+        ) : null}
+      </Dialog.Content>
+    </Dialog.Root>
+  )
+}
+
+function CardDialogForm({
+  card,
+  tags,
+  onCancel,
+  onSaved,
+  onTagCreated,
+}: {
+  card: Card | null
+  tags: Tag[]
+  onCancel: () => void
+  onSaved: (card: Card, mode: 'create' | 'edit') => void
+  onTagCreated: (tag: Tag) => void
+}) {
+  const { show } = useToast()
+  const isEdit = !!card
+
+  const [content, setContent] = useState(card?.content ?? '')
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>(card?.tag_ids ?? [])
+  const [links, setLinks] = useState((card?.external_links ?? []).join('\n'))
+  const [newTagName, setNewTagName] = useState('')
+  const [creatingTag, setCreatingTag] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const toggleTag = (id: number) => {
+    setSelectedTagIds((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]))
+  }
+
+  const onCreateTag = async () => {
+    const name = newTagName.trim()
+    if (!name || creatingTag) return
+
+    setCreatingTag(true)
+    try {
+      const res = await createTag({ name })
+      if (res.data) {
+        onTagCreated(res.data)
+        setSelectedTagIds((prev) => (prev.includes(res.data!.id) ? prev : [...prev, res.data!.id]))
+      }
+      setNewTagName('')
+    } catch (err) {
+      show(getErrorMessage(err, '创建标签失败'), 'error')
+    } finally {
+      setCreatingTag(false)
+    }
+  }
+
+  const onTagInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter') return
+    e.preventDefault()
+    void onCreateTag()
+  }
+
+  const onSubmit = async () => {
+    const trimmed = content.trim()
+    if (!trimmed) {
+      setError('请填写卡片内容')
+      return
+    }
+    if (saving) return
+
+    setSaving(true)
+    setError('')
+
+    const externalLinks = links
+      .split('\n')
+      .map((v) => v.trim())
+      .filter(Boolean)
+
+    try {
+      if (isEdit && card) {
+        const body: UpdateCardRequest = {
+          content: trimmed,
+          tag_ids: selectedTagIds,
+          external_links: externalLinks,
+        }
+        const res = await updateCard(card.id, body)
+        if (res.data) onSaved(res.data, 'edit')
+        show('卡片已更新', 'success')
+      } else {
+        const body: CreateCardRequest = {
+          content: trimmed,
+          tag_ids: selectedTagIds,
+          external_links: externalLinks,
+        }
+        const res = await createCard(body)
+        if (res.data) onSaved(res.data, 'create')
+        show('卡片已写下', 'success')
+      }
+    } catch (err) {
+      show(getErrorMessage(err, isEdit ? '更新失败' : '创建失败'), 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <>
+      <div className="mt-4 flex flex-col gap-5">
+        <div>
+          <Textarea
+            autoFocus
+            value={content}
+            onChange={(e) => {
+              setContent(e.target.value)
+              if (error) setError('')
+            }}
+            placeholder="写下你的想法、摘录或灵感…"
+            className="min-h-36 text-[15px] leading-relaxed"
+            maxLength={CONTENT_MAX_LENGTH}
+          />
+          <div className="mt-1 flex items-center justify-between text-xs">
+            {error ? <span className="text-danger">{error}</span> : <span />}
+            <span className="text-ink-400">
+              {content.length}/{CONTENT_MAX_LENGTH}
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-2 text-sm font-medium text-ink-800">标签</p>
+          {tags.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <TagChip
+                  key={tag.id}
+                  active={selectedTagIds.includes(tag.id)}
+                  onClick={() => toggleTag(tag.id)}
+                >
+                  {tag.name}
+                </TagChip>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-ink-400">还没有标签，先在下面创建一个吧</p>
+          )}
+          <div className="mt-2 flex items-center gap-2">
+            <Input
+              value={newTagName}
+              onChange={(e) => setNewTagName(e.target.value)}
+              onKeyDown={onTagInputKeyDown}
+              placeholder="新建标签"
+              className="h-8 max-w-40 text-xs"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onCreateTag}
+              loading={creatingTag}
+              disabled={!newTagName.trim()}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              添加
+            </Button>
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-2 text-sm font-medium text-ink-800">
+            参考链接 <span className="text-xs font-normal text-ink-400">（选填，一行一个）</span>
+          </p>
+          <Textarea
+            value={links}
+            onChange={(e) => setLinks(e.target.value)}
+            placeholder="https://example.com"
+            className="min-h-16 text-sm"
+          />
+        </div>
+      </div>
+
+      <div className="mt-6 flex justify-end gap-3">
+        <Button type="button" variant="ghost" onClick={onCancel}>
+          取消
+        </Button>
+        <Button type="button" onClick={onSubmit} loading={saving}>
+          {isEdit ? '保存修改' : '写下这张卡片'}
+        </Button>
+      </div>
+    </>
+  )
+}
+
+function getErrorMessage(err: unknown, fallback: string) {
+  if (err instanceof HttpError) {
+    return extractMessage(err.info) || `${fallback} (${err.status})`
+  }
+  return err instanceof Error ? err.message : fallback
+}
+
+function extractMessage(info: unknown): string | null {
+  if (info && typeof info === 'object' && 'message' in info) {
+    const m = (info as { message?: unknown }).message
+    if (typeof m === 'string') return m
+  }
+  return null
+}
