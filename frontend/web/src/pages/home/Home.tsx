@@ -30,8 +30,8 @@ export function Home() {
   const { user } = useAuth()
 
   const onStart = () => {
-    if (user) navigate('/chat')
-    else navigate('/login?redirect=' + encodeURIComponent('/chat'))
+    if (user) navigate('/cards')
+    else navigate('/login?redirect=' + encodeURIComponent('/cards'))
   }
 
   return (

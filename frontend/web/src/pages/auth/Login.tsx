@@ -13,7 +13,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export function Login() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const redirect = params.get('redirect') || '/chat'
+  const redirect = params.get('redirect') || '/cards'
   const { refresh } = useAuth()
   const { show } = useToast()
 
