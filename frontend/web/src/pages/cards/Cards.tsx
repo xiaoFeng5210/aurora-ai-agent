@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import useSWR from 'swr'
 import useSWRInfinite from 'swr/infinite'
-import { Bot, PenLine, Plus, Search, UserRound } from 'lucide-react'
+import { PenLine, Plus, Search } from 'lucide-react'
+import { SiteHeader } from '@/components/layout/SiteHeader'
 import { Button } from '@/components/ui/Button'
 import { Postcard } from '@/components/cards/Postcard'
 import { CardDialog } from '@/components/cards/CardDialog'
@@ -11,7 +11,6 @@ import { deleteCard, queryCards, type Card } from '@/api/card'
 import { queryTags, type Tag } from '@/api/tag'
 import { useToast } from '@/hooks/useToast'
 import { HttpError } from '@/lib/fetcher'
-import logoUrl from '@/assets/logo.png'
 
 const PAGE_SIZE = 12
 const SEARCH_DEBOUNCE_MS = 350
@@ -19,7 +18,6 @@ const SEARCH_DEBOUNCE_MS = 350
 type CardsPageKey = readonly ['cards', string, string, number]
 
 export function Cards() {
-  const navigate = useNavigate()
   const { show } = useToast()
 
   const [keyword, setKeyword] = useState('')
@@ -126,40 +124,13 @@ export function Cards() {
 
   return (
     <div className="min-h-screen bg-paper-50 text-ink-900">
-      <header className="sticky top-0 z-30 border-b border-ink-200/60 bg-paper-50/90 backdrop-blur">
+      <SiteHeader />
+
+      <div className="sticky top-16 z-30 border-b border-ink-200/60 bg-paper-50/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="flex shrink-0 cursor-pointer items-center gap-2"
-          >
-            <img src={logoUrl} alt="Aurora" className="h-7 w-7" />
-            <span className="font-display hidden text-lg font-bold text-ink-950 sm:inline">Aurora</span>
-          </button>
-          <span className="hidden text-ink-300 sm:inline">·</span>
           <h1 className="font-display text-lg font-bold text-ink-950 sm:text-xl">我的卡片</h1>
 
           <div className="ml-auto flex items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/chat')}
-              className="hidden sm:inline-flex"
-            >
-              <Bot className="h-4 w-4" />
-              AI 助手
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              aria-label="个人中心"
-              onClick={() => navigate('/profile')}
-              className="px-2.5!"
-            >
-              <UserRound className="h-4 w-4" />
-            </Button>
             <Button type="button" onClick={openCreate} size="sm">
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">新建卡片</span>
@@ -198,7 +169,7 @@ export function Cards() {
             ))}
           </div>
         ) : null}
-      </header>
+      </div>
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
         {loading ? (

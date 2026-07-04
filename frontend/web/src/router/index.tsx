@@ -5,6 +5,7 @@ import { Register } from '@/pages/auth/Register'
 import { Cards } from '@/pages/cards/Cards'
 import { Chat } from '@/pages/chat/Chat'
 import { Profile } from '@/pages/profile/Profile'
+import { Knowledge } from '@/pages/knowledge/Knowledge'
 import { AuthGuard } from './AuthGuard'
 
 export const router = createHashRouter([
@@ -40,6 +41,14 @@ export const router = createHashRouter([
     element: (
       <AuthGuard>
         <Profile />
+      </AuthGuard>
+    ),
+  },
+  {
+    path: '/knowledge',
+    element: (
+      <AuthGuard>
+        <Knowledge />
       </AuthGuard>
     ),
   },
