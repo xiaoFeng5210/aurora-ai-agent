@@ -12,6 +12,8 @@ var (
 	ErrUserNotFound           = errors.New("user not found")
 	ErrDocumentNotFound       = errors.New("document not found")
 	ErrMessageNotFound        = errors.New("message not found")
+	ErrCardNotFound           = errors.New("card not found")
+	ErrCardContentRequired    = errors.New("content is required")
 	ErrUsernameExists         = errors.New("username already exists")
 	ErrEmailExists            = errors.New("email already exists")
 	ErrInvalidCredentials     = errors.New("invalid email or password")
@@ -48,6 +50,7 @@ func RespondWithServiceError(ctx *gin.Context, err error) {
 	case errors.Is(err, ErrUserNotFound),
 		errors.Is(err, ErrDocumentNotFound),
 		errors.Is(err, ErrMessageNotFound),
+		errors.Is(err, ErrCardNotFound),
 		errors.Is(err, gorm.ErrRecordNotFound):
 		status = http.StatusNotFound
 	case errors.Is(err, ErrUsernameExists),
@@ -61,6 +64,7 @@ func RespondWithServiceError(ctx *gin.Context, err error) {
 		errors.Is(err, ErrMessageTimeFormat),
 		errors.Is(err, ErrMessageTimeRange),
 		errors.Is(err, ErrMessageFeedbackInvalid),
+		errors.Is(err, ErrCardContentRequired),
 		errors.Is(err, ErrNoFieldsToUpdate),
 		errors.Is(err, gorm.ErrInvalidData):
 		status = http.StatusBadRequest

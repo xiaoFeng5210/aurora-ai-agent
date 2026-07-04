@@ -147,3 +147,36 @@ CREATE INDEX IF NOT EXISTS idx_rag_vectorization_deleted_at ON rag_vectorization
 CREATE OR REPLACE TRIGGER trg_rag_vectorization_update_time
 BEFORE UPDATE ON rag_vectorization
 FOR EACH ROW EXECUTE FUNCTION set_update_time();
+
+
+
+
+
+
+
+
+
+-- Aurora AI Agent - Card
+CREATE TABLE IF NOT EXISTS card (
+    id             SERIAL       PRIMARY KEY,
+    user_id        INT          NOT NULL,
+    content        TEXT         NOT NULL,
+    tags           TEXT[]       NOT NULL DEFAULT ARRAY[]::TEXT[],
+    external_links TEXT[]       NOT NULL DEFAULT ARRAY[]::TEXT[],
+    internal_links TEXT[]       NOT NULL DEFAULT ARRAY[]::TEXT[],
+    create_time    TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time    TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at     TIMESTAMPTZ,
+
+    CONSTRAINT card_content_not_empty CHECK (content <> '')
+);
+
+CREATE INDEX IF NOT EXISTS idx_card_user_create_time
+    ON card (user_id, create_time DESC, id DESC);
+
+CREATE INDEX IF NOT EXISTS idx_card_tags
+    ON card USING GIN (tags);
+
+CREATE OR REPLACE TRIGGER trg_card_update_time
+BEFORE UPDATE ON card
+FOR EACH ROW EXECUTE FUNCTION set_update_time();
