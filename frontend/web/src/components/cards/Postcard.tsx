@@ -63,14 +63,16 @@ export function Postcard({ card, index, tagNameById, onOpen, onDelete, deleting 
 
       <div className="flex flex-1 gap-3 px-4 py-4 sm:px-5 sm:py-5">
         <div className="relative min-w-0 flex-1">
-          <div className="relative h-32 overflow-hidden sm:h-36">
+          <div
+            className="h-32 overflow-hidden sm:h-36"
+            style={{
+              maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
+            }}
+          >
             <Markdown
               content={card.content}
               className="font-serif text-[14px] leading-relaxed text-ink-800 sm:text-[15px] [&_*]:my-1.5 [&_*:first-child]:mt-0"
-            />
-            <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-paper-50 to-transparent"
-              aria-hidden
             />
           </div>
           <span
