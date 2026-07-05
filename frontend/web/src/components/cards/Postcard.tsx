@@ -1,7 +1,9 @@
-import { Flower2, Pencil, Trash2 } from 'lucide-react'
+import { useState, type MouseEvent } from 'react'
+import { Check, Copy, Flower2, Pencil, Trash2 } from 'lucide-react'
 import { AlertDialog, Button as RTButton, Flex } from '@radix-ui/themes'
 import type { Card } from '@/api/card'
 import { Markdown } from '@/components/chat/Markdown'
+import { useToast } from '@/hooks/useToast'
 import { cn } from '@/lib/cn'
 
 const ROTATIONS = ['sm:-rotate-1', 'sm:rotate-1', 'sm:-rotate-2', 'sm:rotate-2', 'sm:rotate-0', 'sm:rotate-1']
@@ -18,12 +20,26 @@ export interface PostcardProps {
 }
 
 export function Postcard({ card, index, tagNameById, onOpen, onDelete, deleting }: PostcardProps) {
+  const { show } = useToast()
+  const [copied, setCopied] = useState(false)
   const rotate = ROTATIONS[index % ROTATIONS.length]
   const seal = SEAL_GLYPHS[card.id % SEAL_GLYPHS.length]
 
   const resolvedTags = (card.tag_ids && card.tag_ids.length > 0
     ? card.tag_ids.map((id) => tagNameById.get(id)).filter((v): v is string => !!v)
     : card.tags) ?? []
+
+  const onCopy = async (e: MouseEvent) => {
+    e.stopPropagation()
+    try {
+      await navigator.clipboard.writeText(formatCardForCopy(card, resolvedTags))
+      setCopied(true)
+      show('卡片内容已复制', 'success')
+      window.setTimeout(() => setCopied(false), 1400)
+    } catch {
+      show('复制失败', 'error')
+    }
+  }
 
   return (
     <article
@@ -46,6 +62,14 @@ export function Postcard({ card, index, tagNameById, onOpen, onDelete, deleting 
           </span>
         </span>
         <div className="flex items-center gap-1 opacity-70 transition group-hover:opacity-100">
+          <button
+            type="button"
+            aria-label="复制卡片内容"
+            onClick={onCopy}
+            className="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-ink-400 transition hover:bg-paper-200/70 hover:text-ink-800"
+          >
+            {copied ? <Check className="h-3.5 w-3.5 text-accent-vermilion" /> : <Copy className="h-3.5 w-3.5" />}
+          </button>
           <button
             type="button"
             aria-label="编辑卡片"
@@ -174,4 +198,29 @@ function formatPostmark(value: string) {
   const m = `${date.getMonth() + 1}`.padStart(2, '0')
   const d = `${date.getDate()}`.padStart(2, '0')
   return `${y}.${m}.${d}`
+}
+
+function formatCardForCopy(card: Card, tags: string[]) {
+  const parts: string[] = []
+
+  if (card.title.trim()) {
+    parts.push(card.title.trim())
+    parts.push('')
+  }
+
+  parts.push(card.content)
+
+  if (tags.length > 0) {
+    parts.push('')
+    parts.push(`标签: ${tags.join(', ')}`)
+  }
+
+  const links = [...card.external_links, ...card.internal_links].filter(Boolean)
+  if (links.length > 0) {
+    parts.push('')
+    parts.push('链接:')
+    parts.push(...links.map((link) => `- ${link}`))
+  }
+
+  return parts.join('\n')
 }
