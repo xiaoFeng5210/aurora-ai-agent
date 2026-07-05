@@ -155,13 +155,14 @@ export function Cards() {
             className="flex items-center gap-2 overflow-x-auto px-4 pb-3 sm:px-6 [&::-webkit-scrollbar]:hidden"
             style={{ scrollbarWidth: 'none' }}
           >
-            <TagChip active={selectedTagIds.length === 0} onClick={() => setSelectedTagIds([])}>
+            <TagChip active={selectedTagIds.length === 0} showCheckbox onClick={() => setSelectedTagIds([])}>
               全部
             </TagChip>
             {tags.map((tag) => (
               <TagChip
                 key={tag.id}
                 active={selectedTagIds.includes(tag.id)}
+                showCheckbox
                 onClick={() => toggleTagFilter(tag.id)}
               >
                 {tag.name}
