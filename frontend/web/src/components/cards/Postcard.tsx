@@ -60,6 +60,11 @@ export function Postcard({ card, index, tagNameById, onOpen, onDelete, deleting 
 
       <div className="flex flex-1 gap-3 px-4 py-4 sm:px-5 sm:py-5">
         <div className="relative min-w-0 flex-1">
+          {card.title ? (
+            <p className="font-display mb-1.5 truncate text-[15px] font-semibold text-ink-900 sm:text-base">
+              {card.title}
+            </p>
+          ) : null}
           <p className="line-clamp-[8] min-h-[6rem] whitespace-pre-wrap font-serif text-[14px] leading-relaxed text-ink-800 sm:text-[15px]">
             {card.content}
           </p>

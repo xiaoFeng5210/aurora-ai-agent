@@ -26,6 +26,7 @@ func CreateCard(uid int, req dto.CreateCardRequest) (dto.CardResponse, error) {
 
 	card, err := database.CreateCard(model.Card{
 		UserId:        uid,
+		Title:         strings.TrimSpace(req.Title),
 		Content:       content,
 		Tags:          model.StringArray(normalizeStringList(req.Tags)),
 		ExternalLinks: model.StringArray(normalizeStringList(req.ExternalLinks)),
@@ -155,6 +156,10 @@ func normalizeStringList(values []string) []string {
 func buildCardUpdates(req dto.UpdateCardRequest) (map[string]any, error) {
 	updates := make(map[string]any)
 
+	if req.Title != nil {
+		updates["title"] = strings.TrimSpace(*req.Title)
+	}
+
 	if req.Content != nil {
 		content, err := normalizeCardContent(*req.Content)
 		if err != nil {
@@ -213,6 +218,7 @@ func toCardResponse(card model.Card) dto.CardResponse {
 	return dto.CardResponse{
 		Id:            card.Id,
 		UserId:        card.UserId,
+		Title:         card.Title,
 		Content:       card.Content,
 		Tags:          []string(card.Tags),
 		ExternalLinks: []string(card.ExternalLinks),

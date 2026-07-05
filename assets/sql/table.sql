@@ -160,6 +160,7 @@ FOR EACH ROW EXECUTE FUNCTION set_update_time();
 CREATE TABLE IF NOT EXISTS card (
     id             SERIAL       PRIMARY KEY,
     user_id        INT          NOT NULL,
+    title          VARCHAR(255) NOT NULL DEFAULT '',
     content        TEXT         NOT NULL,
     tags           TEXT[]       NOT NULL DEFAULT ARRAY[]::TEXT[],
     external_links TEXT[]       NOT NULL DEFAULT ARRAY[]::TEXT[],

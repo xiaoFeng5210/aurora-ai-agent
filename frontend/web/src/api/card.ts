@@ -4,6 +4,7 @@ import type { Tag } from './tag'
 export interface Card {
   id: number
   user_id: number
+  title: string
   content: string
   tags: string[]
   tag_ids?: number[]
@@ -14,6 +15,7 @@ export interface Card {
 }
 
 export interface CreateCardRequest {
+  title?: string
   content: string
   tags?: string[]
   tag_ids?: number[]
@@ -22,6 +24,7 @@ export interface CreateCardRequest {
 }
 
 export interface UpdateCardRequest {
+  title?: string
   content?: string
   tags?: string[]
   tag_ids?: number[]

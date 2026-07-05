@@ -3,6 +3,7 @@ package dto
 import "time"
 
 type CreateCardRequest struct {
+	Title         string   `json:"title"`
 	Content       string   `json:"content" binding:"required"`
 	Tags          []string `json:"tags"`
 	TagIds        []int    `json:"tag_ids"`
@@ -11,6 +12,7 @@ type CreateCardRequest struct {
 }
 
 type UpdateCardRequest struct {
+	Title         *string   `json:"title"`
 	Content       *string   `json:"content"`
 	Tags          *[]string `json:"tags"`
 	TagIds        *[]int    `json:"tag_ids"`
@@ -29,6 +31,7 @@ type QueryCardDTO struct {
 type CardResponse struct {
 	Id            int       `json:"id"`
 	UserId        int       `json:"user_id"`
+	Title         string    `json:"title"`
 	Content       string    `json:"content"`
 	Tags          []string  `json:"tags"`
 	TagIds        []int     `json:"tag_ids,omitempty"`

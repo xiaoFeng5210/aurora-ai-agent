@@ -9,6 +9,7 @@ import (
 type Card struct {
 	Id            int            `gorm:"primaryKey;column:id;autoIncrement" json:"id"`
 	UserId        int            `gorm:"column:user_id" json:"user_id"`
+	Title         string         `gorm:"column:title" json:"title"`
 	Content       string         `gorm:"type:text;column:content" json:"content"`
 	Tags          StringArray    `gorm:"type:text[];column:tags" json:"tags"`
 	ExternalLinks StringArray    `gorm:"type:text[];column:external_links" json:"external_links"`
