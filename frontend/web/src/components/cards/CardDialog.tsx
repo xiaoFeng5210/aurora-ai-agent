@@ -1,11 +1,11 @@
-import { useState, type KeyboardEvent } from 'react'
+import { useState } from 'react'
 import { Dialog } from '@radix-ui/themes'
-import { Eye, Maximize2, Minimize2, Pencil, Plus } from 'lucide-react'
+import { Eye, Maximize2, Minimize2, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Markdown } from '@/components/chat/Markdown'
-import { TagChip } from './TagChip'
+import { TagMultiSelect } from './TagMultiSelect'
 import {
   createCard,
   updateCard,
@@ -13,7 +13,7 @@ import {
   type CreateCardRequest,
   type UpdateCardRequest,
 } from '@/api/card'
-import { createTag, type Tag } from '@/api/tag'
+import type { Tag } from '@/api/tag'
 import { useToast } from '@/hooks/useToast'
 import { HttpError } from '@/lib/fetcher'
 import { cn } from '@/lib/cn'
@@ -104,38 +104,11 @@ function CardDialogForm({
   const [contentMode, setContentMode] = useState<'write' | 'preview'>('write')
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>(card?.tag_ids ?? [])
   const [links, setLinks] = useState((card?.external_links ?? []).join('\n'))
-  const [newTagName, setNewTagName] = useState('')
-  const [creatingTag, setCreatingTag] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   const toggleTag = (id: number) => {
     setSelectedTagIds((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]))
-  }
-
-  const onCreateTag = async () => {
-    const name = newTagName.trim()
-    if (!name || creatingTag) return
-
-    setCreatingTag(true)
-    try {
-      const res = await createTag({ name })
-      if (res.data) {
-        onTagCreated(res.data)
-        setSelectedTagIds((prev) => (prev.includes(res.data!.id) ? prev : [...prev, res.data!.id]))
-      }
-      setNewTagName('')
-    } catch (err) {
-      show(getErrorMessage(err, '创建标签失败'), 'error')
-    } finally {
-      setCreatingTag(false)
-    }
-  }
-
-  const onTagInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key !== 'Enter') return
-    e.preventDefault()
-    void onCreateTag()
   }
 
   const onSubmit = async () => {
@@ -280,41 +253,12 @@ function CardDialogForm({
 
         <div>
           <p className="mb-2 text-sm font-medium text-ink-800">标签</p>
-          {tags.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <TagChip
-                  key={tag.id}
-                  active={selectedTagIds.includes(tag.id)}
-                  onClick={() => toggleTag(tag.id)}
-                >
-                  {tag.name}
-                </TagChip>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-ink-400">还没有标签，先在下面创建一个吧</p>
-          )}
-          <div className="mt-2 flex items-center gap-2">
-            <Input
-              value={newTagName}
-              onChange={(e) => setNewTagName(e.target.value)}
-              onKeyDown={onTagInputKeyDown}
-              placeholder="新建标签"
-              className="h-8 max-w-40 text-xs"
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={onCreateTag}
-              loading={creatingTag}
-              disabled={!newTagName.trim()}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              添加
-            </Button>
-          </div>
+          <TagMultiSelect
+            tags={tags}
+            selectedTagIds={selectedTagIds}
+            onToggle={toggleTag}
+            onTagCreated={onTagCreated}
+          />
         </div>
 
         <div>
