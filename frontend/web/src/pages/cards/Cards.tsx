@@ -152,7 +152,7 @@ export function Cards() {
 
         {tags.length > 0 ? (
           <div
-            className="flex items-center gap-2 overflow-x-auto px-4 pb-3 sm:px-6 [&::-webkit-scrollbar]:hidden"
+            className="mx-auto flex max-w-6xl items-center gap-2 overflow-x-auto px-4 pb-3 sm:px-6 [&::-webkit-scrollbar]:hidden"
             style={{ scrollbarWidth: 'none' }}
           >
             <TagChip active={selectedTagIds.length === 0} showCheckbox onClick={() => setSelectedTagIds([])}>
