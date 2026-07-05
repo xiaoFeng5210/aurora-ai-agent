@@ -1,6 +1,7 @@
 import { Flower2, Pencil, Trash2 } from 'lucide-react'
 import { AlertDialog, Button as RTButton, Flex } from '@radix-ui/themes'
 import type { Card } from '@/api/card'
+import { Markdown } from '@/components/chat/Markdown'
 import { cn } from '@/lib/cn'
 
 const ROTATIONS = ['sm:-rotate-1', 'sm:rotate-1', 'sm:-rotate-2', 'sm:rotate-2', 'sm:rotate-0', 'sm:rotate-1']
@@ -38,9 +39,11 @@ export function Postcard({ card, index, tagNameById, onOpen, onDelete, deleting 
       }}
     >
       <div className="flex items-center justify-between gap-2 border-b border-dashed border-ink-200 px-4 pt-3 pb-2 sm:px-5">
-        <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-300">
-          <span className="text-accent-vermilion">●</span>
-          明信片 · POSTCARD
+        <span className="inline-flex min-w-0 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-300">
+          <span className="shrink-0 text-accent-vermilion">●</span>
+          <span className="truncate" title={card.title || undefined}>
+            {card.title ? card.title : '明信片 · POSTCARD'}
+          </span>
         </span>
         <div className="flex items-center gap-1 opacity-70 transition group-hover:opacity-100">
           <button
@@ -60,14 +63,16 @@ export function Postcard({ card, index, tagNameById, onOpen, onDelete, deleting 
 
       <div className="flex flex-1 gap-3 px-4 py-4 sm:px-5 sm:py-5">
         <div className="relative min-w-0 flex-1">
-          {card.title ? (
-            <p className="font-display mb-1.5 truncate text-[15px] font-semibold text-ink-900 sm:text-base">
-              {card.title}
-            </p>
-          ) : null}
-          <p className="line-clamp-[8] min-h-[6rem] whitespace-pre-wrap font-serif text-[14px] leading-relaxed text-ink-800 sm:text-[15px]">
-            {card.content}
-          </p>
+          <div className="relative h-32 overflow-hidden sm:h-36">
+            <Markdown
+              content={card.content}
+              className="font-serif text-[14px] leading-relaxed text-ink-800 sm:text-[15px] [&_*]:my-1.5 [&_*:first-child]:mt-0"
+            />
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-paper-50 to-transparent"
+              aria-hidden
+            />
+          </div>
           <span
             className="pointer-events-none absolute -bottom-1 right-0 flex h-7 w-7 rotate-[-8deg] items-center justify-center rounded-sm border-2 border-accent-vermilion/70 bg-accent-vermilion/5 font-display text-[13px] font-bold text-accent-vermilion/80"
             aria-hidden
