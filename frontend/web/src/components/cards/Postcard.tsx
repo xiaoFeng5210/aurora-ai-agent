@@ -57,7 +57,7 @@ export function Postcard({ card, index, tagNameById, onOpen, onDelete, deleting 
       <div className="flex items-center justify-between gap-2 border-b border-dashed border-ink-200 px-4 pt-3 pb-2 sm:px-5">
         <span className="inline-flex min-w-0 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-300">
           <span className="shrink-0 text-accent-vermilion">●</span>
-          <span className="truncate" title={card.title || undefined}>
+          <span className="truncate text-[16px]" title={card.title || undefined}>
             {card.title ? card.title : '明信片 · POSTCARD'}
           </span>
         </span>
