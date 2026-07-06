@@ -122,27 +122,6 @@ export function Postcard({ card, index, tagNameById, onOpen, onDelete, deleting 
             <span className="my-0.5 h-px w-6 bg-ink-400/50" />
             <span className="text-[8px] font-medium">{formatPostmark(card.created_at)}</span>
           </div>
-
-          <div className="mt-1 flex w-full flex-col gap-1.5">
-            {resolvedTags.length > 0 ? (
-              resolvedTags.slice(0, 3).map((tag, i) => (
-                <span
-                  key={`${tag}-${i}`}
-                  className="truncate border-b border-ink-200 pb-0.5 text-center text-[10px] text-ink-500"
-                  title={tag}
-                >
-                  {tag}
-                </span>
-              ))
-            ) : (
-              <span className="truncate border-b border-ink-200 pb-0.5 text-center text-[10px] italic text-ink-300">
-                无标签
-              </span>
-            )}
-            {resolvedTags.length > 3 ? (
-              <span className="text-center text-[10px] text-ink-300">+{resolvedTags.length - 3}</span>
-            ) : null}
-          </div>
         </div>
       </div>
     </article>
