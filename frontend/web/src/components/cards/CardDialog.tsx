@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Dialog } from '@radix-ui/themes'
 import { Eye, Maximize2, Minimize2, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -26,11 +26,20 @@ export interface CardDialogProps {
   onOpenChange: (open: boolean) => void
   card: Card | null
   tags: Tag[]
+  tagsLoaded: boolean
   onSaved: (card: Card, mode: 'create' | 'edit') => void
   onTagCreated: (tag: Tag) => void
 }
 
-export function CardDialog({ open, onOpenChange, card, tags, onSaved, onTagCreated }: CardDialogProps) {
+export function CardDialog({
+  open,
+  onOpenChange,
+  card,
+  tags,
+  tagsLoaded,
+  onSaved,
+  onTagCreated,
+}: CardDialogProps) {
   const isEdit = !!card
   const [expanded, setExpanded] = useState(false)
 
@@ -64,6 +73,7 @@ export function CardDialog({ open, onOpenChange, card, tags, onSaved, onTagCreat
             key={card ? `edit-${card.id}` : 'create'}
             card={card}
             tags={tags}
+            tagsLoaded={tagsLoaded}
             expanded={expanded}
             onToggleExpanded={() => setExpanded((v) => !v)}
             onCancel={() => handleOpenChange(false)}
@@ -82,6 +92,7 @@ export function CardDialog({ open, onOpenChange, card, tags, onSaved, onTagCreat
 function CardDialogForm({
   card,
   tags,
+  tagsLoaded,
   expanded,
   onToggleExpanded,
   onCancel,
@@ -90,6 +101,7 @@ function CardDialogForm({
 }: {
   card: Card | null
   tags: Tag[]
+  tagsLoaded: boolean
   expanded: boolean
   onToggleExpanded: () => void
   onCancel: () => void
@@ -107,7 +119,14 @@ function CardDialogForm({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  const availableTagIds = useMemo(() => new Set(tags.map((tag) => tag.id)), [tags])
+  const visibleSelectedTagIds = useMemo(
+    () => (tagsLoaded ? selectedTagIds.filter((id) => availableTagIds.has(id)) : selectedTagIds),
+    [availableTagIds, selectedTagIds, tagsLoaded],
+  )
+
   const toggleTag = (id: number) => {
+    if (tagsLoaded && !availableTagIds.has(id)) return
     setSelectedTagIds((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]))
   }
 
@@ -128,13 +147,14 @@ function CardDialogForm({
       .split('\n')
       .map((v) => v.trim())
       .filter(Boolean)
+    const validSelectedTagIds = tagsLoaded ? visibleSelectedTagIds : selectedTagIds
 
     try {
       if (isEdit && card) {
         const body: UpdateCardRequest = {
           title: trimmedTitle,
           content: trimmed,
-          tag_ids: selectedTagIds,
+          tag_ids: validSelectedTagIds,
           external_links: externalLinks,
         }
         const res = await updateCard(card.id, body)
@@ -144,7 +164,7 @@ function CardDialogForm({
         const body: CreateCardRequest = {
           title: trimmedTitle,
           content: trimmed,
-          tag_ids: selectedTagIds,
+          tag_ids: validSelectedTagIds,
           external_links: externalLinks,
         }
         const res = await createCard(body)
@@ -255,7 +275,7 @@ function CardDialogForm({
           <p className="mb-2 text-sm font-medium text-ink-800">标签</p>
           <TagMultiSelect
             tags={tags}
-            selectedTagIds={selectedTagIds}
+            selectedTagIds={visibleSelectedTagIds}
             onToggle={toggleTag}
             onTagCreated={onTagCreated}
           />

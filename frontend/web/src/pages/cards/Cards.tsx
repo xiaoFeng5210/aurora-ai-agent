@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import useSWR from 'swr'
 import useSWRInfinite from 'swr/infinite'
-import { Check, PenLine, Plus, Search, Trash2 } from 'lucide-react'
+import { PenLine, Plus, Search, Trash2 } from 'lucide-react'
 import { AlertDialog, Button as RTButton, Flex } from '@radix-ui/themes'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { Button } from '@/components/ui/Button'
@@ -12,7 +12,6 @@ import { deleteCard, queryCards, type Card } from '@/api/card'
 import { deleteTag, queryTags, type Tag } from '@/api/tag'
 import { useToast } from '@/hooks/useToast'
 import { HttpError } from '@/lib/fetcher'
-import { cn } from '@/lib/cn'
 
 const PAGE_SIZE = 12
 const SEARCH_DEBOUNCE_MS = 350
@@ -26,7 +25,7 @@ export function Cards() {
   const [debouncedKeyword, setDebouncedKeyword] = useState('')
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([])
   const [deletingId, setDeletingId] = useState<number | null>(null)
-  const [deletingTagId, setDeletingTagId] = useState<number | null>(null)
+  const [deletingTagIds, setDeletingTagIds] = useState<number[]>([])
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [activeCard, setActiveCard] = useState<Card | null>(null)
@@ -36,11 +35,13 @@ export function Cards() {
     return () => window.clearTimeout(timer)
   }, [keyword])
 
-  const { data: tags = [], mutate: mutateTags } = useSWR<Tag[]>(
+  const { data: tagData, mutate: mutateTags } = useSWR<Tag[]>(
     'aurora:tags:all',
     () => queryTags({ page: 1, page_size: 200 }).then((res) => res.data ?? []),
     { revalidateOnFocus: false },
   )
+  const tags = useMemo(() => tagData ?? [], [tagData])
+  const tagsLoaded = !!tagData
 
   const tagIdsKey = selectedTagIds.slice().sort((a, b) => a - b).join(',')
 
@@ -80,6 +81,10 @@ export function Cards() {
     tags.forEach((t) => map.set(t.id, t.name))
     return map
   }, [tags])
+  const selectedTags = useMemo(
+    () => tags.filter((tag) => selectedTagIds.includes(tag.id)),
+    [selectedTagIds, tags],
+  )
 
   const toggleTagFilter = (id: number) => {
     setSelectedTagIds((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]))
@@ -105,19 +110,47 @@ export function Cards() {
     })
   }
 
-  const onTagDeleted = async (tag: Tag) => {
-    setDeletingTagId(tag.id)
+  const onSelectedTagsDeleted = async () => {
+    if (selectedTags.length === 0) return
+
+    setDeletingTagIds(selectedTags.map((tag) => tag.id))
     try {
-      await deleteTag(tag.id)
-      setSelectedTagIds((prev) => prev.filter((id) => id !== tag.id))
-      setActiveCard((prev) => (prev ? removeTagFromCard(prev, tag) : prev))
-      mutateTags((prev) => prev?.filter((t) => t.id !== tag.id) ?? [], { revalidate: false })
-      await mutateCards((prev) => removeTagFromCardPages(prev, tag), { revalidate: true })
-      show('标签已删除', 'success')
+      const results = await Promise.allSettled(
+        selectedTags.map(async (tag) => {
+          await deleteTag(tag.id)
+          return tag
+        }),
+      )
+      const deletedTags = results
+        .filter((result): result is PromiseFulfilledResult<Tag> => result.status === 'fulfilled')
+        .map((result) => result.value)
+
+      if (deletedTags.length === 0) {
+        const firstRejected = results.find(
+          (result): result is PromiseRejectedResult => result.status === 'rejected',
+        )
+        throw firstRejected?.reason
+      }
+
+      const deletedTagIds = new Set(deletedTags.map((tag) => tag.id))
+      setSelectedTagIds((prev) => prev.filter((id) => !deletedTagIds.has(id)))
+      setActiveCard((prev) => (prev ? removeTagsFromCard(prev, deletedTags) : prev))
+      mutateTags((prev) => prev?.filter((t) => !deletedTagIds.has(t.id)) ?? [], { revalidate: false })
+      await mutateCards((prev) => removeTagsFromCardPages(prev, deletedTags), { revalidate: true })
+
+      const failedCount = results.length - deletedTags.length
+      show(
+        failedCount > 0
+          ? `已删除 ${deletedTags.length} 个标签，${failedCount} 个删除失败`
+          : deletedTags.length > 1
+            ? `已删除 ${deletedTags.length} 个标签`
+            : '标签已删除',
+        failedCount > 0 ? 'info' : 'success',
+      )
     } catch (err) {
       show(getErrorMessage(err, '删除标签失败'), 'error')
     } finally {
-      setDeletingTagId(null)
+      setDeletingTagIds([])
     }
   }
 
@@ -171,22 +204,33 @@ export function Cards() {
 
         {tags.length > 0 ? (
           <div
-            className="mx-auto flex max-w-6xl items-center gap-2 overflow-x-auto px-4 pb-3 sm:px-6 [&::-webkit-scrollbar]:hidden"
-            style={{ scrollbarWidth: 'none' }}
+            className="mx-auto flex max-w-6xl items-center gap-2 px-4 pb-3 sm:px-6"
           >
-            <TagChip active={selectedTagIds.length === 0} showCheckbox onClick={() => setSelectedTagIds([])}>
-              全部
-            </TagChip>
-            {tags.map((tag) => (
-              <TagFilterPill
-                key={tag.id}
-                tag={tag}
-                active={selectedTagIds.includes(tag.id)}
-                onClick={() => toggleTagFilter(tag.id)}
-                onDelete={() => onTagDeleted(tag)}
-                deleting={deletingTagId === tag.id}
+            <div
+              className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden"
+              style={{ scrollbarWidth: 'none' }}
+            >
+              <TagChip active={selectedTagIds.length === 0} showCheckbox onClick={() => setSelectedTagIds([])}>
+                全部
+              </TagChip>
+              {tags.map((tag) => (
+                <TagChip
+                  key={tag.id}
+                  active={selectedTagIds.includes(tag.id)}
+                  showCheckbox
+                  onClick={() => toggleTagFilter(tag.id)}
+                >
+                  {tag.name}
+                </TagChip>
+              ))}
+            </div>
+            {selectedTags.length > 0 ? (
+              <SelectedTagsDeleteConfirm
+                tags={selectedTags}
+                deleting={deletingTagIds.length > 0}
+                onConfirm={onSelectedTagsDeleted}
               />
-            ))}
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -228,6 +272,7 @@ export function Cards() {
         onOpenChange={setDialogOpen}
         card={activeCard}
         tags={tags}
+        tagsLoaded={tagsLoaded}
         onSaved={onSaved}
         onTagCreated={onTagCreated}
       />
@@ -277,76 +322,35 @@ function getErrorMessage(err: unknown, fallback: string) {
   return err instanceof Error ? err.message : fallback
 }
 
-function TagFilterPill({
-  tag,
-  active,
-  deleting,
-  onClick,
-  onDelete,
-}: {
-  tag: Tag
-  active: boolean
-  deleting: boolean
-  onClick: () => void
-  onDelete: () => Promise<void> | void
-}) {
-  return (
-    <span
-      className={cn(
-        'inline-flex shrink-0 items-center overflow-hidden rounded-full border text-xs font-medium transition',
-        active
-          ? 'border-accent-vermilion bg-accent-vermilion/10 text-accent-vermilion'
-          : 'border-ink-200 bg-paper-50 text-ink-600 hover:border-ink-300 hover:text-ink-900',
-      )}
-    >
-      <button
-        type="button"
-        onClick={onClick}
-        className="inline-flex cursor-pointer items-center gap-2 whitespace-nowrap py-1.5 pl-3 pr-2"
-      >
-        <span
-          className={cn(
-            'inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] border transition',
-            active
-              ? 'border-accent-vermilion bg-accent-vermilion text-paper-50'
-              : 'border-ink-300 bg-paper-50',
-          )}
-          aria-hidden
-        >
-          {active ? <Check className="h-2.5 w-2.5" strokeWidth={3} /> : null}
-        </span>
-        {tag.name}
-      </button>
-      <TagDeleteConfirm tag={tag} deleting={deleting} onConfirm={onDelete} />
-    </span>
-  )
-}
-
-function TagDeleteConfirm({
-  tag,
+function SelectedTagsDeleteConfirm({
+  tags,
   deleting,
   onConfirm,
 }: {
-  tag: Tag
+  tags: Tag[]
   deleting: boolean
   onConfirm: () => Promise<void> | void
 }) {
+  const label = tags.length > 1 ? `删除标签 (${tags.length})` : '删除标签'
+  const tagNames = tags.map((tag) => `「${tag.name}」`).join('、')
+
   return (
     <AlertDialog.Root>
       <AlertDialog.Trigger>
         <button
           type="button"
-          aria-label={`删除标签 ${tag.name}`}
+          aria-label={label}
           disabled={deleting}
-          className="inline-flex h-7 w-7 cursor-pointer items-center justify-center border-l border-current/10 text-ink-300 transition hover:bg-danger/10 hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-8 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-full border border-danger/30 bg-danger/5 px-3 text-xs font-medium text-danger transition hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Trash2 className="h-3.5 w-3.5" />
+          <span>{label}</span>
         </button>
       </AlertDialog.Trigger>
       <AlertDialog.Content maxWidth="420px">
         <AlertDialog.Title>删除标签</AlertDialog.Title>
         <AlertDialog.Description size="2">
-          确认删除「{tag.name}」？删除后会从卡片和筛选条件中移除这个标签关系，且不可撤销。
+          确认删除 {tagNames}？删除后会从卡片和筛选条件中移除这些标签关系，且不可撤销。
         </AlertDialog.Description>
         <Flex gap="3" mt="4" justify="end">
           <AlertDialog.Cancel>
@@ -365,16 +369,19 @@ function TagDeleteConfirm({
   )
 }
 
-function removeTagFromCard(card: Card, tag: Tag): Card {
+function removeTagsFromCard(card: Card, tags: Tag[]): Card {
+  const tagIds = new Set(tags.map((tag) => tag.id))
+  const tagNames = new Set(tags.map((tag) => tag.name))
+
   return {
     ...card,
-    tag_ids: card.tag_ids?.filter((id) => id !== tag.id),
-    tags: card.tags.filter((name) => name !== tag.name),
+    tag_ids: card.tag_ids?.filter((id) => !tagIds.has(id)),
+    tags: card.tags.filter((name) => !tagNames.has(name)),
   }
 }
 
-function removeTagFromCardPages(pages: Card[][] | undefined, tag: Tag) {
-  return pages?.map((page) => page.map((card) => removeTagFromCard(card, tag)))
+function removeTagsFromCardPages(pages: Card[][] | undefined, tags: Tag[]) {
+  return pages?.map((page) => page.map((card) => removeTagsFromCard(card, tags)))
 }
 
 function extractMessage(info: unknown): string | null {
