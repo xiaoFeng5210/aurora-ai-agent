@@ -12,9 +12,10 @@ import { deleteCard, queryCards, type Card } from '@/api/card'
 import { deleteTag, queryTags, type Tag } from '@/api/tag'
 import { useToast } from '@/hooks/useToast'
 import { HttpError } from '@/lib/fetcher'
+// import _ from 'lodash'
 
 const PAGE_SIZE = 12
-const SEARCH_DEBOUNCE_MS = 350
+const SEARCH_DEBOUNCE_MS = 450
 
 type CardsPageKey = readonly ['cards', string, string, number]
 
