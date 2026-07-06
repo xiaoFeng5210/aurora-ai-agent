@@ -28,8 +28,8 @@ export function AuthLayout({
             }}
             className="inline-flex w-fit cursor-pointer items-center gap-2 select-none"
           >
-            <img src={logoUrl} alt="Aurora" className="h-8 w-8" />
-            <span className="font-display text-xl font-extrabold text-accent-vermilion">Aurora</span>
+            <img src={logoUrl} alt="Ariadne" className="h-8 w-8" />
+            <span className="font-display text-xl font-extrabold text-accent-vermilion">Ariadne</span>
             <span className="text-ink-300">·</span>
           </div>
         </div>

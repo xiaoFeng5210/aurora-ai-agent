@@ -7,7 +7,7 @@ export function Composer({
   streaming,
   onSend,
   onStop,
-  placeholder = '给 Aurora 发消息…',
+  placeholder = '给 Ariadne 发消息…',
 }: {
   disabled?: boolean
   streaming?: boolean

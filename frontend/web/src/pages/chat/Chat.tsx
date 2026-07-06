@@ -244,7 +244,7 @@ export function Chat() {
         <header className="z-10 flex shrink-0 items-center justify-between gap-4 border-b border-ink-200/50 bg-paper-50/80 px-6 py-3 backdrop-blur">
           <div className="min-w-0">
             <h1 className="font-display truncate text-base font-semibold text-ink-950">
-              {doc?.display_name ?? (docId ? '加载中…' : 'Aurora')}
+              {doc?.display_name ?? (docId ? '加载中…' : 'Ariadne')}
             </h1>
             {docId ? <p className="text-[11px] text-ink-500">会话 #{docId}</p> : null}
           </div>
@@ -259,7 +259,7 @@ export function Chat() {
         <div ref={scrollRef} className="flex-1 overflow-y-auto">
           {showNoDoc ? (
             <EmptyFull
-              title="你好，我是 Aurora"
+              title="你好，我是 Ariadne"
               subtitle="在左侧新建或选择一个会话开始对话"
             />
           ) : historyLoading ? (
@@ -267,7 +267,7 @@ export function Chat() {
               <Spinner />
             </div>
           ) : showEmpty ? (
-            <EmptyFull title="今天想聊点什么？" subtitle="向 Aurora 提问或让它帮你生成内容" />
+            <EmptyFull title="今天想聊点什么？" subtitle="向 Ariadne 提问或让它帮你生成内容" />
           ) : (
             <div className="mx-auto flex max-w-3xl flex-col gap-7 px-6 py-8">
               {messages.map((m) => (

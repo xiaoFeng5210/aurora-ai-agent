@@ -59,7 +59,7 @@ export function Login() {
   return (
     <AuthLayout
       title="登录"
-      subtitle="使用邮箱与密码登录到 Aurora"
+      subtitle="使用邮箱与密码登录到 Ariadne"
       footer={
         <span>
           还没有账号？

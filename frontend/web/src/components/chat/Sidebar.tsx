@@ -74,8 +74,8 @@ export function Sidebar({
           }}
           className="flex w-fit cursor-pointer items-center gap-2 select-none"
         >
-          <img src={logoUrl} alt="Aurora" className="h-7 w-7" />
-          <span className="font-display text-lg font-extrabold text-accent-vermilion">Aurora</span>
+          <img src={logoUrl} alt="Ariadne" className="h-7 w-7" />
+          <span className="font-display text-lg font-extrabold text-accent-vermilion">Ariadne</span>
         </div>
       </div>
 

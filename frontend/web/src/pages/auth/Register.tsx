@@ -74,7 +74,7 @@ export function Register() {
   return (
     <AuthLayout
       title="注册账号"
-      subtitle="加入 Aurora，开始构建你的 AI Agent"
+      subtitle="加入 Ariadne，开始构建你的 AI Agent"
       footer={
         <span>
           已有账号？

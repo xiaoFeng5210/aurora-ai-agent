@@ -118,7 +118,7 @@ export function Profile() {
               </div>
               <div className="min-w-0">
                 <p className="truncate text-base font-semibold text-ink-950">
-                  {form.username || 'Aurora 用户'}
+                  {form.username || 'Ariadne 用户'}
                 </p>
                 <p className="truncate text-xs text-ink-500">{form.email || '未设置邮箱'}</p>
               </div>
@@ -142,7 +142,7 @@ export function Profile() {
                   个人中心
                 </h1>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-ink-500">
-                  管理账户资料和 Aurora 的默认交互偏好。
+                  管理账户资料和 Ariadne 的默认交互偏好。
                 </p>
               </div>
               <Button variant="ghost" onClick={() => window.history.back()} className="w-full sm:w-auto">
@@ -203,7 +203,7 @@ export function Profile() {
                     <h2 className="text-base font-semibold text-ink-950">User Prompt</h2>
                   </div>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-500">
-                    这段内容会作为你的默认偏好，帮助 Aurora 贴近你的表达方式和工作习惯。
+                    这段内容会作为你的默认偏好，帮助 Ariadne 贴近你的表达方式和工作习惯。
                   </p>
                 </div>
                 <span className="text-xs text-ink-500">{promptLength}/2000</span>
