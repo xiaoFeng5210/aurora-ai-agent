@@ -1,16 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import useSWR from 'swr'
 import useSWRInfinite from 'swr/infinite'
-import { PenLine, Plus, Search } from 'lucide-react'
+import { Check, PenLine, Plus, Search, Trash2 } from 'lucide-react'
+import { AlertDialog, Button as RTButton, Flex } from '@radix-ui/themes'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { Button } from '@/components/ui/Button'
 import { Postcard } from '@/components/cards/Postcard'
 import { CardDialog } from '@/components/cards/CardDialog'
 import { TagChip } from '@/components/cards/TagChip'
 import { deleteCard, queryCards, type Card } from '@/api/card'
-import { queryTags, type Tag } from '@/api/tag'
+import { deleteTag, queryTags, type Tag } from '@/api/tag'
 import { useToast } from '@/hooks/useToast'
 import { HttpError } from '@/lib/fetcher'
+import { cn } from '@/lib/cn'
 
 const PAGE_SIZE = 12
 const SEARCH_DEBOUNCE_MS = 350
@@ -24,6 +26,7 @@ export function Cards() {
   const [debouncedKeyword, setDebouncedKeyword] = useState('')
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([])
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [deletingTagId, setDeletingTagId] = useState<number | null>(null)
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [activeCard, setActiveCard] = useState<Card | null>(null)
@@ -102,6 +105,22 @@ export function Cards() {
     })
   }
 
+  const onTagDeleted = async (tag: Tag) => {
+    setDeletingTagId(tag.id)
+    try {
+      await deleteTag(tag.id)
+      setSelectedTagIds((prev) => prev.filter((id) => id !== tag.id))
+      setActiveCard((prev) => (prev ? removeTagFromCard(prev, tag) : prev))
+      mutateTags((prev) => prev?.filter((t) => t.id !== tag.id) ?? [], { revalidate: false })
+      await mutateCards((prev) => removeTagFromCardPages(prev, tag), { revalidate: true })
+      show('标签已删除', 'success')
+    } catch (err) {
+      show(getErrorMessage(err, '删除标签失败'), 'error')
+    } finally {
+      setDeletingTagId(null)
+    }
+  }
+
   const onDelete = async (card: Card) => {
     setDeletingId(card.id)
     try {
@@ -159,14 +178,14 @@ export function Cards() {
               全部
             </TagChip>
             {tags.map((tag) => (
-              <TagChip
+              <TagFilterPill
                 key={tag.id}
+                tag={tag}
                 active={selectedTagIds.includes(tag.id)}
-                showCheckbox
                 onClick={() => toggleTagFilter(tag.id)}
-              >
-                {tag.name}
-              </TagChip>
+                onDelete={() => onTagDeleted(tag)}
+                deleting={deletingTagId === tag.id}
+              />
             ))}
           </div>
         ) : null}
@@ -256,6 +275,106 @@ function getErrorMessage(err: unknown, fallback: string) {
     return extractMessage(err.info) || `${fallback} (${err.status})`
   }
   return err instanceof Error ? err.message : fallback
+}
+
+function TagFilterPill({
+  tag,
+  active,
+  deleting,
+  onClick,
+  onDelete,
+}: {
+  tag: Tag
+  active: boolean
+  deleting: boolean
+  onClick: () => void
+  onDelete: () => Promise<void> | void
+}) {
+  return (
+    <span
+      className={cn(
+        'inline-flex shrink-0 items-center overflow-hidden rounded-full border text-xs font-medium transition',
+        active
+          ? 'border-accent-vermilion bg-accent-vermilion/10 text-accent-vermilion'
+          : 'border-ink-200 bg-paper-50 text-ink-600 hover:border-ink-300 hover:text-ink-900',
+      )}
+    >
+      <button
+        type="button"
+        onClick={onClick}
+        className="inline-flex cursor-pointer items-center gap-2 whitespace-nowrap py-1.5 pl-3 pr-2"
+      >
+        <span
+          className={cn(
+            'inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] border transition',
+            active
+              ? 'border-accent-vermilion bg-accent-vermilion text-paper-50'
+              : 'border-ink-300 bg-paper-50',
+          )}
+          aria-hidden
+        >
+          {active ? <Check className="h-2.5 w-2.5" strokeWidth={3} /> : null}
+        </span>
+        {tag.name}
+      </button>
+      <TagDeleteConfirm tag={tag} deleting={deleting} onConfirm={onDelete} />
+    </span>
+  )
+}
+
+function TagDeleteConfirm({
+  tag,
+  deleting,
+  onConfirm,
+}: {
+  tag: Tag
+  deleting: boolean
+  onConfirm: () => Promise<void> | void
+}) {
+  return (
+    <AlertDialog.Root>
+      <AlertDialog.Trigger>
+        <button
+          type="button"
+          aria-label={`删除标签 ${tag.name}`}
+          disabled={deleting}
+          className="inline-flex h-7 w-7 cursor-pointer items-center justify-center border-l border-current/10 text-ink-300 transition hover:bg-danger/10 hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </AlertDialog.Trigger>
+      <AlertDialog.Content maxWidth="420px">
+        <AlertDialog.Title>删除标签</AlertDialog.Title>
+        <AlertDialog.Description size="2">
+          确认删除「{tag.name}」？删除后会从卡片和筛选条件中移除这个标签关系，且不可撤销。
+        </AlertDialog.Description>
+        <Flex gap="3" mt="4" justify="end">
+          <AlertDialog.Cancel>
+            <RTButton variant="soft" color="gray">
+              取消
+            </RTButton>
+          </AlertDialog.Cancel>
+          <AlertDialog.Action>
+            <RTButton color="tomato" onClick={onConfirm}>
+              确认删除
+            </RTButton>
+          </AlertDialog.Action>
+        </Flex>
+      </AlertDialog.Content>
+    </AlertDialog.Root>
+  )
+}
+
+function removeTagFromCard(card: Card, tag: Tag): Card {
+  return {
+    ...card,
+    tag_ids: card.tag_ids?.filter((id) => id !== tag.id),
+    tags: card.tags.filter((name) => name !== tag.name),
+  }
+}
+
+function removeTagFromCardPages(pages: Card[][] | undefined, tag: Tag) {
+  return pages?.map((page) => page.map((card) => removeTagFromCard(card, tag)))
 }
 
 function extractMessage(info: unknown): string | null {
