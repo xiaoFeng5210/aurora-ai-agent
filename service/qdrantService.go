@@ -1,18 +1,17 @@
 package service
 
 import (
-	qdrant_db "aurora-agent/database/qdrant"
+	"aurora-agent/database/aliyunossvector"
 	"aurora-agent/middleware"
 	"aurora-agent/service/embedding"
 	"fmt"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/qdrant/go-client/qdrant"
 	"go.uber.org/zap"
 )
 
-func UpsertQdrantByMDText(ctx *gin.Context, mdText string) (*qdrant.UpdateResult, error) {
+func UpsertQdrantByMDText(ctx *gin.Context, mdText string) (*aliyunossvector.UpdateResult, error) {
 	uid := ctx.GetInt(middleware.UID_IN_CTX)
 	md := &embedding.MdDocument{
 		Content: mdText,
@@ -32,14 +31,14 @@ func UpsertQdrantByMDText(ctx *gin.Context, mdText string) (*qdrant.UpdateResult
 	return updateResult, nil
 }
 
-func QueryQdrantVector(ctx *gin.Context, prompt string) ([]*qdrant.ScoredPoint, error) {
+func QueryQdrantVector(ctx *gin.Context, prompt string) ([]aliyunossvector.ScoredVector, error) {
 	uid := ctx.GetInt(middleware.UID_IN_CTX)
 	fmt.Println("Query Qdrant UID:", uid)
 	queryVector, err := embedding.Embed(prompt, 1024)
 	if err != nil {
 		return nil, err
 	}
-	searchResult, err := qdrant_db.QueryRagVector(queryVector, uid)
+	searchResult, err := aliyunossvector.QueryRagVector(queryVector, uid)
 	if err != nil {
 		logger.Error("Query Qdrant vector failed", zap.Error(err))
 		return nil, err
@@ -48,13 +47,13 @@ func QueryQdrantVector(ctx *gin.Context, prompt string) ([]*qdrant.ScoredPoint, 
 	return searchResult, nil
 }
 
-func DeleteQdrantVectorByFilenames(uid int, filenames []string) (*qdrant.UpdateResult, error) {
+func DeleteQdrantVectorByFilenames(uid int, filenames []string) (*aliyunossvector.UpdateResult, error) {
 	normalizedFilenames := normalizeQdrantFilenames(filenames)
 	if len(normalizedFilenames) == 0 {
 		return nil, fmt.Errorf("filename is required")
 	}
 
-	result, err := qdrant_db.DeleteRagVectorByFilenames(uid, normalizedFilenames)
+	result, err := aliyunossvector.DeleteRagVectorByFilenames(uid, normalizedFilenames)
 	if err != nil {
 		logger.Error("Delete Qdrant vectors by filenames failed",
 			zap.Int("uid", uid),

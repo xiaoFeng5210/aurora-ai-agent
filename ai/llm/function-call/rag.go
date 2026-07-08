@@ -1,7 +1,7 @@
 package functioncall
 
 import (
-	qdrant_db "aurora-agent/database/qdrant"
+	"aurora-agent/database/aliyunossvector"
 	"aurora-agent/middleware"
 	"aurora-agent/service/embedding"
 	"encoding/json"
@@ -29,14 +29,13 @@ var RAGTools = []map[string]interface{}{
 	},
 }
 
-
 func QueryRag(ctx *gin.Context, prompt string) ([]byte, error) {
 	uid := ctx.GetInt(middleware.UID_IN_CTX)
 	queryVector, err := embedding.Embed(prompt, 1024)
 	if err != nil {
 		return nil, err
 	}
-	searchResult, err := qdrant_db.QueryRagVector(queryVector, uid)
+	searchResult, err := aliyunossvector.QueryRagVector(queryVector, uid)
 	if err != nil {
 		return nil, err
 	}
@@ -46,5 +45,3 @@ func QueryRag(ctx *gin.Context, prompt string) ([]byte, error) {
 	}
 	return jsonData, nil
 }
-
-
