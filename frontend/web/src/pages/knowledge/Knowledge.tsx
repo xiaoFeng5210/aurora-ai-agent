@@ -13,6 +13,7 @@ import {
   Sparkles,
   Trash2,
   UploadCloud,
+  X,
 } from 'lucide-react'
 import { AlertDialog, Button as RTButton, Flex } from '@radix-ui/themes'
 import { SiteHeader } from '@/components/layout/SiteHeader'
@@ -208,6 +209,10 @@ function KnowledgeAiChatPrompt({
   completedCount: number
   onChat: () => void
 }) {
+  const [dismissed, setDismissed] = useState(
+    () => sessionStorage.getItem('knowledge-ai-prompt-dismissed') === '1',
+  )
+
   const title =
     completedCount > 0
       ? `已有 ${completedCount} 个文档入库，可与 AI 对话`
@@ -217,12 +222,29 @@ function KnowledgeAiChatPrompt({
       ? '已入库文档可被 AI 检索，前往对话页提问。'
       : '上传并向量化入库后即可与 AI 对话。'
 
+  const onDismiss = () => {
+    sessionStorage.setItem('knowledge-ai-prompt-dismissed', '1')
+    setDismissed(true)
+  }
+
+  if (dismissed) return null
+
   return (
     <div className="pointer-events-none fixed bottom-5 left-4 z-30 w-[min(calc(100vw-2rem),17rem)] sm:bottom-6 sm:left-6">
       <div className="pointer-events-auto rounded-lg border border-accent-vermilion/20 bg-paper-50/95 p-3 shadow-lg backdrop-blur sm:p-4">
-        <div className="flex items-center gap-2 text-accent-vermilion">
-          <Sparkles className="h-4 w-4 shrink-0" />
-          <p className="text-xs font-semibold uppercase tracking-[0.12em]">AI 对话</p>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 text-accent-vermilion">
+            <Sparkles className="h-4 w-4 shrink-0" />
+            <p className="text-xs font-semibold uppercase tracking-[0.12em]">AI 对话</p>
+          </div>
+          <button
+            type="button"
+            onClick={onDismiss}
+            aria-label="关闭提示"
+            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-ink-400 transition hover:bg-paper-200/80 hover:text-ink-700"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
         <p className="mt-2 text-sm font-semibold leading-5 text-ink-950">{title}</p>
         <p className="mt-1 hidden text-xs leading-5 text-ink-500 sm:block">{description}</p>
