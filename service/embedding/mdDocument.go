@@ -9,14 +9,14 @@ import (
 )
 
 type MdDocument struct {
-	Data []byte  // markdown 文件数据
-	Content string // 转换后的文本内容
-	chunks []string // 分块后的文本内容
+	Data    []byte      // markdown 文件数据
+	Content string      // 转换后的文本内容
+	chunks  []string    // 分块后的文本内容
 	vectors [][]float32 // 向量化后
 }
 
 func (md *MdDocument) ConvertToText() string {
-  if md.Data != nil {
+	if md.Data != nil {
 		md.Content = string(md.Data)
 		return md.Content
 	}
@@ -27,7 +27,7 @@ func (md *MdDocument) ConvertToText() string {
 // 分块
 func (md *MdDocument) Chunk() []string {
 	chunks := []string{}
-	
+
 	start := 0
 	delta := 500
 	end := start + delta
