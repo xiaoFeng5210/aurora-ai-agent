@@ -21,29 +21,29 @@ func UpsertQdrantByMDText(ctx *gin.Context, mdText string) (*aliyunossvector.Upd
 	if err != nil {
 		return nil, err
 	}
-	logger.Info("Upsert Qdrant UID:", zap.Any("uid", uid))
+	logger.Info("Upsert vector UID:", zap.Any("uid", uid))
 	updateResult, err := md.UpsertQdrantVector(uid, "")
 	if err != nil {
-		logger.Error("Upsert Qdrant by MD text failed", zap.Error(err))
+		logger.Error("Upsert vector by MD text failed", zap.Error(err))
 		return nil, err
 	}
-	logger.Info("Upsert Qdrant by MD text success", zap.Any("updateResult", updateResult))
+	logger.Info("Upsert vector by MD text success", zap.Any("updateResult", updateResult))
 	return updateResult, nil
 }
 
 func QueryQdrantVector(ctx *gin.Context, prompt string) ([]aliyunossvector.ScoredVector, error) {
 	uid := ctx.GetInt(middleware.UID_IN_CTX)
-	fmt.Println("Query Qdrant UID:", uid)
+	fmt.Println("Query vector UID:", uid)
 	queryVector, err := embedding.Embed(prompt, 1024)
 	if err != nil {
 		return nil, err
 	}
 	searchResult, err := aliyunossvector.QueryRagVector(queryVector, uid)
 	if err != nil {
-		logger.Error("Query Qdrant vector failed", zap.Error(err))
+		logger.Error("Query vector failed", zap.Error(err))
 		return nil, err
 	}
-	logger.Info("Query Qdrant vector success", zap.Any("searchResult", searchResult))
+	logger.Info("Query vector success", zap.Any("searchResult", searchResult))
 	return searchResult, nil
 }
 
@@ -55,14 +55,14 @@ func DeleteQdrantVectorByFilenames(uid int, filenames []string) (*aliyunossvecto
 
 	result, err := aliyunossvector.DeleteRagVectorByFilenames(uid, normalizedFilenames)
 	if err != nil {
-		logger.Error("Delete Qdrant vectors by filenames failed",
+		logger.Error("Delete vectors by filenames failed",
 			zap.Int("uid", uid),
 			zap.Strings("filenames", normalizedFilenames),
 			zap.Error(err),
 		)
 		return nil, err
 	}
-	logger.Info("Delete Qdrant vectors by filenames success",
+	logger.Info("Delete vectors by filenames success",
 		zap.Int("uid", uid),
 		zap.Strings("filenames", normalizedFilenames),
 		zap.Any("result", result),

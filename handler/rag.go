@@ -23,7 +23,7 @@ var allowedFileExtensions = map[string]bool{
 	// ".docx": true,
 }
 
-// 上传文件并且将文件向量化上传到qdrant, 只是将任务发送给消息队列
+// 上传文件并且将文件向量化上传到向量库, 只是将任务发送给消息队列
 func RagVectorizeTask(ctx *gin.Context) {
 	fh, err := ctx.FormFile("file")
 	fileCloudPath := ctx.PostForm("file_cloud_path")
