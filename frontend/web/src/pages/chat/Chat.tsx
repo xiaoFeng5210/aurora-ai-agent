@@ -104,8 +104,14 @@ export function Chat() {
     return [...base, ...pending]
   }, [feedbackByMessageId, history, pending])
 
+  const shouldStopAutoScroll = useRef(false)
+
   const scrollRef = useRef<HTMLDivElement>(null)
+  const userStartScroll = () => {
+    shouldStopAutoScroll.current = true
+  }
   useEffect(() => {
+    if (shouldStopAutoScroll.current) return
     const el = scrollRef.current
     if (el) el.scrollTop = el.scrollHeight
   }, [messages])
@@ -116,6 +122,8 @@ export function Chat() {
       return
     }
     if (streaming) return
+
+    shouldStopAutoScroll.current = false
 
     const shouldAutoRename =
       !!doc &&
@@ -256,7 +264,7 @@ export function Chat() {
           ) : null}
         </header>
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto" onScroll={userStartScroll}>
           {showNoDoc ? (
             <EmptyFull
               title="你好，我是 Ariadne"
