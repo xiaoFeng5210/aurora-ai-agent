@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Database, LayoutGrid, Menu, UserRound, X } from 'lucide-react'
+import { Database, LayoutGrid, Menu, Sparkles, UserRound, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
@@ -10,6 +10,7 @@ import logoUrl from '@/assets/logo.png'
 const NAV = [
   { label: '卡片', href: '/cards', icon: LayoutGrid },
   { label: '知识库', href: '/knowledge', icon: Database },
+  { label: 'AI', href: '/chat', icon: Sparkles },
 ]
 
 export function SiteHeader() {

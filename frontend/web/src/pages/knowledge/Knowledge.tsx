@@ -1,4 +1,5 @@
 import { useRef, useState, type ChangeEvent, type ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import useSWR from 'swr'
 import {
   AlertTriangle,
@@ -9,6 +10,7 @@ import {
   FileText,
   HardDrive,
   RefreshCw,
+  Sparkles,
   Trash2,
   UploadCloud,
 } from 'lucide-react'
@@ -33,6 +35,7 @@ import { HttpError } from '@/lib/fetcher'
 export function Knowledge() {
   const { user } = useAuth()
   const { show } = useToast()
+  const navigate = useNavigate()
 
   const [uploading, setUploading] = useState(false)
   const [deletingPath, setDeletingPath] = useState<string | null>(null)
@@ -98,6 +101,9 @@ export function Knowledge() {
   }
 
   const fileCount = files.filter((file) => file.isdir !== 1).length
+  const completedCount = files.filter(
+    (file) => file.isdir !== 1 && file.vector_status === 'completed',
+  ).length
   const totalSize = files.reduce((sum, file) => sum + (file.isdir === 1 ? 0 : file.size), 0)
 
   return (
@@ -124,6 +130,34 @@ export function Knowledge() {
               <KnowledgeStat icon={<FileText className="h-4 w-4" />} label="文件" value={`${fileCount}`} />
               <KnowledgeStat icon={<HardDrive className="h-4 w-4" />} label="容量" value={formatBytes(totalSize)} />
             </div>
+          </div>
+
+          <div className="mt-6 flex flex-col gap-4 rounded-lg border border-accent-vermilion/20 bg-accent-vermilion/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-vermilion/10 text-accent-vermilion">
+                <Sparkles className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-ink-950">
+                  {completedCount > 0
+                    ? `已有 ${completedCount} 个文档入库，可与 AI 对话`
+                    : '文档入库后，可与 AI 对话'}
+                </p>
+                <p className="mt-1 text-sm leading-6 text-ink-500">
+                  {completedCount > 0
+                    ? '已入库的文档会被 AI 助手检索引用，前往对话页即可基于知识库提问。'
+                    : '上传文档并完成向量化入库后，AI 助手即可检索知识库内容与您对话。'}
+                </p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              onClick={() => navigate('/chat')}
+              className="w-full shrink-0 sm:w-auto"
+            >
+              <Sparkles className="h-4 w-4" />
+              去 AI 对话
+            </Button>
           </div>
 
           <div className="mt-6 grid gap-3 rounded-lg border border-dashed border-ink-300 bg-paper-100/40 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
