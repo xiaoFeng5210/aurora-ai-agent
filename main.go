@@ -3,7 +3,7 @@ package main
 import (
 	"aurora-agent/bootstrap"
 	"aurora-agent/database"
-	qdrant_db "aurora-agent/database/qdrant"
+	"aurora-agent/database/aliyunossvector"
 	redis_db "aurora-agent/database/redis"
 	"aurora-agent/router"
 	utils "aurora-agent/utils"
@@ -18,9 +18,10 @@ func init() {
 	if _, err := redis_db.RedisConnect(); err != nil {
 		panic(err)
 	}
-	qdrant_db.QdrantConnect()
-	err := qdrant_db.CreateRagCollection()
-	if err != nil {
+	if err := aliyunossvector.Connect(); err != nil {
+		panic(err)
+	}
+	if err := aliyunossvector.EnsureRagResources(); err != nil {
 		panic(err)
 	}
 }

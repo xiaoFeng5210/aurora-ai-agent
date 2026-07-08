@@ -75,7 +75,7 @@ func (p *TextParser) Parse2String(data []byte) (string, error) {
 // ---------------------- Service ----------------------
 
 // CreateRag 将上传的文件写入当前用户的个人 RAG 知识库
-// 流程：根据扩展名选择解析器 → 解析为文本 → 分块 → 向量化 → 按 user_id 写入 Qdrant
+// 流程：根据扩展名选择解析器 → 解析为文本 → 分块 → 向量化 → 按 user_id 写入向量库
 func CreateRag(uid int, file io.Reader, filename string) (*aliyunossvector.UpdateResult, error) {
 	return CreateRagWithPath(uid, file, filename, filename)
 }
