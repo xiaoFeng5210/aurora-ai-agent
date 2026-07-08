@@ -2,6 +2,7 @@ package service
 
 import (
 	"aurora-agent/database"
+	"aurora-agent/database/aliyunossvector"
 	"aurora-agent/database/model"
 	"aurora-agent/service/embedding"
 	"bytes"
@@ -13,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/qdrant/go-client/qdrant"
 	"go.uber.org/zap"
 
 	rabbitmq_module "aurora-agent/database/rabbitmq"
@@ -76,11 +76,11 @@ func (p *TextParser) Parse2String(data []byte) (string, error) {
 
 // CreateRag 将上传的文件写入当前用户的个人 RAG 知识库
 // 流程：根据扩展名选择解析器 → 解析为文本 → 分块 → 向量化 → 按 user_id 写入 Qdrant
-func CreateRag(uid int, file io.Reader, filename string) (*qdrant.UpdateResult, error) {
+func CreateRag(uid int, file io.Reader, filename string) (*aliyunossvector.UpdateResult, error) {
 	return CreateRagWithPath(uid, file, filename, filename)
 }
 
-func CreateRagWithPath(uid int, file io.Reader, filename string, filePath string) (*qdrant.UpdateResult, error) {
+func CreateRagWithPath(uid int, file io.Reader, filename string, filePath string) (*aliyunossvector.UpdateResult, error) {
 	if err := setRagVectorizationStatus(uid, filename, filePath, model.RagVectorStatusVectorizing, nil); err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func CreateRagWithPath(uid int, file io.Reader, filename string, filePath string
 	return result, nil
 }
 
-func createRagVector(uid int, file io.Reader, filename string) (*qdrant.UpdateResult, error) {
+func createRagVector(uid int, file io.Reader, filename string) (*aliyunossvector.UpdateResult, error) {
 	// 1. 根据文件扩展名匹配解析器
 	ext := strings.ToLower(filepath.Ext(filename))
 	parser, ok := fileParsers[ext]
@@ -141,14 +141,14 @@ func createRagVector(uid int, file io.Reader, filename string) (*qdrant.UpdateRe
 		return nil, fmt.Errorf("向量化失败: %w", err)
 	}
 
-	// 5. 写入 Qdrant，user_id 用于隔离不同用户的知识库
+	// 5. 写入向量库，user_id 用于隔离不同用户的知识库
 	logger.Info("RAG 创建: 正在写入知识库",
 		zap.Int("uid", uid),
 		zap.String("filename", filename),
 	)
 	result, err := doc.UpsertQdrantVector(uid, filename)
 	if err != nil {
-		logger.Error("RAG 创建: 写入 Qdrant 失败", zap.Error(err))
+		logger.Error("RAG 创建: 写入向量库失败", zap.Error(err))
 		return nil, fmt.Errorf("写入知识库失败: %w", err)
 	}
 
