@@ -109,7 +109,7 @@ export function Knowledge() {
   return (
     <div className="min-h-screen bg-paper-50 text-ink-900">
       <SiteHeader />
-      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-10">
+      <main className="mx-auto max-w-6xl px-4 py-6 pb-28 sm:px-6 lg:py-10 lg:pb-32">
         <div className="border-b border-ink-200/70 pb-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
@@ -130,34 +130,6 @@ export function Knowledge() {
               <KnowledgeStat icon={<FileText className="h-4 w-4" />} label="文件" value={`${fileCount}`} />
               <KnowledgeStat icon={<HardDrive className="h-4 w-4" />} label="容量" value={formatBytes(totalSize)} />
             </div>
-          </div>
-
-          <div className="mt-6 flex flex-col gap-4 rounded-lg border border-accent-vermilion/20 bg-accent-vermilion/5 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 items-start gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-vermilion/10 text-accent-vermilion">
-                <Sparkles className="h-5 w-5" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-ink-950">
-                  {completedCount > 0
-                    ? `已有 ${completedCount} 个文档入库，可与 AI 对话`
-                    : '文档入库后，可与 AI 对话'}
-                </p>
-                <p className="mt-1 text-sm leading-6 text-ink-500">
-                  {completedCount > 0
-                    ? '已入库的文档会被 AI 助手检索引用，前往对话页即可基于知识库提问。'
-                    : '上传文档并完成向量化入库后，AI 助手即可检索知识库内容与您对话。'}
-                </p>
-              </div>
-            </div>
-            <Button
-              type="button"
-              onClick={() => navigate('/chat')}
-              className="w-full shrink-0 sm:w-auto"
-            >
-              <Sparkles className="h-4 w-4" />
-              去 AI 对话
-            </Button>
           </div>
 
           <div className="mt-6 grid gap-3 rounded-lg border border-dashed border-ink-300 bg-paper-100/40 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
@@ -219,7 +191,46 @@ export function Knowledge() {
             )}
           </div>
         </div>
+
+        <KnowledgeAiChatPrompt
+          completedCount={completedCount}
+          onChat={() => navigate('/chat')}
+        />
       </main>
+    </div>
+  )
+}
+
+function KnowledgeAiChatPrompt({
+  completedCount,
+  onChat,
+}: {
+  completedCount: number
+  onChat: () => void
+}) {
+  const title =
+    completedCount > 0
+      ? `已有 ${completedCount} 个文档入库，可与 AI 对话`
+      : '文档入库后，可与 AI 对话'
+  const description =
+    completedCount > 0
+      ? '已入库文档可被 AI 检索，前往对话页提问。'
+      : '上传并向量化入库后即可与 AI 对话。'
+
+  return (
+    <div className="pointer-events-none fixed bottom-5 left-4 z-30 w-[min(calc(100vw-2rem),17rem)] sm:bottom-6 sm:left-6">
+      <div className="pointer-events-auto rounded-lg border border-accent-vermilion/20 bg-paper-50/95 p-3 shadow-lg backdrop-blur sm:p-4">
+        <div className="flex items-center gap-2 text-accent-vermilion">
+          <Sparkles className="h-4 w-4 shrink-0" />
+          <p className="text-xs font-semibold uppercase tracking-[0.12em]">AI 对话</p>
+        </div>
+        <p className="mt-2 text-sm font-semibold leading-5 text-ink-950">{title}</p>
+        <p className="mt-1 hidden text-xs leading-5 text-ink-500 sm:block">{description}</p>
+        <Button type="button" size="sm" onClick={onChat} className="mt-3 w-full">
+          <Sparkles className="h-3.5 w-3.5" />
+          去 AI 对话
+        </Button>
+      </div>
     </div>
   )
 }
