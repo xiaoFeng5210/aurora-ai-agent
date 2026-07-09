@@ -42,6 +42,7 @@ func CreateCard(uid int, req dto.CreateCardRequest) (dto.CardResponse, error) {
 		}
 	}
 
+	syncCardVectorBestEffort(card)
 	return buildCardResponse(uid, card), nil
 }
 
@@ -110,7 +111,21 @@ func UpdateCard(uid int, id int, req dto.UpdateCardRequest) (dto.CardResponse, e
 		}
 	}
 
-	return GetCardByID(uid, id)
+	resp, err := GetCardByID(uid, id)
+	if err != nil {
+		return dto.CardResponse{}, err
+	}
+
+	if cardVectorFieldsChanged(updates) {
+		syncCardVectorBestEffort(model.Card{
+			Id:      resp.Id,
+			UserId:  resp.UserId,
+			Title:   resp.Title,
+			Content: resp.Content,
+		})
+	}
+
+	return resp, nil
 }
 
 func DeleteCard(uid int, id int) error {
@@ -120,7 +135,11 @@ func DeleteCard(uid int, id int) error {
 		}
 		return err
 	}
-	return database.SoftDeleteCardTagsByCardIDAndUserID(uid, id)
+	if err := database.SoftDeleteCardTagsByCardIDAndUserID(uid, id); err != nil {
+		return err
+	}
+	deleteCardVectorBestEffort(uid, id)
+	return nil
 }
 
 func normalizeCardContent(value string) (string, error) {

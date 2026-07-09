@@ -31,6 +31,10 @@ func (md *MdDocument) Chunk() []string {
 	end := start + delta
 
 	runeContent := []rune(strings.TrimSpace(md.Content))
+	if len(runeContent) == 0 {
+		md.chunks = chunks
+		return chunks
+	}
 	for {
 		if end >= len(runeContent) {
 			chunks = append(chunks, string(runeContent[start:]))
