@@ -87,9 +87,19 @@ func UpsertCardVector(chunks []string, vectorData [][]float32, payload map[strin
 	}
 
 	userID := fmt.Sprintf("%v", payload["user_id"])
-	cardID := fmt.Sprintf("%v", payload["card_id"])
+	cardID := strings.TrimSpace(fmt.Sprintf("%v", payload["card_id"]))
+	if userID == "" || userID == "<nil>" {
+		return nil, fmt.Errorf("user_id is required")
+	}
+	if cardID == "" || cardID == "<nil>" {
+		return nil, fmt.Errorf("card_id is required")
+	}
 
-	baseKey := ragBaseKey(userID, cardID)
+	if _, err = DeleteCardVector(toInt(userID), cardID); err != nil {
+		return nil, err
+	}
+
+	baseKey := ragBaseKey(userID, "card:"+cardID)
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	items := make([]map[string]any, 0, len(chunks))
 	for idx := range chunks {
@@ -123,7 +133,40 @@ func UpsertCardVector(chunks []string, vectorData [][]float32, payload map[strin
 		RequestID:  result.Headers.Get("X-Oss-Request-Id"),
 		Count:      len(items),
 	}, nil
+}
 
+func DeleteCardVector(userID int, cardID string) (*UpdateResult, error) {
+	c, cfg, err := client()
+	if err != nil {
+		return nil, err
+	}
+	cardID = strings.TrimSpace(cardID)
+	if cardID == "" {
+		return nil, fmt.Errorf("card_id is required")
+	}
+
+	keys, err := listKeysByMetadata(c, cfg, strconv.Itoa(userID), "card_id", map[string]struct{}{cardID: {}})
+	if err != nil {
+		return nil, err
+	}
+	if len(keys) == 0 {
+		return &UpdateResult{StatusCode: 204, Status: "NoContent", Count: 0}, nil
+	}
+
+	result, err := c.DeleteVectors(context.Background(), &vectors.DeleteVectorsRequest{
+		Bucket:    oss.Ptr(cfg.Bucket),
+		IndexName: oss.Ptr(cfg.IndexName),
+		Keys:      keys,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &UpdateResult{
+		StatusCode: result.StatusCode,
+		Status:     result.Status,
+		RequestID:  result.Headers.Get("X-Oss-Request-Id"),
+		Count:      len(keys),
+	}, nil
 }
 
 func UpsertRagVector(chunks []string, vectorData [][]float32, payload map[string]any) (*UpdateResult, error) {
@@ -201,7 +244,7 @@ func DeleteRagVectorByFilenames(userID int, filenames []string) (*UpdateResult, 
 		return nil, fmt.Errorf("filename is required")
 	}
 
-	keys, err := listKeysByMetadata(c, cfg, strconv.Itoa(userID), filenameSet)
+	keys, err := listKeysByMetadata(c, cfg, strconv.Itoa(userID), "filename", filenameSet)
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +303,13 @@ func QueryRagVector(queryVector []float32, userID int) ([]ScoredVector, error) {
 	return searchResult, nil
 }
 
-func listKeysByMetadata(c *vectors.VectorsClient, cfg Config, userID string, filenames map[string]struct{}) ([]string, error) {
+func listKeysByMetadata(
+	c *vectors.VectorsClient,
+	cfg Config,
+	userID string,
+	field string,
+	values map[string]struct{},
+) ([]string, error) {
 	keys := make([]string, 0)
 	var nextToken *string
 	for {
@@ -280,7 +329,7 @@ func listKeysByMetadata(c *vectors.VectorsClient, cfg Config, userID string, fil
 			if fmt.Sprintf("%v", metadata["user_id"]) != userID {
 				continue
 			}
-			if _, ok := filenames[fmt.Sprintf("%v", metadata["filename"])]; !ok {
+			if _, ok := values[fmt.Sprintf("%v", metadata[field])]; !ok {
 				continue
 			}
 			if key, ok := item["key"].(string); ok && key != "" {
