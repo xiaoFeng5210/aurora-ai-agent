@@ -42,7 +42,8 @@ func CreateCard(uid int, req dto.CreateCardRequest) (dto.CardResponse, error) {
 		}
 	}
 
-	syncCardVectorBestEffort(card)
+	go syncCardVectorBestEffort(card)
+
 	return buildCardResponse(uid, card), nil
 }
 
@@ -117,7 +118,7 @@ func UpdateCard(uid int, id int, req dto.UpdateCardRequest) (dto.CardResponse, e
 	}
 
 	if cardVectorFieldsChanged(updates) {
-		syncCardVectorBestEffort(model.Card{
+		go syncCardVectorBestEffort(model.Card{
 			Id:      resp.Id,
 			UserId:  resp.UserId,
 			Title:   resp.Title,
