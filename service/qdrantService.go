@@ -22,7 +22,7 @@ func UpsertQdrantByMDText(ctx *gin.Context, mdText string) (*aliyunossvector.Upd
 		return nil, err
 	}
 	logger.Info("Upsert vector UID:", zap.Any("uid", uid))
-	updateResult, err := md.UpsertQdrantVector(uid, "")
+	updateResult, err := md.UpsertAliyunossvector(uid, "")
 	if err != nil {
 		logger.Error("Upsert vector by MD text failed", zap.Error(err))
 		return nil, err

@@ -33,6 +33,15 @@ import { useToast } from '@/hooks/useToast'
 import { cn } from '@/lib/cn'
 import { HttpError } from '@/lib/fetcher'
 
+const ALLOWED_EXTENSIONS = ['.txt', '.md', '.markdown'] as const
+const ALLOWED_ACCEPT = '.txt,.md,.markdown,text/plain,text/markdown'
+const ALLOWED_HINT = '仅支持 .txt、.md（Markdown）文本文件'
+
+function isAllowedKnowledgeFile(file: File) {
+  const name = file.name.toLowerCase()
+  return ALLOWED_EXTENSIONS.some((ext) => name.endsWith(ext))
+}
+
 export function Knowledge() {
   const { user } = useAuth()
   const { show } = useToast()
@@ -59,12 +68,32 @@ export function Knowledge() {
     { revalidateOnFocus: false },
   )
 
+  const clearSelectedFile = () => {
+    setSelectedFile(null)
+    if (inputRef.current) inputRef.current.value = ''
+  }
+
   const onSelectFile = (e: ChangeEvent<HTMLInputElement>) => {
-    setSelectedFile(e.target.files?.[0] ?? null)
+    const file = e.target.files?.[0] ?? null
+    if (!file) {
+      setSelectedFile(null)
+      return
+    }
+    if (!isAllowedKnowledgeFile(file)) {
+      show(`${ALLOWED_HINT}，当前选择：${file.name}`, 'error')
+      clearSelectedFile()
+      return
+    }
+    setSelectedFile(file)
   }
 
   const onUpload = async () => {
     if (!selectedFile || uploading) return
+    if (!isAllowedKnowledgeFile(selectedFile)) {
+      show(`${ALLOWED_HINT}，当前选择：${selectedFile.name}`, 'error')
+      clearSelectedFile()
+      return
+    }
 
     setUploading(true)
     try {
@@ -76,8 +105,7 @@ export function Knowledge() {
           : '文件已上传并写入知识库',
         'success',
       )
-      setSelectedFile(null)
-      if (inputRef.current) inputRef.current.value = ''
+      clearSelectedFile()
       await mutateFiles()
     } catch (err) {
       show(getErrorMessage(err, '上传或向量化失败'), 'error')
@@ -133,26 +161,33 @@ export function Knowledge() {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-3 rounded-lg border border-dashed border-ink-300 bg-paper-100/40 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
-            <div className="min-w-0">
+          <div className="mt-6 rounded-lg border border-dashed border-ink-300 bg-paper-100/40 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <input
                 ref={inputRef}
                 type="file"
-                accept=".txt,.md,.csv,text/plain,text/markdown,text/csv"
+                accept={ALLOWED_ACCEPT}
                 onChange={onSelectFile}
-                className="block w-full min-w-0 rounded-md border border-ink-200 bg-paper-50 px-3 py-2 text-sm text-ink-700 file:mr-3 file:rounded-md file:border-0 file:bg-paper-200 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-ink-900 hover:file:bg-paper-300"
+                className="block min-w-0 flex-1 rounded-md border border-ink-200 bg-paper-50 px-3 py-2 text-sm text-ink-700 file:mr-3 file:rounded-md file:border-0 file:bg-paper-200 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-ink-900 hover:file:bg-paper-300"
               />
+              <Button
+                type="button"
+                onClick={onUpload}
+                loading={uploading}
+                disabled={!selectedFile || uploading}
+                className="w-full shrink-0 sm:w-auto"
+                title={ALLOWED_HINT}
+              >
+                <UploadCloud className="h-4 w-4" />
+                上传并向量化
+              </Button>
             </div>
-            <Button
-              type="button"
-              onClick={onUpload}
-              loading={uploading}
-              disabled={!selectedFile || uploading}
-              className="w-full sm:w-auto"
-            >
-              <UploadCloud className="h-4 w-4" />
-              上传并向量化
-            </Button>
+            <p className="mt-3 text-xs leading-5 text-ink-500">
+              {ALLOWED_HINT}
+              {selectedFile ? (
+                <span className="ml-1 text-ink-700">· 已选择 {selectedFile.name}</span>
+              ) : null}
+            </p>
           </div>
         </div>
 

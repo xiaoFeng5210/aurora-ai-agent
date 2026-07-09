@@ -59,9 +59,9 @@ func (md *MdDocument) Embedding() ([][]float32, error) {
 	return vectors, nil
 }
 
-// UpsertQdrantVector 将分块和向量写入当前配置的向量库。
+// UpsertAliyunossvector 将分块和向量写入当前配置的向量库。
 // filename 记录数据来源文件名，便于用户管理知识库
-func (md *MdDocument) UpsertQdrantVector(uid int, filename string) (*aliyunossvector.UpdateResult, error) {
+func (md *MdDocument) UpsertAliyunossvector(uid int, filename string) (*aliyunossvector.UpdateResult, error) {
 	if md.Content == "" {
 		return nil, errors.New("content is empty")
 	}

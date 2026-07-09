@@ -146,7 +146,7 @@ func createRagVector(uid int, file io.Reader, filename string) (*aliyunossvector
 		zap.Int("uid", uid),
 		zap.String("filename", filename),
 	)
-	result, err := doc.UpsertQdrantVector(uid, filename)
+	result, err := doc.UpsertAliyunossvector(uid, filename)
 	if err != nil {
 		logger.Error("RAG 创建: 写入向量库失败", zap.Error(err))
 		return nil, fmt.Errorf("写入知识库失败: %w", err)
