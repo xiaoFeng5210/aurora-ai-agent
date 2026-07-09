@@ -74,6 +74,58 @@ func EnsureRagResources() error {
 	return nil
 }
 
+func UpsertCardVector(chunks []string, vectorData [][]float32, payload map[string]interface{}) (*UpdateResult, error) {
+	c, cfg, err := client()
+	if err != nil {
+		return nil, err
+	}
+	if len(chunks) == 0 || len(vectorData) == 0 {
+		return nil, fmt.Errorf("chunks or vectors is empty")
+	}
+	if len(chunks) != len(vectorData) {
+		return nil, fmt.Errorf("chunks and vectors length mismatch")
+	}
+
+	userID := fmt.Sprintf("%v", payload["user_id"])
+	cardID := fmt.Sprintf("%v", payload["card_id"])
+
+	baseKey := ragBaseKey(userID, cardID)
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	items := make([]map[string]any, 0, len(chunks))
+	for idx := range chunks {
+		items = append(items, map[string]any{
+			"key": fmt.Sprintf("%s:%06d", baseKey, idx),
+			"data": map[string]any{
+				"float32": vectorData[idx],
+			},
+			"metadata": map[string]any{
+				"text":        chunks[idx],
+				"user_id":     userID,
+				"card_id":     cardID,
+				"card_title":  payload["card_title"],
+				"chunk_index": idx,
+				"updated_at":  now,
+			},
+		})
+	}
+
+	result, err := c.PutVectors(context.Background(), &vectors.PutVectorsRequest{
+		Bucket:    oss.Ptr(cfg.Bucket),
+		IndexName: oss.Ptr(cfg.IndexName),
+		Vectors:   items,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &UpdateResult{
+		StatusCode: result.StatusCode,
+		Status:     result.Status,
+		RequestID:  result.Headers.Get("X-Oss-Request-Id"),
+		Count:      len(items),
+	}, nil
+
+}
+
 func UpsertRagVector(chunks []string, vectorData [][]float32, payload map[string]any) (*UpdateResult, error) {
 	c, cfg, err := client()
 	if err != nil {
