@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import useSWR from 'swr'
 import useSWRInfinite from 'swr/infinite'
-import { PenLine, Plus, Search, Trash2 } from 'lucide-react'
+import { PenLine, Plus, Search, Sparkles, Trash2, X } from 'lucide-react'
 import { AlertDialog, Button as RTButton, Flex } from '@radix-ui/themes'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { Button } from '@/components/ui/Button'
@@ -21,6 +22,7 @@ type CardsPageKey = readonly ['cards', string, string, number]
 
 export function Cards() {
   const { show } = useToast()
+  const navigate = useNavigate()
 
   const [keyword, setKeyword] = useState('')
   const [debouncedKeyword, setDebouncedKeyword] = useState('')
@@ -236,7 +238,7 @@ export function Cards() {
         ) : null}
       </div>
 
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      <main className="mx-auto max-w-6xl px-4 py-8 pb-28 sm:px-6 sm:py-10 sm:pb-32">
         {loading ? (
           <SkeletonGrid />
         ) : cards.length === 0 ? (
@@ -268,6 +270,8 @@ export function Cards() {
         )}
       </main>
 
+      <CardsAiChatPrompt cardCount={cards.length} onChat={() => navigate('/chat')} />
+
       <CardDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
@@ -277,6 +281,59 @@ export function Cards() {
         onSaved={onSaved}
         onTagCreated={onTagCreated}
       />
+    </div>
+  )
+}
+
+function CardsAiChatPrompt({
+  cardCount,
+  onChat,
+}: {
+  cardCount: number
+  onChat: () => void
+}) {
+  const [dismissed, setDismissed] = useState(
+    () => sessionStorage.getItem('cards-ai-prompt-dismissed') === '1',
+  )
+
+  const title =
+    cardCount > 0 ? 'AI 会吸收你的卡片，帮你检索回忆' : '写下卡片后，AI 可帮你检索回忆'
+  const description =
+    cardCount > 0
+      ? '卡片内容会进入知识检索，在对话里帮你回忆与联想。'
+      : '创建卡片后，AI 会吸收内容，在对话中帮你检索回忆。'
+
+  const onDismiss = () => {
+    sessionStorage.setItem('cards-ai-prompt-dismissed', '1')
+    setDismissed(true)
+  }
+
+  if (dismissed) return null
+
+  return (
+    <div className="pointer-events-none fixed bottom-5 right-4 z-30 w-[min(calc(100vw-2rem),17rem)] pb-[env(safe-area-inset-bottom)] sm:bottom-6 sm:right-6">
+      <div className="pointer-events-auto rounded-lg border border-accent-vermilion/20 bg-paper-50/95 p-3 shadow-lg backdrop-blur sm:p-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 text-accent-vermilion">
+            <Sparkles className="h-4 w-4 shrink-0" />
+            <p className="text-xs font-semibold uppercase tracking-[0.12em]">AI 回忆</p>
+          </div>
+          <button
+            type="button"
+            onClick={onDismiss}
+            aria-label="关闭提示"
+            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-ink-400 transition hover:bg-paper-200/80 hover:text-ink-700"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <p className="mt-2 text-sm font-semibold leading-5 text-ink-950">{title}</p>
+        <p className="mt-1 hidden text-xs leading-5 text-ink-500 sm:block">{description}</p>
+        <Button type="button" size="sm" onClick={onChat} className="mt-3 w-full">
+          <Sparkles className="h-3.5 w-3.5" />
+          去 AI 对话
+        </Button>
+      </div>
     </div>
   )
 }
