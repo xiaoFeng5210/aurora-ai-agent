@@ -14,12 +14,21 @@ export interface PostcardProps {
   card: Card
   index: number
   tagNameById: Map<number, string>
-  onOpen: (card: Card) => void
+  onPreview: (card: Card) => void
+  onEdit: (card: Card) => void
   onDelete: (card: Card) => Promise<void> | void
   deleting?: boolean
 }
 
-export function Postcard({ card, index, tagNameById, onOpen, onDelete, deleting }: PostcardProps) {
+export function Postcard({
+  card,
+  index,
+  tagNameById,
+  onPreview,
+  onEdit,
+  onDelete,
+  deleting,
+}: PostcardProps) {
   const { show } = useToast()
   const [copied, setCopied] = useState(false)
   const rotate = ROTATIONS[index % ROTATIONS.length]
@@ -43,7 +52,7 @@ export function Postcard({ card, index, tagNameById, onOpen, onDelete, deleting 
 
   return (
     <article
-      onClick={() => onOpen(card)}
+      onClick={() => onPreview(card)}
       className={cn(
         'group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border border-ink-200 bg-paper-50 shadow-[0_1px_0_0_rgba(58,46,31,0.04),0_8px_24px_-12px_rgba(58,46,31,0.15)] transition-all duration-200 hover:-translate-y-1 hover:rotate-0 hover:shadow-[0_1px_0_0_rgba(58,46,31,0.06),0_18px_36px_-14px_rgba(58,46,31,0.28)]',
         rotate,
@@ -75,7 +84,7 @@ export function Postcard({ card, index, tagNameById, onOpen, onDelete, deleting 
             aria-label="编辑卡片"
             onClick={(e) => {
               e.stopPropagation()
-              onOpen(card)
+              onEdit(card)
             }}
             className="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-ink-400 transition hover:bg-paper-200/70 hover:text-ink-800"
           >

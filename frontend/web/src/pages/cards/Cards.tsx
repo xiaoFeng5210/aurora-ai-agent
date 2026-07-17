@@ -8,6 +8,7 @@ import { SiteHeader } from '@/components/layout/SiteHeader'
 import { Button } from '@/components/ui/Button'
 import { Postcard } from '@/components/cards/Postcard'
 import { CardDialog } from '@/components/cards/CardDialog'
+import { CardPreview } from '@/components/cards/CardPreview'
 import { TagChip } from '@/components/cards/TagChip'
 import { deleteCard, queryCards, type Card } from '@/api/card'
 import { deleteTag, queryTags, type Tag } from '@/api/tag'
@@ -32,6 +33,8 @@ export function Cards() {
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [activeCard, setActiveCard] = useState<Card | null>(null)
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewCard, setPreviewCard] = useState<Card | null>(null)
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedKeyword(keyword.trim()), SEARCH_DEBOUNCE_MS)
@@ -98,7 +101,13 @@ export function Cards() {
     setDialogOpen(true)
   }
 
+  const openPreview = (card: Card) => {
+    setPreviewCard(card)
+    setPreviewOpen(true)
+  }
+
   const openEdit = (card: Card) => {
+    setPreviewOpen(false)
     setActiveCard(card)
     setDialogOpen(true)
   }
@@ -252,7 +261,8 @@ export function Cards() {
                   card={card}
                   index={i}
                   tagNameById={tagNameById}
-                  onOpen={openEdit}
+                  onPreview={openPreview}
+                  onEdit={openEdit}
                   onDelete={onDelete}
                   deleting={deletingId === card.id}
                 />
@@ -271,6 +281,13 @@ export function Cards() {
       </main>
 
       <CardsAiChatPrompt cardCount={cards.length} onChat={() => navigate('/chat')} />
+
+      <CardPreview
+        open={previewOpen}
+        card={previewCard}
+        tagNameById={tagNameById}
+        onOpenChange={setPreviewOpen}
+      />
 
       <CardDialog
         open={dialogOpen}
