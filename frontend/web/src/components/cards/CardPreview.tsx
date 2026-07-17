@@ -6,6 +6,9 @@ import { Markdown } from '@/components/chat/Markdown'
 import { useToast } from '@/hooks/useToast'
 import { cn } from '@/lib/cn'
 
+const GRAIN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#n)"/></svg>`
+const GRAIN_TEXTURE = `url("data:image/svg+xml,${encodeURIComponent(GRAIN_SVG)}")`
+
 export interface CardPreviewProps {
   open: boolean
   card: Card | null
@@ -44,77 +47,85 @@ export function CardPreview({ open, card, tagNameById, onOpenChange }: CardPrevi
     >
       {card ? (
         <Dialog.Content
-          maxWidth="40rem"
-          maxHeight="min(88dvh, 44rem)"
+          maxWidth="34rem"
+          maxHeight="min(86dvh, 46rem)"
           className={cn(
-            '!flex !flex-col !overflow-hidden !rounded-2xl !border !border-ink-200/80 !bg-paper-50 !p-0',
-            'shadow-[0_24px_80px_-28px_rgba(43,32,22,0.45)]',
+            'relative !flex !flex-col !overflow-hidden !rounded-[22px] !border !border-ink-200/70 !bg-paper-50 !p-0',
+            'shadow-[0_2px_0_0_rgba(58,46,31,0.03),0_32px_64px_-24px_rgba(43,32,22,0.38)]',
           )}
-          style={{
-            backgroundImage:
-              'radial-gradient(circle at 1px 1px, rgba(58,46,31,0.045) 1px, transparent 0)',
-            backgroundSize: '18px 18px',
-          }}
         >
           <Dialog.Title className="sr-only">{card.title?.trim() || '卡片预览'}</Dialog.Title>
           <Dialog.Description className="sr-only">预览卡片全文，可滚动阅读并复制内容</Dialog.Description>
 
-          <header className="flex shrink-0 items-start justify-between gap-3 border-b border-ink-200/70 px-5 py-4 sm:px-7 sm:py-5">
-            <div className="min-w-0 pt-0.5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent-vermilion/80">
-                Preview
-              </p>
-              <h2 className="font-display mt-1.5 truncate text-xl font-semibold leading-snug text-ink-950 sm:text-2xl">
-                {card.title?.trim() || '无标题'}
-              </h2>
-              <p className="mt-1.5 text-xs text-ink-500">{formatQuietDate(card.created_at)}</p>
-            </div>
+          <div
+            className="pointer-events-none absolute inset-0 z-0 mix-blend-multiply opacity-[0.05]"
+            style={{ backgroundImage: GRAIN_TEXTURE, backgroundSize: '220px 220px' }}
+          />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute -bottom-8 -right-5 z-0 select-none font-display text-[150px] font-black leading-none text-ink-900/[0.045] sm:-right-7 sm:text-[170px]"
+          >
+            忆
+          </span>
+          <div className="pointer-events-none absolute inset-[10px] z-20 rounded-[15px] border border-ink-200/55 sm:inset-3" />
 
-            <div className="flex shrink-0 items-center gap-1">
+          <div className="absolute right-3 top-3 z-30 flex items-center gap-0.5 sm:right-4 sm:top-4">
+            <button
+              type="button"
+              onClick={onCopy}
+              aria-label="复制卡片内容"
+              title="复制"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-ink-400 transition hover:bg-paper-200/80 hover:text-ink-800"
+            >
+              {copied ? (
+                <Check className="h-4 w-4 text-accent-vermilion" />
+              ) : (
+                <Copy className="h-[15px] w-[15px]" />
+              )}
+            </button>
+            <Dialog.Close>
               <button
                 type="button"
-                onClick={onCopy}
-                aria-label="复制卡片内容"
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm text-ink-500 transition hover:bg-paper-200/70 hover:text-ink-900"
+                aria-label="关闭预览"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full text-ink-400 transition hover:bg-paper-200/80 hover:text-ink-800"
               >
-                {copied ? (
-                  <Check className="h-4 w-4 text-accent-vermilion" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-                <span className="hidden sm:inline">{copied ? '已复制' : '复制'}</span>
+                <X className="h-4 w-4" />
               </button>
-              <Dialog.Close>
-                <button
-                  type="button"
-                  aria-label="关闭预览"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-ink-400 transition hover:bg-paper-200/70 hover:text-ink-800"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </Dialog.Close>
-            </div>
-          </header>
+            </Dialog.Close>
+          </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-7 sm:py-6">
+          <div className="relative z-10 min-h-0 flex-1 overflow-y-auto overscroll-contain px-7 pb-9 pt-12 sm:px-10 sm:pb-11 sm:pt-14">
+            <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-ink-400">
+              {formatQuietDate(card.created_at)}
+            </p>
+
+            <h2 className="font-display mt-2.5 text-[26px] font-semibold leading-[1.2] text-ink-950 sm:text-[30px]">
+              {card.title?.trim() || '无标题'}
+            </h2>
+
+            <div className="mt-5 h-px w-10 bg-accent-vermilion/45" />
+
             <Markdown
               content={card.content}
-              className="font-serif text-[15px] leading-[1.85] text-ink-800 sm:text-base sm:leading-[1.9] [&_*]:my-3 [&_*:first-child]:mt-0 [&_*:last-child]:mb-0"
+              className="mt-7 font-serif text-[15.5px] leading-[1.9] text-ink-800 sm:text-[16px] [&_*]:my-4 [&_*:first-child]:mt-0 [&_*:last-child]:mb-0"
             />
 
             {resolvedTags.length > 0 ? (
-              <div className="mt-8 flex flex-wrap gap-2 border-t border-dashed border-ink-200 pt-5">
+              <div className="mt-10 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-ink-200/60 pt-6">
                 {resolvedTags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-full border border-ink-200/80 bg-paper-100/60 px-2.5 py-0.5 text-xs text-ink-500"
+                    className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.08em] text-ink-400"
                   >
+                    <span className="h-1 w-1 rounded-full bg-accent-vermilion/50" />
                     {tag}
                   </span>
                 ))}
               </div>
             ) : null}
           </div>
+
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-9 bg-gradient-to-t from-paper-50 to-transparent" />
         </Dialog.Content>
       ) : null}
     </Dialog.Root>
