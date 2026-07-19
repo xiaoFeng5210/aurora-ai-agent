@@ -14,7 +14,9 @@
   --color-ink-900: #3a2e1f; /* 主文字 */
   --color-ink-800: #4a3a28;
   --color-ink-700: #5c4a36;
+  --color-ink-600: #6f5b44;
   --color-ink-500: #8a7659; /* 次要文字 */
+  --color-ink-400: #a89478; /* 弱化图标 / 辅助 */
   --color-ink-300: #c7b79a; /* 分隔线 */
   --color-ink-200: #ddd0b4; /* 浅边框 */
 

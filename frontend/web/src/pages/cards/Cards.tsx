@@ -187,10 +187,10 @@ export function Cards() {
   const filtered = !!debouncedKeyword || selectedTagIds.length > 0
 
   return (
-    <div className="min-h-screen bg-paper-50 text-ink-900">
+    <div className="min-h-screen bg-paper-100 text-ink-900">
       <SiteHeader />
 
-      <div className="sticky top-16 z-30 border-b border-ink-200/60 bg-paper-50/90 backdrop-blur">
+      <div className="sticky top-16 z-30 border-b border-ink-200/60 bg-paper-100/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
           <h1 className="font-display text-lg font-bold text-ink-950 sm:text-xl">我的卡片</h1>
 
@@ -329,7 +329,7 @@ function CardsAiChatPrompt({
 
   return (
     <div className="pointer-events-none fixed bottom-5 right-4 z-30 w-[min(calc(100vw-2rem),17rem)] pb-[env(safe-area-inset-bottom)] sm:bottom-6 sm:right-6">
-      <div className="pointer-events-auto rounded-lg border border-accent-vermilion/20 bg-paper-50/95 p-3 shadow-lg backdrop-blur sm:p-4">
+      <div className="pointer-events-auto rounded-xl border border-accent-vermilion/25 bg-paper-50/95 p-3 shadow-lg backdrop-blur sm:p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 text-accent-vermilion">
             <Sparkles className="h-4 w-4 shrink-0" />
@@ -361,7 +361,7 @@ function SkeletonGrid() {
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
-          className="h-64 animate-pulse rounded-xl border border-ink-200 bg-paper-100"
+          className="h-64 animate-pulse rounded-[14px] border border-ink-200/80 bg-paper-50"
         />
       ))}
     </div>
@@ -370,7 +370,7 @@ function SkeletonGrid() {
 
 function EmptyState({ onCreate, filtered }: { onCreate: () => void; filtered: boolean }) {
   return (
-    <div className="mx-auto flex max-w-md flex-col items-center rounded-2xl border-2 border-dashed border-ink-200 bg-paper-100/50 px-8 py-16 text-center">
+    <div className="mx-auto flex max-w-md flex-col items-center rounded-2xl border-2 border-dashed border-ink-200 bg-paper-50/80 px-8 py-16 text-center">
       <span className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-vermilion/10 text-accent-vermilion">
         <PenLine className="h-6 w-6" />
       </span>
