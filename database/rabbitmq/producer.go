@@ -25,4 +25,3 @@ func DeclareExchange(ch *amqp.Channel, exg string) error {
 	}
 	return nil
 }
-
