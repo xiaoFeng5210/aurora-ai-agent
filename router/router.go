@@ -17,6 +17,8 @@ const webDistDir = "web/dist"
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
+	r.Use(middleware.ApiTimers)
+
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "pong"})
 	})
