@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import useSWR from 'swr'
-import { Plus, Trash2 } from 'lucide-react'
+import { Database, LayoutGrid, Plus, Trash2 } from 'lucide-react'
 import { AlertDialog, Button as RTButton, Flex } from '@radix-ui/themes'
 import { createDocument, deleteDocument, listDocuments, type Document } from '@/api/documents'
 import type { ApiEnvelope } from '@/api/client'
@@ -13,15 +13,27 @@ import logoUrl from '@/assets/logo.png'
 
 const KEY = '/documents'
 
+const NAV_ITEMS = [
+  { label: '卡片', href: '/cards', icon: LayoutGrid },
+  { label: '知识库', href: '/knowledge', icon: Database },
+]
+
 export function Sidebar({
   onDeleteCurrentDocument,
+  onNavigate,
 }: {
   onDeleteCurrentDocument?: (id: number) => void | Promise<void>
+  onNavigate?: () => void
 }) {
   const navigate = useNavigate()
   const { documentId } = useParams<{ documentId?: string }>()
   const currentId = documentId ? Number(documentId) : null
   const { show } = useToast()
+
+  const go = (to: string) => () => {
+    navigate(to)
+    onNavigate?.()
+  }
 
   const { data, error, isLoading, mutate } = useSWR<ApiEnvelope<Document[]>>(
     KEY,
@@ -33,7 +45,7 @@ export function Sidebar({
       const name = `新对话 · ${new Date().toLocaleString('zh-CN', { hour12: false })}`
       const created = await createDocument({ display_name: name })
       await mutate()
-      if (created.data) navigate(`/chat/${created.data.id}`)
+      if (created.data) go(`/chat/${created.data.id}`)()
     } catch (e) {
       show(e instanceof Error ? e.message : '创建失败', 'error')
     }
@@ -68,9 +80,9 @@ export function Sidebar({
         <div
           role="link"
           tabIndex={0}
-          onClick={() => navigate('/')}
+          onClick={go('/')}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') navigate('/')
+            if (e.key === 'Enter' || e.key === ' ') go('/')()
           }}
           className="flex w-fit cursor-pointer items-center gap-2 select-none"
         >
@@ -102,9 +114,9 @@ export function Sidebar({
                   <div
                     role="link"
                     tabIndex={0}
-                    onClick={() => navigate(`/chat/${doc.id}`)}
+                    onClick={go(`/chat/${doc.id}`)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') navigate(`/chat/${doc.id}`)
+                      if (e.key === 'Enter' || e.key === ' ') go(`/chat/${doc.id}`)()
                     }}
                     className={cn(
                       'flex cursor-pointer items-center gap-2 rounded-md py-2 pl-3 pr-9 text-sm transition',
@@ -125,6 +137,24 @@ export function Sidebar({
           </ul>
         )}
       </div>
+
+      <nav className="shrink-0 border-t border-ink-200/60 px-2 py-2" aria-label="页面导航">
+        <p className="px-3 pb-1 text-[11px] font-medium tracking-wide text-ink-500">导航</p>
+        <ul className="flex flex-col gap-0.5">
+          {NAV_ITEMS.map((item) => (
+            <li key={item.href}>
+              <button
+                type="button"
+                onClick={go(item.href)}
+                className="flex w-full cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-sm text-ink-700 transition hover:bg-paper-200/50 hover:text-ink-950"
+              >
+                <item.icon className="h-4 w-4 text-ink-500" />
+                {item.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
     </aside>
   )
 }

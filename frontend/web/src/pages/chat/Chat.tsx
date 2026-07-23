@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import useSWR, { useSWRConfig } from 'swr'
 import { AlertDialog, Button as RTButton, Flex } from '@radix-ui/themes'
-import { Trash2 } from 'lucide-react'
+import { Menu, Trash2 } from 'lucide-react'
 import {
   listHistoryMessages,
   updateMessageFeedback,
@@ -85,6 +85,7 @@ export function Chat() {
 
   const [pending, setPending] = useState<DisplayMessage[]>([])
   const [feedbackByMessageId, setFeedbackByMessageId] = useState<Record<string, MessageFeedback>>({})
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const { send, abort, streaming } = useChatStream()
 
   // 切会话时清空本地消息
@@ -246,15 +247,44 @@ export function Chat() {
   const showEmpty = !!docId && !historyLoading && messages.length === 0
 
   return (
-    <div className="grid h-screen grid-cols-[280px_1fr] bg-paper-50">
-      <Sidebar onDeleteCurrentDocument={onDeleteDocument} />
-      <section className="flex h-screen flex-col">
-        <header className="z-10 flex shrink-0 items-center justify-between gap-4 border-b border-ink-200/50 bg-paper-50/80 px-6 py-3 backdrop-blur">
-          <div className="min-w-0">
-            <h1 className="font-display truncate text-base font-semibold text-ink-950">
-              {doc?.display_name ?? (docId ? '加载中…' : 'Ariadne')}
-            </h1>
-            {docId ? <p className="text-[11px] text-ink-500">会话 #{docId}</p> : null}
+    <div className="flex h-screen bg-paper-50">
+      <div className="hidden shrink-0 md:block">
+        <Sidebar onDeleteCurrentDocument={onDeleteDocument} />
+      </div>
+
+      {sidebarOpen ? (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div
+            className="absolute inset-0 bg-ink-950/40"
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden
+          />
+          <div className="absolute inset-y-0 left-0 shadow-xl">
+            <Sidebar
+              onDeleteCurrentDocument={onDeleteDocument}
+              onNavigate={() => setSidebarOpen(false)}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      <section className="flex h-screen min-w-0 flex-1 flex-col">
+        <header className="z-10 flex shrink-0 items-center justify-between gap-4 border-b border-ink-200/50 bg-paper-50/80 px-4 py-3 backdrop-blur md:px-6">
+          <div className="flex min-w-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="打开导航菜单"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-ink-700 transition hover:bg-paper-200/70 md:hidden"
+            >
+              <Menu className="h-4.5 w-4.5" />
+            </button>
+            <div className="min-w-0">
+              <h1 className="font-display truncate text-base font-semibold text-ink-950">
+                {doc?.display_name ?? (docId ? '加载中…' : 'Ariadne')}
+              </h1>
+              {docId ? <p className="text-[11px] text-ink-500">会话 #{docId}</p> : null}
+            </div>
           </div>
           {docId ? (
             <DocumentDeleteConfirm
