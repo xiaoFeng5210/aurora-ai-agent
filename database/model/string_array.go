@@ -77,6 +77,7 @@ func parsePostgresTextArray(value string) ([]string, error) {
 	)
 
 	for _, r := range body {
+
 		switch {
 		case escaped:
 			current.WriteRune(r)
