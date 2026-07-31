@@ -2,10 +2,12 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AuthLayout } from '@/components/layout/AuthLayout'
 import { Button } from '@/components/ui/Button'
+import { Checkbox } from '@/components/ui/Checkbox'
 import { Input } from '@/components/ui/Input'
 import { login } from '@/api/auth'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/useToast'
+import { clearCredentials, loadCredentials, saveCredentials } from '@/lib/credentials'
 import { HttpError } from '@/lib/fetcher'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -17,8 +19,10 @@ export function Login() {
   const { refresh } = useAuth()
   const { show } = useToast()
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const saved = loadCredentials()
+  const [email, setEmail] = useState(saved?.email ?? '')
+  const [password, setPassword] = useState(saved?.password ?? '')
+  const [remember, setRemember] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
 
@@ -37,6 +41,11 @@ export function Login() {
     try {
       const res = await login({ email, password })
       if (res.code === 0) {
+        if (remember) {
+          saveCredentials({ email, password })
+        } else {
+          clearCredentials()
+        }
         await refresh()
         show('登录成功', 'success')
       } else {
@@ -99,6 +108,11 @@ export function Login() {
             invalid={!!errors.password}
           />
         </Field>
+
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-700 select-none">
+          <Checkbox checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+          记住账号和密码
+        </label>
 
         <Button type="submit" size="lg" loading={submitting}>
           登录

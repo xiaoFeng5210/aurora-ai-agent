@@ -2,10 +2,12 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AuthLayout } from '@/components/layout/AuthLayout'
 import { Button } from '@/components/ui/Button'
+import { Checkbox } from '@/components/ui/Checkbox'
 import { Input } from '@/components/ui/Input'
 import { login, register } from '@/api/auth'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/useToast'
+import { clearCredentials, saveCredentials } from '@/lib/credentials'
 import { HttpError } from '@/lib/fetcher'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -29,6 +31,7 @@ export function Register() {
     phone: '',
   })
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({})
+  const [remember, setRemember] = useState(true)
   const [submitting, setSubmitting] = useState(false)
 
   const set = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -55,6 +58,11 @@ export function Register() {
         phone: form.phone.trim() || undefined,
       })
       await login({ email: form.email.trim(), password: form.password })
+      if (remember) {
+        saveCredentials({ email: form.email.trim(), password: form.password })
+      } else {
+        clearCredentials()
+      }
       await refresh()
       show('注册成功，已自动登录', 'success')
       navigate('/chat', { replace: true })
@@ -130,6 +138,11 @@ export function Register() {
             autoComplete="tel"
           />
         </Field>
+
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-700 select-none">
+          <Checkbox checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+          记住账号和密码
+        </label>
 
         <Button type="submit" size="lg" loading={submitting}>
           注册并登录
