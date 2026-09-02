@@ -7,10 +7,18 @@ import { Chat } from '@/pages/chat/Chat'
 import { Profile } from '@/pages/profile/Profile'
 import { Knowledge } from '@/pages/knowledge/Knowledge'
 import { AuthGuard } from './AuthGuard'
+import { GuestGuard } from './GuestGuard'
 
 export const router = createHashRouter([
   { path: '/', element: <Home /> },
-  { path: '/login', element: <Login /> },
+  {
+    path: '/login',
+    element: (
+      <GuestGuard>
+        <Login />
+      </GuestGuard>
+    ),
+  },
   { path: '/register', element: <Register /> },
   {
     path: '/cards',

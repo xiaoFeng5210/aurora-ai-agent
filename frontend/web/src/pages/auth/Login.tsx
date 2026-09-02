@@ -9,13 +9,14 @@ import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/useToast'
 import { clearCredentials, loadCredentials, saveCredentials } from '@/lib/credentials'
 import { HttpError } from '@/lib/fetcher'
+import { safeRedirectPath } from '@/router/redirect'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function Login() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const redirect = params.get('redirect') || '/cards'
+  const redirect = safeRedirectPath(params.get('redirect'))
   const { refresh } = useAuth()
   const { show } = useToast()
 
@@ -39,18 +40,14 @@ export function Login() {
     if (!validate()) return
     setSubmitting(true)
     try {
-      const res = await login({ email, password })
-      if (res.code === 0) {
-        if (remember) {
-          saveCredentials({ email, password })
-        } else {
-          clearCredentials()
-        }
-        await refresh()
-        show('登录成功', 'success')
+      await login({ email, password })
+      if (remember) {
+        saveCredentials({ email, password })
       } else {
-        show(res.message, 'error')
+        clearCredentials()
       }
+      await refresh()
+      show('登录成功', 'success')
       navigate(redirect, { replace: true })
     } catch (err) {
       const msg =

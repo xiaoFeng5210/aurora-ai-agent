@@ -13,6 +13,8 @@ const NAV = [
   { label: 'AI', href: '/chat', icon: Sparkles },
 ]
 
+const PUBLIC_PATHS = new Set(['/', '/login', '/register'])
+
 export function SiteHeader() {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -41,7 +43,7 @@ export function SiteHeader() {
 
   const go = (to: string) => () => {
     setOpen(false)
-    if (!user && to !== '/') {
+    if (!user && !PUBLIC_PATHS.has(to)) {
       navigate(`/login?redirect=${encodeURIComponent(to)}`)
       return
     }
