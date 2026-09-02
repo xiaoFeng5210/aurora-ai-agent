@@ -39,6 +39,8 @@ export const register = (body: RegisterRequest) =>
 export const login = (body: LoginRequest) =>
   apiPost<ApiEnvelope<null>>('/login', body)
 
+export const logout = () => apiPost<ApiEnvelope<null>>('/logout')
+
 export const getMe = () => apiGet<ApiEnvelope<User>>('/users/me')
 
 export const updateMe = (body: UpdateMeRequest) =>

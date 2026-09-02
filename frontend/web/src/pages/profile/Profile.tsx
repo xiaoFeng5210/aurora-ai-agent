@@ -1,5 +1,6 @@
 import { useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
-import { Save, Settings2, Sparkles } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { LogOut, Save, Settings2, Sparkles } from 'lucide-react'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -39,11 +40,13 @@ const formFromUser = (user: User | null): ProfileForm => {
 }
 
 export function Profile() {
-  const { user, setUser } = useAuth()
+  const { user, setUser, logout } = useAuth()
   const { show } = useToast()
+  const navigate = useNavigate()
   const [form, setForm] = useState<ProfileForm>(() => formFromUser(user))
   const [errors, setErrors] = useState<Partial<Record<keyof ProfileForm, string>>>({})
   const [saving, setSaving] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
 
   const initials = useMemo(() => {
     const name = form.username.trim() || user?.email || 'A'
@@ -106,6 +109,14 @@ export function Profile() {
     }
   }
 
+  const onLogout = async () => {
+    if (loggingOut) return
+    setLoggingOut(true)
+    navigate('/', { replace: true })
+    await logout()
+    show('已退出登录', 'success')
+  }
+
   return (
     <div className="min-h-screen bg-paper-50 text-ink-900">
       <SiteHeader />
@@ -128,6 +139,24 @@ export function Profile() {
               <AccountFact label="账户编号" value={user ? `#${user.id}` : '-'} />
               <AccountFact label="最后更新" value={formatDate(user?.updated_at)} />
             </div>
+          </div>
+
+          <div className="mt-5 border-t border-ink-200/70 pt-5 sm:mt-6 sm:pt-6">
+            <p className="text-xs tracking-[0.18em] text-ink-500 uppercase">Session</p>
+            <p className="mt-2 text-sm leading-6 text-ink-500">
+              退出后需重新登录，记住的账号仍会保留。
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onLogout}
+              loading={loggingOut}
+              disabled={saving}
+              className="mt-4 w-full min-h-11 text-ink-700 hover:border-accent-vermilion/40 hover:text-accent-vermilion sm:min-h-9"
+            >
+              <LogOut className="h-4 w-4" />
+              退出登录
+            </Button>
           </div>
         </aside>
 
