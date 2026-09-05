@@ -13,8 +13,10 @@ type ToolCall struct {
 }
 
 type Message struct {
-	Role       string     `json:"role"`
-	Content    string     `json:"content"`
-	ToolCallId *string    `json:"tool_call_id,omitempty"`
-	ToolCalls  []ToolCall `json:"tool_calls,omitempty"`
+	// Internal model continuation; excluded from API responses and stored history.
+	ReasoningContent string     `json:"-"`
+	Role             string     `json:"role"`
+	Content          string     `json:"content"`
+	ToolCallId       *string    `json:"tool_call_id,omitempty"`
+	ToolCalls        []ToolCall `json:"tool_calls,omitempty"`
 }

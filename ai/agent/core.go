@@ -24,7 +24,8 @@ func init() {
 
 type Agent struct {
 	Id          string // agent的唯一标识
-	Llm         *llm.GLM
+	Llm         llm.Model
+	Options     llm.ChatOptions
 	History     []ai.Message
 	MaxLoop     int
 	CurrentLoop int
@@ -55,7 +56,8 @@ func (a *Agent) NewAgentWithOptions(opts llm.ChatOptions) {
 	a.CurrentLoop = 0
 	a.MaxLoop = 6
 	a.Llm = llm.InitModel()
-	a.Llm.SetOptions(opts)
+	opts.Tools = functioncall.RAGTools
+	a.Options = opts
 
 	a.History = []ai.Message{
 		{
@@ -76,36 +78,34 @@ func (a *Agent) RunAgent(ctx *gin.Context, messages []ai.Message, onEvent llm.St
 	a.CurrentLoop = 0
 	conversation := append([]ai.Message{}, messages...)
 	emitAgentEvent(onEvent, "start", map[string]any{
-		"model": a.Llm.Model,
+		"model": a.Llm.Name(),
 	})
-	a.History = append(a.History, messages...)
+	// The caller supplies the full conversation; avoid duplicating it on reuse.
+	a.History = append([]ai.Message{}, messages...)
 	a.ToolCalls = []ai.ToolCall{}
 
 	for {
 		a.CurrentLoop++
-		needToolCall, toolCalls, content, err := a.Llm.ChatWithGLMInStreamWithEvents(conversation, llm.ChatOptions{}, onEvent)
+		response, err := a.Llm.Chat(ctx.Request.Context(), conversation, a.Options, onEvent)
 		if err != nil {
-			logger.Error("ChatWithGLMInStreamWithEvents failed", zap.Error(err))
+			logger.Error("model chat failed", zap.Error(err))
 			emitAgentEvent(onEvent, "error", map[string]any{
 				"message": err.Error(),
 			})
 			return AgentResult{Result: AgentResultTypeError, message: err.Error()}, err
 		}
 
-		conversation = append(conversation, ai.Message{
-			Role:      "assistant",
-			Content:   content,
-			ToolCalls: toolCalls,
-		})
+		content, toolCalls := response.Message.Content, response.Message.ToolCalls
+		conversation = append(conversation, response.Message)
 
-		if !needToolCall {
+		if len(toolCalls) == 0 {
 			a.History = append(a.History, ai.Message{
 				Role:    "assistant",
 				Content: content, // 最后的回答内容
 			})
 			emitAgentEvent(onEvent, "done", map[string]any{
 				"content":       content,
-				"finish_reason": "stop",
+				"finish_reason": response.FinishReason,
 			})
 			return AgentResult{Result: AgentResultTypeSuccess, message: "success", content: content}, nil
 		}
@@ -160,45 +160,12 @@ func emitAgentEvent(onEvent llm.StreamEventHandler, event string, data any) {
 	onEvent(event, data)
 }
 
+// RunAgentWithPormpt keeps the legacy entry point on the same tool-loop implementation.
 func (a *Agent) RunAgentWithPormpt(ctx *gin.Context, userPrompt string) (AgentResult, error) {
-	for {
-		a.CurrentLoop++
-
-		sendMessages := append([]ai.Message{}, a.History...)
-		sendMessages = append(sendMessages, ai.Message{Role: "user", Content: userPrompt})
-
-		needToolCall, toolCalls, content, err := a.Llm.ChatWithGLMInStream(sendMessages)
-		if err != nil {
-			logger.Error("ChatWithGLMInStream failed", zap.Error(err))
-			return AgentResult{Result: AgentResultTypeError, message: err.Error()}, err
-		}
-
-		if !needToolCall {
-			return AgentResult{Result: AgentResultTypeSuccess, message: "success", content: content}, nil
-		}
-
-		if a.CurrentLoop >= a.MaxLoop {
-			return AgentResult{Result: AgentResultTypeTerminate, content: "", message: "max loop reached"}, fmt.Errorf("max loop reached")
-		}
-
-		for _, toolCall := range toolCalls {
-			switch toolCall.Type {
-			case "function":
-				functionName := toolCall.Function.Name
-				functionArguments := toolCall.Function.Arguments
-				result, err := functioncall.RunToolFunction(ctx, functionName, functionArguments)
-				if err != nil {
-					logger.Error("RunToolFunction failed", zap.Error(err))
-					return AgentResult{Result: AgentResultTypeError, message: err.Error()}, err
-				}
-				a.History = append(a.History, ai.Message{
-					Role:       "tool",
-					Content:    string(result),
-					ToolCallId: &toolCall.Id,
-				})
-			default:
-				logger.Error("unknown tool call type", zap.String("type", toolCall.Type))
-			}
-		}
+	if a.Llm == nil {
+		a.NewAgent()
 	}
+	messages := append([]ai.Message{}, a.History...)
+	messages = append(messages, ai.Message{Role: "user", Content: userPrompt})
+	return a.RunAgent(ctx, messages, nil)
 }

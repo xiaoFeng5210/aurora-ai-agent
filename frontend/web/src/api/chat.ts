@@ -22,7 +22,7 @@ export async function streamChat(
   onEvent: SSEEventHandler,
   signal?: AbortSignal,
 ): Promise<void> {
-  const res = await fetch(`${API_BASE}/chat/glm/stream/${documentId}`, {
+  const res = await fetch(`${API_BASE}/chat/stream/${documentId}`, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },

@@ -69,3 +69,31 @@ docker buildx build \
 
 
 
+## 回答模型：DeepSeek V4 Flash
+
+回答与分析统一使用 `deepseek-v4-flash`，通过官方 `https://api.deepseek.com/chat/completions` 调用。
+在本地 `.env` 或部署环境配置 `DEEPSEEK_API_KEY`，不要将真实 Key 写入源码。
+Docker Compose 已通过 `env_file: .env` 加载；更新后需重建并重启 backend：
+
+```bash
+docker compose up -d --build backend
+```
+
+`GLM_API_KEY` 暂时仅供原有 `embedding-3` 向量化使用，仍须保留。向量数据库、维度和存量向量均未迁移；不能直接把 DeepSeek Key 填到向量化配置中。
+
+- `ai/llm/model.go` 定义供应商无关的 `Model`、`ChatOptions` 和 `ChatResult`；agent 只依赖该接口。
+- `ai/llm/deepseek.go` 封装请求映射、HTTP 超时/取消、SSE 解码、工具分片合并、思考上下文回传及错误处理。工具定义由 agent 注入。
+- 默认 `thinking.type=disabled`，沿用原有行为；显式 `enabled` 可开启思考。思考内容仅在当前工具循环内部传递，不展示或保存到聊天历史。历史普通回答以空思考字段兼容回传。
+- SSE 保留 `start / delta / tool_call / tool_result / done / error`；截断、内容过滤、资源不足、连接提前关闭不会伪装成正常完成，也不会执行未完整生成的工具参数。
+- 新接口：`POST /api/v1/chat/stream/:document_id`。旧 `/api/v1/chat/glm/stream/:document_id` 作为兼容别名，也实际使用 DeepSeek。
+
+验证：
+
+```bash
+# 无外部模型请求的适配层与 agent 回归测试
+go test ./ai/llm ./ai/agent
+# 显式真实 API 测试：普通/思考模式各执行一次工具调用和结果回答；会产生少量费用
+DEEPSEEK_LIVE_TEST=1 go test ./ai/llm -run '^TestDeepSeekLive$' -v -count=1
+```
+
+官方参考：[模型与价格](https://api-docs.deepseek.com/quick_start/pricing/)、[Chat Completions](https://api-docs.deepseek.com/api/create-chat-completion/)、[思考与工具调用上下文](https://api-docs.deepseek.com/guides/thinking_mode/)。

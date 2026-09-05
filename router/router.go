@@ -30,7 +30,9 @@ func SetupRouter() *gin.Engine {
 
 		apiv1.POST("/login", handler.Login)
 		apiv1.POST("/logout", handler.Logout)
-		apiv1.POST("/chat/glm/stream/:document_id", middleware.Auth, handler.StreamChatWithGLMController)
+		apiv1.POST("/chat/stream/:document_id", middleware.Auth, handler.StreamChatController)
+		// Compatibility alias for previously deployed clients; uses DeepSeek.
+		apiv1.POST("/chat/glm/stream/:document_id", middleware.Auth, handler.StreamChatController)
 
 		apiv1.GET("/test_jwt", middleware.Auth, func(c *gin.Context) {
 			c.JSON(200, gin.H{"message": "test jwt success"})

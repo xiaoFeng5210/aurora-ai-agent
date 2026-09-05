@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func StreamChatWithGLMController(ctx *gin.Context) {
+func StreamChatController(ctx *gin.Context) {
 	documentID, err := strconv.Atoi(ctx.Param("document_id"))
 	if err != nil {
 		vo.RespondError(ctx, http.StatusBadRequest, err)
@@ -39,7 +39,7 @@ func StreamChatWithGLMController(ctx *gin.Context) {
 	ctx.Writer.Flush()
 
 	var writeErr error
-	err = service.ChatWithGLMStream(ctx, documentID, req, func(event service.ChatStreamEvent) {
+	err = service.ChatStream(ctx, documentID, req, func(event service.ChatStreamEvent) {
 		if ctx.Request.Context().Err() != nil {
 			return
 		}
@@ -47,8 +47,8 @@ func StreamChatWithGLMController(ctx *gin.Context) {
 	})
 
 	if err != nil {
-		logger.Error("chat with glm agent failed", zap.Error(err))
-		fmt.Println("chat with glm agent failed", err)
+		logger.Error("chat with model agent failed", zap.Error(err))
+		fmt.Println("chat with model agent failed", err)
 	}
 	if writeErr != nil {
 		logger.Error("sse connection failed", zap.Error(writeErr))

@@ -14,7 +14,11 @@ services:
     volumes:
       - ./deploy/data/nginx/log:/var/log/nginx
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz >/dev/null 2>&1 || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:8080/healthz >/dev/null 2>&1 || exit 1",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -36,7 +40,11 @@ services:
     volumes:
       - ./deploy/data/admin-nginx/log:/var/log/nginx
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz >/dev/null 2>&1 || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:8080/healthz >/dev/null 2>&1 || exit 1",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -67,7 +75,11 @@ services:
       - ./deploy/conf:/app/conf:ro
       - ./deploy/data/backend/log:/app/log
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:1119/ping >/dev/null 2>&1 || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:1119/ping >/dev/null 2>&1 || exit 1",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -107,7 +119,8 @@ services:
     volumes:
       - ./deploy/data/redis:/data
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a aurora_redis_change_me ping | grep PONG"]
+      test:
+        ["CMD-SHELL", "redis-cli -a aurora_redis_change_me ping | grep PONG"]
       interval: 10s
       timeout: 5s
       retries: 5
