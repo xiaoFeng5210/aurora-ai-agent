@@ -27,4 +27,13 @@ type ChatResult struct {
 
 type StreamEventHandler func(event string, data any)
 
-func InitModel() Model { return NewDeepSeek() }
+const CUR_AI_MODEL_TYPE = "deepseek"
+
+func InitModel() Model {
+	switch CUR_AI_MODEL_TYPE {
+	case "deepseek":
+		return NewDeepSeek()
+	default:
+		return NewDeepSeek()
+	}
+}
