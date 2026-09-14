@@ -10,8 +10,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// GetBalance leaves legacy users without a balance row unchanged.
-func GetBalance(userID int) (int, error) {
+// Query leaves legacy users without a balance row unchanged.
+func Query(userID int) (int, error) {
 	if userID <= 0 {
 		return 0, gorm.ErrInvalidData
 	}
@@ -22,8 +22,8 @@ func GetBalance(userID int) (int, error) {
 	return balance.BalanceAfter, err
 }
 
-// AddPoints is the business entry point for crediting an existing user.
-func AddPoints(userID, amount int, remark string) (model.PointsBalance, error) {
+// Add is the business entry point for crediting an existing user.
+func Add(userID, amount int, remark string) (model.PointsBalance, error) {
 	remark = strings.TrimSpace(remark)
 	if userID <= 0 || amount <= 0 || utf8.RuneCountInString(remark) > 255 {
 		return model.PointsBalance{}, gorm.ErrInvalidData

@@ -10,7 +10,7 @@ import (
 )
 
 func GetCurrentUserPoints(ctx *gin.Context) {
-	balance, err := points.GetBalance(ctx.GetInt(middleware.UID_IN_CTX))
+	balance, err := points.Query(ctx.GetInt(middleware.UID_IN_CTX))
 	if err != nil {
 		vo.RespondWithServiceError(ctx, err)
 		return

@@ -284,7 +284,7 @@ CREATE TABLE IF NOT EXISTS points_record (
     create_time TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT points_ledger_balance_non_negative CHECK (balance_after >= 0),
+    CONSTRAINT points_ledger_balance_non_negative CHECK (balance_after >= 0)
 );
 
 
