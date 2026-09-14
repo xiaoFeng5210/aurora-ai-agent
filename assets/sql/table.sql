@@ -247,3 +247,45 @@ CREATE INDEX IF NOT EXISTS idx_card_tag_user_tag
 CREATE OR REPLACE TRIGGER trg_card_tag_update_time
 BEFORE UPDATE ON card_tag
 FOR EACH ROW EXECUTE FUNCTION set_update_time();
+
+
+
+
+-- 积分余额
+CREATE TABLE IF NOT EXISTS points_balance (
+    id          SERIAL       PRIMARY KEY,
+    user_id     INT          NOT NULL,
+
+    -- 真实余额
+    balance_after INT          NOT NULL,
+
+    -- 备注
+    remark      VARCHAR(255) NOT NULL,
+
+    create_time TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_points_balance_user_id ON points_balance (user_id);
+
+
+
+-- 积分变动记录
+CREATE TABLE IF NOT EXISTS points_record (
+    id          SERIAL       PRIMARY KEY,
+    user_id     INT          NOT NULL,
+    delta       INT          NOT NULL,
+    trigger_mode VARCHAR(128) NOT NULL,
+
+    -- 变动后余额
+    balance_after INT          NOT NULL, 
+
+    remark      VARCHAR(255) NOT NULL,
+    create_time TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT points_ledger_balance_non_negative CHECK (balance_after >= 0),
+);
+
+
+
