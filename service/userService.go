@@ -21,8 +21,6 @@ const (
 	birthdayLayout    = "2006-01-02"
 )
 
-
-
 func CreateUser(req dto.CreateUserRequest) error {
 	username := strings.TrimSpace(req.Username)
 	email := strings.TrimSpace(req.Email)
@@ -73,7 +71,10 @@ func CreateUser(req dto.CreateUserRequest) error {
 		UserPrompt: req.UserPrompt,
 	}
 
-	return database.CreateUser(user)
+	return database.CreateUserWithPointsBalance(user, model.PointsBalance{
+		BalanceAfter: 0,
+		Remark:       "注册初始化",
+	})
 }
 
 func AuthenticateUser(req dto.LoginRequest) (model.User, error) {

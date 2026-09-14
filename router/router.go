@@ -45,6 +45,7 @@ func SetupRouter() *gin.Engine {
 	userGroup.GET("/:id", handler.GetUserById)
 	userGroup.POST("/query", handler.QueryUser)
 	userGroup.GET("/me", handler.GetCurrentUser)
+	userGroup.GET("/me/points", handler.GetCurrentUserPoints)
 	userGroup.PUT("/me", handler.UpdateCurrentUser)
 	userGroup.PUT("/me/password", handler.ChangeCurrentUserPassword)
 	userGroup.DELETE("/me", handler.DeleteCurrentUser)

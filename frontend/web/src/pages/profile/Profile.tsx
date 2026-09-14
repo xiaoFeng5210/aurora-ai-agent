@@ -1,6 +1,6 @@
 import { useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { LogOut, Save, Settings2, Sparkles } from 'lucide-react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Coins, LogOut, Save, Settings2, Sparkles } from 'lucide-react'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -9,6 +9,7 @@ import { updateMe, type User } from '@/api/auth'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/useToast'
 import { HttpError } from '@/lib/fetcher'
+import { Points } from './Points'
 
 interface ProfileForm {
   username: string
@@ -43,6 +44,8 @@ export function Profile() {
   const { user, setUser, logout } = useAuth()
   const { show } = useToast()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const showingPoints = searchParams.get('tab') === 'points'
   const [form, setForm] = useState<ProfileForm>(() => formFromUser(user))
   const [errors, setErrors] = useState<Partial<Record<keyof ProfileForm, string>>>({})
   const [saving, setSaving] = useState(false)
@@ -121,7 +124,7 @@ export function Profile() {
     <div className="min-h-screen bg-paper-50 text-ink-900">
       <SiteHeader />
       <main className="mx-auto grid max-w-7xl gap-7 px-4 py-6 sm:px-6 lg:grid-cols-[260px_1fr] lg:gap-8 lg:py-10">
-        <aside className="lg:sticky lg:top-24 lg:h-fit">
+        <aside className="contents lg:sticky lg:top-24 lg:block lg:h-fit">
           <div className="border-b border-ink-200/70 pb-5 sm:pb-6">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-ink-950 text-lg font-bold text-paper-50 shadow-sm sm:h-12 sm:w-12 sm:text-xl">
@@ -141,7 +144,28 @@ export function Profile() {
             </div>
           </div>
 
-          <div className="mt-5 border-t border-ink-200/70 pt-5 sm:mt-6 sm:pt-6">
+          <nav aria-label="个人中心导航" className="grid grid-cols-2 gap-2 lg:mt-5 lg:grid-cols-1">
+            {([
+              { key: 'profile', label: '基础资料', icon: Settings2 },
+              { key: 'points', label: '个人积分', icon: Coins },
+            ] as const).map(({ key, label, icon: Icon }) => {
+              const active = showingPoints ? key === 'points' : key === 'profile'
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  aria-current={active ? 'page' : undefined}
+                  onClick={() => setSearchParams(key === 'points' ? { tab: 'points' } : {})}
+                  className={`flex min-h-12 items-center gap-3 rounded-lg px-4 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-vermilion ${active ? 'bg-paper-200 text-accent-vermilion' : 'text-ink-600 hover:bg-paper-100 hover:text-ink-950'}`}
+                >
+                  <Icon aria-hidden="true" className="h-4 w-4" />
+                  {label}
+                </button>
+              )
+            })}
+          </nav>
+
+          <div className="order-last border-t border-ink-200/70 pt-5 sm:pt-6 lg:order-none lg:mt-6">
             <p className="text-xs tracking-[0.18em] text-ink-500 uppercase">Session</p>
             <p className="mt-2 text-sm leading-6 text-ink-500">
               退出后需重新登录，记住的账号仍会保留。
@@ -171,7 +195,7 @@ export function Profile() {
                   个人中心
                 </h1>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-ink-500">
-                  管理账户资料和 Ariadne 的默认交互偏好。
+                  {showingPoints ? '查看你的积分余额。' : '管理账户资料和 Ariadne 的默认交互偏好。'}
                 </p>
               </div>
               <Button variant="ghost" onClick={() => window.history.back()} className="w-full sm:w-auto">
@@ -180,7 +204,7 @@ export function Profile() {
             </div>
           </div>
 
-          <form onSubmit={onSubmit} className="mt-6 sm:mt-8" noValidate>
+          {showingPoints && user ? <Points userID={user.id} /> : <form onSubmit={onSubmit} className="mt-6 sm:mt-8" noValidate>
             <section className="border-b border-ink-200/70 pb-7 sm:pb-8">
               <div className="mb-5 flex items-center gap-2">
                 <Settings2 className="h-4 w-4 text-accent-vermilion" />
@@ -261,7 +285,7 @@ export function Profile() {
                 保存更改
               </Button>
             </div>
-          </form>
+          </form>}
         </section>
       </main>
     </div>

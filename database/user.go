@@ -24,6 +24,17 @@ func CreateUser(user model.User) error {
 	return db.Model(&model.User{}).Create(&user).Error
 }
 
+// CreateUserWithPointsBalance persists both records atomically.
+func CreateUserWithPointsBalance(user model.User, balance model.PointsBalance) error {
+	return db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&user).Error; err != nil {
+			return err
+		}
+		balance.UserId = user.Id
+		return tx.Create(&balance).Error
+	})
+}
+
 func GetAllUsers() ([]model.User, error) {
 	var users []model.User
 	err := db.Model(&model.User{}).Order("id ASC").Find(&users).Error
