@@ -40,3 +40,15 @@ type CardResponse struct {
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }
+
+type CardQueryFilter struct {
+	UserID   int
+	Content  string
+	Tags     []string
+	TagIDs   []int
+	Page     int
+	PageSize int
+
+	CreatedAt *time.Time
+	UpdatedAt *time.Time
+}

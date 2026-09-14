@@ -6,7 +6,6 @@ import (
 	"aurora-agent/handler/dto"
 	"aurora-agent/handler/vo"
 	"errors"
-	"fmt"
 	"strings"
 
 	"gorm.io/gorm"
@@ -62,10 +61,7 @@ func GetCardByID(uid int, id int) (dto.CardResponse, error) {
 
 func QueryCards(uid int, filter dto.QueryCardDTO) ([]dto.CardResponse, error) {
 	page, pageSize := normalizePagination(filter.Page, filter.PageSize)
-
-	fmt.Println("tags", filter.Tags)
-	fmt.Println("tagids", filter.TagIds)
-	cards, err := database.QueryCardsByUserID(database.CardQueryFilter{
+	cards, err := database.QueryCardsByUserID(dto.CardQueryFilter{
 		UserID:   uid,
 		Content:  strings.TrimSpace(filter.Content),
 		Tags:     normalizeStringList(filter.Tags),

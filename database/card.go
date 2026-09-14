@@ -2,18 +2,10 @@ package database
 
 import (
 	"aurora-agent/database/model"
+	"aurora-agent/handler/dto"
 
 	"gorm.io/gorm"
 )
-
-type CardQueryFilter struct {
-	UserID   int
-	Content  string
-	Tags     []string
-	TagIDs   []int
-	Page     int
-	PageSize int
-}
 
 func CreateCard(card model.Card) (model.Card, error) {
 	err := db.Model(&model.Card{}).Create(&card).Error
@@ -28,8 +20,16 @@ func GetCardByIDAndUserID(id int, userID int) (model.Card, error) {
 	return card, err
 }
 
-func QueryCardsByUserID(filter CardQueryFilter) ([]model.Card, error) {
+func QueryCardsByUserID(filter dto.CardQueryFilter) ([]model.Card, error) {
 	queryDB := db.Model(&model.Card{}).Where("user_id = ?", filter.UserID)
+
+	if filter.CreatedAt != nil {
+		queryDB = queryDB.Where("create_time = ?", filter.CreatedAt)
+	}
+
+	if filter.UpdatedAt != nil {
+		queryDB = queryDB.Where("update_time = ?", filter.UpdatedAt)
+	}
 
 	if filter.Content != "" {
 		queryDB = queryDB.Where("content ILIKE ?", "%"+filter.Content+"%")
