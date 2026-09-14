@@ -1,0 +1,30 @@
+.points-balance {
+  padding: 2rem 2.5rem;
+  border-radius: 1rem;
+  background: var(--color-ink-950);
+  color: var(--color-paper-50);
+}
+
+.points-amount {
+  font-size: clamp(3rem, 6vw, 5.5rem);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .points-balance {
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .points-panel {
+    animation: points-enter 180ms ease-out;
+  }
+
+  @keyframes points-enter {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
