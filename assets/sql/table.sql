@@ -254,7 +254,7 @@ FOR EACH ROW EXECUTE FUNCTION set_update_time();
 -- 积分余额
 CREATE TABLE IF NOT EXISTS points_balance (
     id          SERIAL       PRIMARY KEY,
-    user_id     INT          NOT NULL,
+    user_id     INT          NOT NULL UNIQUE,
 
     -- 真实余额
     balance_after INT          NOT NULL,
