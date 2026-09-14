@@ -23,13 +23,11 @@ func Query(userID int) (int, error) {
 }
 
 // Add is the business entry point for crediting an existing user.
-func Add(userID, amount int, remark string) (model.PointsBalance, error) {
+func Add(userID, amount int, remark string, triggerMode string) (model.PointsBalance, error) {
 	remark = strings.TrimSpace(remark)
 	if userID <= 0 || amount <= 0 || utf8.RuneCountInString(remark) > 255 {
 		return model.PointsBalance{}, gorm.ErrInvalidData
 	}
-	if _, err := database.GetUserById(userID); err != nil {
-		return model.PointsBalance{}, err
-	}
-	return database.IncrementPointsBalance(userID, amount, remark)
+
+	return database.IncrementPointsBalance(userID, amount, remark, triggerMode)
 }
