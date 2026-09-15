@@ -62,7 +62,7 @@ export function CardDialog({
         className={cn(
           '!flex !flex-col',
           expanded
-            ? '!fixed !inset-0 !m-0 !h-dvh !max-h-dvh !w-screen !max-w-none !rounded-none !p-6 overflow-hidden sm:!p-10'
+            ? '!fixed !inset-0 !m-0 !h-dvh !max-h-dvh !w-screen !max-w-none !rounded-none !border-0 !shadow-none !p-6 overflow-hidden sm:!p-10'
             : '!rounded-xl',
         )}
       >
@@ -301,7 +301,7 @@ function CardDialogForm({
           />
         </div>
 
-        <div>
+        {/* <div>
           <p className="mb-2 text-sm font-medium text-ink-800">
             参考链接 <span className="text-xs font-normal text-ink-400">（选填，一行一个）</span>
           </p>
@@ -311,10 +311,10 @@ function CardDialogForm({
             placeholder="https://example.com"
             className="min-h-16 text-sm"
           />
-        </div>
+        </div> */}
       </div>
 
-      <div className={cn('mt-6 flex shrink-0 justify-end gap-3', expanded && 'border-t border-ink-100 pt-4')}>
+      <div className="mt-6 flex shrink-0 justify-end gap-3">
         <Button type="button" variant="ghost" onClick={onCancel}>
           取消
         </Button>
