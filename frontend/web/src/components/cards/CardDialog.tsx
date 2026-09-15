@@ -264,7 +264,7 @@ function CardDialogForm({
               placeholder="写下你的想法、摘录或灵感，支持 Markdown 语法…"
               className={cn(
                 'text-[15px] leading-relaxed font-mono',
-                expanded ? 'min-h-0 flex-1 resize-none' : 'min-h-36',
+                expanded ? 'min-h-0 flex-1 resize-none' : 'min-h-52 sm:min-h-64',
               )}
               maxLength={CONTENT_MAX_LENGTH}
             />
@@ -272,7 +272,7 @@ function CardDialogForm({
             <div
               className={cn(
                 'w-full overflow-y-auto rounded-md border border-ink-200 bg-paper-50 px-3 py-2',
-                expanded ? 'min-h-0 flex-1' : 'min-h-36',
+                expanded ? 'min-h-0 flex-1' : 'min-h-52 sm:min-h-64',
               )}
             >
               {content.trim() ? (
