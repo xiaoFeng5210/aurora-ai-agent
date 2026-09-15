@@ -62,6 +62,18 @@
 }
 ```
 
+### 切换卡片正文可见性
+
+`PUT /api/v1/cards/{id}/content-visibility`
+
+只影响平铺列表里的正文展示，不改卡片内容。
+
+```json
+{
+  "is_content_visible": false
+}
+```
+
 ### 删除卡片
 
 `DELETE /api/v1/cards/{id}`

@@ -10,7 +10,7 @@ import { Postcard } from '@/components/cards/Postcard'
 import { CardDialog } from '@/components/cards/CardDialog'
 import { CardPreview } from '@/components/cards/CardPreview'
 import { TagChip } from '@/components/cards/TagChip'
-import { deleteCard, queryCards, type Card } from '@/api/card'
+import { deleteCard, queryCards, changeCardContentVisibility, isCardContentVisible, type Card } from '@/api/card'
 import { deleteTag, queryTags, type Tag } from '@/api/tag'
 import { useToast } from '@/hooks/useToast'
 import { HttpError } from '@/lib/fetcher'
@@ -29,6 +29,7 @@ export function Cards() {
   const [debouncedKeyword, setDebouncedKeyword] = useState('')
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([])
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [visibilityPendingId, setVisibilityPendingId] = useState<number | null>(null)
   const [deletingTagIds, setDeletingTagIds] = useState<number[]>([])
 
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -110,6 +111,31 @@ export function Cards() {
     setPreviewOpen(false)
     setActiveCard(card)
     setDialogOpen(true)
+  }
+
+  const applyCardPatch = (updated: Card) => {
+    mutateCards((pages) => patchCardInPages(pages, updated), { revalidate: false })
+    setPreviewCard((prev) => (prev?.id === updated.id ? { ...prev, ...updated } : prev))
+    setActiveCard((prev) => (prev?.id === updated.id ? { ...prev, ...updated } : prev))
+  }
+
+  const onToggleVisibility = async (card: Card) => {
+    if (visibilityPendingId === card.id) return
+    const nextVisible = !isCardContentVisible(card)
+    const optimistic: Card = { ...card, is_content_visible: nextVisible }
+
+    setVisibilityPendingId(card.id)
+    applyCardPatch(optimistic)
+    try {
+      const res = await changeCardContentVisibility(card.id, nextVisible)
+      if (res.data) applyCardPatch(res.data)
+      show(nextVisible ? '卡片正文已展示' : '卡片正文已隐去', 'success')
+    } catch (err) {
+      applyCardPatch(card)
+      show(getErrorMessage(err, '切换可见性失败'), 'error')
+    } finally {
+      setVisibilityPendingId(null)
+    }
   }
 
   const onSaved = () => {
@@ -263,8 +289,10 @@ export function Cards() {
                   tagNameById={tagNameById}
                   onPreview={openPreview}
                   onEdit={openEdit}
+                  onToggleVisibility={onToggleVisibility}
                   onDelete={onDelete}
                   deleting={deletingId === card.id}
+                  visibilityPending={visibilityPendingId === card.id}
                 />
               ))}
             </div>
@@ -287,6 +315,8 @@ export function Cards() {
         card={previewCard}
         tagNameById={tagNameById}
         onOpenChange={setPreviewOpen}
+        onToggleVisibility={onToggleVisibility}
+        visibilityPending={previewCard ? visibilityPendingId === previewCard.id : false}
       />
 
       <CardDialog
@@ -297,6 +327,8 @@ export function Cards() {
         tagsLoaded={tagsLoaded}
         onSaved={onSaved}
         onTagCreated={onTagCreated}
+        onToggleVisibility={onToggleVisibility}
+        visibilityPending={activeCard ? visibilityPendingId === activeCard.id : false}
       />
     </div>
   )
@@ -457,6 +489,10 @@ function removeTagsFromCard(card: Card, tags: Tag[]): Card {
 
 function removeTagsFromCardPages(pages: Card[][] | undefined, tags: Tag[]) {
   return pages?.map((page) => page.map((card) => removeTagsFromCard(card, tags)))
+}
+
+function patchCardInPages(pages: Card[][] | undefined, updated: Card) {
+  return pages?.map((page) => page.map((card) => (card.id === updated.id ? { ...card, ...updated } : card)))
 }
 
 function extractMessage(info: unknown): string | null {

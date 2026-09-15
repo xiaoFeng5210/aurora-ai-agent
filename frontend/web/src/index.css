@@ -221,3 +221,48 @@ body {
 .markdown-body .hljs-strong {
   font-weight: 600;
 }
+
+/* 平铺卡片正文隐去：高斯模糊 + 宣纸薄雾，不依赖额外库。
+   filter: blur 在 Safari / iOS 6+、Chrome Android、Firefox 均可用；
+   不支持时退化为整块遮盖，避免正文仍可被读出。 */
+.postcard-letter {
+  isolation: isolate;
+}
+
+.postcard-letter-ink {
+  transition: filter 220ms ease, opacity 220ms ease;
+}
+
+.postcard-letter-veiled .postcard-letter-ink {
+  filter: blur(9px) saturate(0.55);
+  -webkit-filter: blur(9px) saturate(0.55);
+  user-select: none;
+  pointer-events: none;
+  transform: translateZ(0);
+}
+
+.postcard-letter-mist {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgb(253 250 241 / 0.22) 0%, rgb(248 239 216 / 0.46) 100%);
+}
+
+@supports not (filter: blur(1px)) {
+  .postcard-letter-veiled .postcard-letter-ink {
+    filter: none;
+    -webkit-filter: none;
+    opacity: 0;
+  }
+
+  .postcard-letter-mist {
+    background: rgb(248 239 216 / 0.92);
+  }
+}
+
+@media (max-width: 640px) {
+  .postcard-letter-veiled .postcard-letter-ink {
+    filter: blur(7px) saturate(0.6);
+    -webkit-filter: blur(7px) saturate(0.6);
+  }
+}

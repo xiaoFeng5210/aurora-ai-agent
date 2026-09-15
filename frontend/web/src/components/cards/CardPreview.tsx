@@ -2,8 +2,9 @@ import { useState } from 'react'
 import type { CSSProperties } from 'react'
 import { Dialog } from '@radix-ui/themes'
 import { Check, Copy, X } from 'lucide-react'
-import type { Card } from '@/api/card'
+import { isCardContentVisible, type Card } from '@/api/card'
 import { Markdown } from '@/components/chat/Markdown'
+import { CardVisibilityToggle } from '@/components/cards/CardVisibilityToggle'
 import { useToast } from '@/hooks/useToast'
 import { cn } from '@/lib/cn'
 
@@ -35,9 +36,18 @@ export interface CardPreviewProps {
   card: Card | null
   tagNameById: Map<number, string>
   onOpenChange: (open: boolean) => void
+  onToggleVisibility?: (card: Card) => void
+  visibilityPending?: boolean
 }
 
-export function CardPreview({ open, card, tagNameById, onOpenChange }: CardPreviewProps) {
+export function CardPreview({
+  open,
+  card,
+  tagNameById,
+  onOpenChange,
+  onToggleVisibility,
+  visibilityPending,
+}: CardPreviewProps) {
   const { show } = useToast()
   const [copied, setCopied] = useState(false)
 
@@ -107,6 +117,14 @@ export function CardPreview({ open, card, tagNameById, onOpenChange }: CardPrevi
           <div className="pointer-events-none absolute inset-[10px] z-20 rounded-[15px] border border-ink-200/55 sm:inset-3" />
 
           <div className="absolute right-3 top-3 z-30 flex items-center gap-0.5 sm:right-4 sm:top-4">
+            {onToggleVisibility ? (
+              <CardVisibilityToggle
+                visible={isCardContentVisible(card)}
+                pending={visibilityPending}
+                onToggle={() => onToggleVisibility(card)}
+                size="lg"
+              />
+            ) : null}
             <button
               type="button"
               onClick={onCopy}

@@ -5,6 +5,7 @@ import (
 	"aurora-agent/handler/vo"
 	"aurora-agent/middleware"
 	"aurora-agent/service"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -79,6 +80,33 @@ func UpdateCard(ctx *gin.Context) {
 	card, err := service.UpdateCard(ctx.GetInt(middleware.UID_IN_CTX), id, req)
 	if err != nil {
 		logger.Error("update card failed", zap.Error(err))
+		vo.RespondWithServiceError(ctx, err)
+		return
+	}
+
+	vo.RespondSuccess(ctx, card)
+}
+
+func ChangeCardContentVisibility(ctx *gin.Context) {
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		vo.RespondError(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	var req dto.ChangeCardContentVisibilityRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		vo.RespondError(ctx, http.StatusBadRequest, err)
+		return
+	}
+	if req.IsContentVisible == nil {
+		vo.RespondError(ctx, http.StatusBadRequest, errors.New("is_content_visible is required"))
+		return
+	}
+
+	card, err := service.ChangeCardContentVisibility(ctx.GetInt(middleware.UID_IN_CTX), id, *req.IsContentVisible)
+	if err != nil {
+		logger.Error("change card content visibility failed", zap.Error(err))
 		vo.RespondWithServiceError(ctx, err)
 		return
 	}

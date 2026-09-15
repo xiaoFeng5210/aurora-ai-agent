@@ -83,9 +83,9 @@ func SoftDeleteCardByIDAndUserID(id int, userID int) error {
 	return nil
 }
 
-func UpdateCardByID(id int, updates map[string]any) (model.Card, error) {
+func UpdateCardByID(id int, userID int, updates map[string]any) (model.Card, error) {
 	var card model.Card
-	result := db.Model(&card).Clauses(&clause.Returning{}).Where("id = ?", id).Updates(updates)
+	result := db.Model(&card).Clauses(clause.Returning{}).Where("id = ? AND user_id = ?", id, userID).Updates(updates)
 	if result.Error != nil {
 		return card, result.Error
 	}

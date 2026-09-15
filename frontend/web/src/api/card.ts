@@ -10,6 +10,7 @@ export interface Card {
   tag_ids?: number[]
   external_links: string[]
   internal_links: string[]
+  is_content_visible: boolean
   created_at: string
   updated_at: string
 }
@@ -49,6 +50,14 @@ export const queryCards = (body: QueryCardRequest = {}) =>
 
 export const updateCard = (id: number, body: UpdateCardRequest) =>
   apiPut<ApiEnvelope<Card>>(`/cards/${id}`, body)
+
+export const changeCardContentVisibility = (id: number, isContentVisible: boolean) =>
+  apiPut<ApiEnvelope<Card>>(`/cards/${id}/content-visibility`, {
+    is_content_visible: isContentVisible,
+  })
+
+export const isCardContentVisible = (card: Pick<Card, 'is_content_visible'>) =>
+  card.is_content_visible !== false
 
 export const deleteCard = (id: number) => apiDelete<ApiEnvelope<null>>(`/cards/${id}`)
 

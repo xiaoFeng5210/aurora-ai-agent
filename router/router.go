@@ -73,6 +73,7 @@ func SetupRouter() *gin.Engine {
 	cardGroup.GET("/:id", handler.GetCardById)
 	cardGroup.POST("/query", handler.QueryCard)
 	cardGroup.PUT("/:id", handler.UpdateCard)
+	cardGroup.PUT("/:id/content-visibility", handler.ChangeCardContentVisibility)
 	cardGroup.DELETE("/:id", handler.DeleteCard)
 	cardGroup.GET("/:id/tags", handler.QueryTagsByCard)
 	cardGroup.POST("/:id/tags", handler.AddTagToCard)

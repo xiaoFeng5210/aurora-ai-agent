@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Markdown } from '@/components/chat/Markdown'
 import { TagMultiSelect } from './TagMultiSelect'
+import { CardVisibilityToggle } from './CardVisibilityToggle'
 import {
   createCard,
+  isCardContentVisible,
   updateCard,
   type Card,
   type CreateCardRequest,
@@ -29,6 +31,8 @@ export interface CardDialogProps {
   tagsLoaded: boolean
   onSaved: (card: Card, mode: 'create' | 'edit') => void
   onTagCreated: (tag: Tag) => void
+  onToggleVisibility?: (card: Card) => void
+  visibilityPending?: boolean
 }
 
 export function CardDialog({
@@ -39,6 +43,8 @@ export function CardDialog({
   tagsLoaded,
   onSaved,
   onTagCreated,
+  onToggleVisibility,
+  visibilityPending,
 }: CardDialogProps) {
   const isEdit = !!card
   const [expanded, setExpanded] = useState(false)
@@ -82,6 +88,8 @@ export function CardDialog({
               handleOpenChange(false)
             }}
             onTagCreated={onTagCreated}
+            onToggleVisibility={onToggleVisibility}
+            visibilityPending={visibilityPending}
           />
         ) : null}
       </Dialog.Content>
@@ -98,6 +106,8 @@ function CardDialogForm({
   onCancel,
   onSaved,
   onTagCreated,
+  onToggleVisibility,
+  visibilityPending,
 }: {
   card: Card | null
   tags: Tag[]
@@ -107,6 +117,8 @@ function CardDialogForm({
   onCancel: () => void
   onSaved: (card: Card, mode: 'create' | 'edit') => void
   onTagCreated: (tag: Tag) => void
+  onToggleVisibility?: (card: Card) => void
+  visibilityPending?: boolean
 }) {
   const { show } = useToast()
   const isEdit = !!card
@@ -195,6 +207,14 @@ function CardDialogForm({
           <div className="mb-2 flex items-center justify-between">
             <p className="text-sm font-medium text-ink-800">内容</p>
             <div className="flex items-center gap-1">
+              {isEdit && card && onToggleVisibility ? (
+                <CardVisibilityToggle
+                  visible={isCardContentVisible(card)}
+                  pending={visibilityPending}
+                  onToggle={() => onToggleVisibility(card)}
+                  withLabel
+                />
+              ) : null}
               <button
                 type="button"
                 onClick={() => setContentMode((m) => (m === 'write' ? 'preview' : 'write'))}

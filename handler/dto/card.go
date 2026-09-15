@@ -20,6 +20,10 @@ type UpdateCardRequest struct {
 	InternalLinks *[]string `json:"internal_links"`
 }
 
+type ChangeCardContentVisibilityRequest struct {
+	IsContentVisible *bool `json:"is_content_visible"`
+}
+
 type QueryCardDTO struct {
 	Content  string   `json:"content"`
 	Tags     []string `json:"tags"`
@@ -29,16 +33,17 @@ type QueryCardDTO struct {
 }
 
 type CardResponse struct {
-	Id            int       `json:"id"`
-	UserId        int       `json:"user_id"`
-	Title         string    `json:"title"`
-	Content       string    `json:"content"`
-	Tags          []string  `json:"tags"`
-	TagIds        []int     `json:"tag_ids,omitempty"`
-	ExternalLinks []string  `json:"external_links"`
-	InternalLinks []string  `json:"internal_links"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	Id               int       `json:"id"`
+	UserId           int       `json:"user_id"`
+	Title            string    `json:"title"`
+	Content          string    `json:"content"`
+	Tags             []string  `json:"tags"`
+	TagIds           []int     `json:"tag_ids,omitempty"`
+	ExternalLinks    []string  `json:"external_links"`
+	InternalLinks    []string  `json:"internal_links"`
+	IsContentVisible bool      `json:"is_content_visible"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
 }
 
 type CardQueryFilter struct {

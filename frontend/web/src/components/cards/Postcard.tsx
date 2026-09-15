@@ -1,8 +1,9 @@
 import { useState, type CSSProperties, type MouseEvent } from 'react'
 import { Check, Copy, Pencil, Trash2 } from 'lucide-react'
 import { AlertDialog, Button as RTButton, Flex } from '@radix-ui/themes'
-import type { Card } from '@/api/card'
+import { isCardContentVisible, type Card } from '@/api/card'
 import { Markdown } from '@/components/chat/Markdown'
+import { CardVisibilityToggle } from '@/components/cards/CardVisibilityToggle'
 import { useToast } from '@/hooks/useToast'
 import { cn } from '@/lib/cn'
 
@@ -35,8 +36,10 @@ export interface PostcardProps {
   tagNameById: Map<number, string>
   onPreview: (card: Card) => void
   onEdit: (card: Card) => void
+  onToggleVisibility: (card: Card) => void
   onDelete: (card: Card) => Promise<void> | void
   deleting?: boolean
+  visibilityPending?: boolean
 }
 
 export function Postcard({
@@ -45,13 +48,16 @@ export function Postcard({
   tagNameById,
   onPreview,
   onEdit,
+  onToggleVisibility,
   onDelete,
   deleting,
+  visibilityPending,
 }: PostcardProps) {
   const { show } = useToast()
   const [copied, setCopied] = useState(false)
   const rotate = ROTATIONS[index % ROTATIONS.length]
   const seal = SEAL_GLYPHS[card.id % SEAL_GLYPHS.length]
+  const contentVisible = isCardContentVisible(card)
 
   const resolvedTags = (card.tag_ids && card.tag_ids.length > 0
     ? card.tag_ids.map((id) => tagNameById.get(id)).filter((v): v is string => !!v)
@@ -85,6 +91,11 @@ export function Postcard({
           {card.title?.trim() || '无题'}
         </h3>
         <div className="flex shrink-0 items-center gap-0.5 opacity-60 transition group-hover:opacity-100">
+          <CardVisibilityToggle
+            visible={contentVisible}
+            pending={visibilityPending}
+            onToggle={() => onToggleVisibility(card)}
+          />
           <button
             type="button"
             aria-label="复制卡片内容"
@@ -109,7 +120,10 @@ export function Postcard({
       </div>
 
       <div className="flex flex-1 gap-3 px-4 py-4 sm:px-5 sm:py-5">
-        <div className="relative min-w-0 flex-1" style={LETTER_LINES}>
+        <div
+          className={cn('postcard-letter relative min-w-0 flex-1', !contentVisible && 'postcard-letter-veiled')}
+          style={LETTER_LINES}
+        >
           <div
             className="h-32 overflow-hidden sm:h-36"
             style={{
@@ -117,11 +131,19 @@ export function Postcard({
               WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
             }}
           >
-            <Markdown
-              content={card.content}
-              className="font-serif text-[14px] leading-relaxed text-ink-800 sm:text-[15px] [&_*]:my-1.5 [&_*:first-child]:mt-0"
-            />
+            <div className="postcard-letter-ink">
+              <Markdown
+                content={card.content}
+                className="font-serif text-[14px] leading-relaxed text-ink-800 sm:text-[15px] [&_*]:my-1.5 [&_*:first-child]:mt-0"
+              />
+            </div>
           </div>
+          {!contentVisible ? (
+            <>
+              <span className="sr-only">正文已隐去</span>
+              <div className="postcard-letter-mist" aria-hidden />
+            </>
+          ) : null}
         </div>
 
         <div className="flex w-[68px] shrink-0 flex-col items-center justify-center gap-3 border-l border-dashed border-ink-200 pl-3 sm:w-[72px]">

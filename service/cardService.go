@@ -25,12 +25,13 @@ func CreateCard(uid int, req dto.CreateCardRequest) (dto.CardResponse, error) {
 	}
 
 	card, err := database.CreateCard(model.Card{
-		UserId:        uid,
-		Title:         strings.TrimSpace(req.Title),
-		Content:       content,
-		Tags:          model.StringArray(normalizeStringList(req.Tags)),
-		ExternalLinks: model.StringArray(normalizeStringList(req.ExternalLinks)),
-		InternalLinks: model.StringArray(normalizeStringList(req.InternalLinks)),
+		UserId:           uid,
+		Title:            strings.TrimSpace(req.Title),
+		Content:          content,
+		Tags:             model.StringArray(normalizeStringList(req.Tags)),
+		ExternalLinks:    model.StringArray(normalizeStringList(req.ExternalLinks)),
+		InternalLinks:    model.StringArray(normalizeStringList(req.InternalLinks)),
+		IsContentVisible: true,
 	})
 	if err != nil {
 		return dto.CardResponse{}, err
@@ -128,15 +129,17 @@ func UpdateCard(uid int, id int, req dto.UpdateCardRequest) (dto.CardResponse, e
 	return resp, nil
 }
 
-// 切换卡片内容可见性
-func ChangeCardContentVisibility(id int, visibility bool) (dto.CardResponse, error) {
-	card, err := database.UpdateCardByID(id, map[string]interface{}{
+func ChangeCardContentVisibility(uid int, id int, visibility bool) (dto.CardResponse, error) {
+	if _, err := database.UpdateCardByID(id, uid, map[string]any{
 		"is_content_visible": visibility,
-	})
-	if err != nil {
-		return toCardResponse(card), err
+	}); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return dto.CardResponse{}, vo.ErrCardNotFound
+		}
+		return dto.CardResponse{}, err
 	}
-	return toCardResponse(card), nil
+
+	return GetCardByID(uid, id)
 }
 
 func DeleteCard(uid int, id int) error {
@@ -246,14 +249,15 @@ func buildCardResponse(uid int, card model.Card) dto.CardResponse {
 
 func toCardResponse(card model.Card) dto.CardResponse {
 	return dto.CardResponse{
-		Id:            card.Id,
-		UserId:        card.UserId,
-		Title:         card.Title,
-		Content:       card.Content,
-		Tags:          []string(card.Tags),
-		ExternalLinks: []string(card.ExternalLinks),
-		InternalLinks: []string(card.InternalLinks),
-		CreatedAt:     card.CreatedAt,
-		UpdatedAt:     card.UpdatedAt,
+		Id:               card.Id,
+		UserId:           card.UserId,
+		Title:            card.Title,
+		Content:          card.Content,
+		Tags:             []string(card.Tags),
+		ExternalLinks:    []string(card.ExternalLinks),
+		InternalLinks:    []string(card.InternalLinks),
+		IsContentVisible: card.IsContentVisible,
+		CreatedAt:        card.CreatedAt,
+		UpdatedAt:        card.UpdatedAt,
 	}
 }
