@@ -1,0 +1,26 @@
+-- 2026-07-04
+BEGIN;
+
+ALTER TABLE "card"
+    ADD COLUMN IF NOT EXISTS title VARCHAR(255) NOT NULL DEFAULT '';
+
+COMMIT;
+
+
+-- 2026-09-14
+BEGIN;
+
+ALTER TABLE points_balance
+    ADD CONSTRAINT uk_points_balance_user_id UNIQUE (user_id);
+
+COMMIT;
+
+
+
+-- 2026-09-15
+BEGIN;
+
+ALTER TABLE "card"
+    ADD COLUMN IF NOT EXISTS is_content_visible BOOLEAN NOT NULL DEFAULT TRUE;
+
+COMMIT;
