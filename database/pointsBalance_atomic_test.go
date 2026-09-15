@@ -2,6 +2,7 @@ package database
 
 import (
 	"aurora-agent/database/model"
+	"aurora-agent/utils/enum"
 	"fmt"
 	"strings"
 	"sync"
@@ -63,7 +64,7 @@ func TestPointsConcurrentFirstCredits(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			balance, err := IncrementPointsBalance(userID, 5, "test credit")
+			balance, err := IncrementPointsBalance(userID, 5, "test credit", enum.TriggerMode_Register)
 			if err == nil && (balance.UserId != userID || balance.BalanceAfter < 5) {
 				err = fmt.Errorf("invalid returned balance: %+v", balance)
 			}

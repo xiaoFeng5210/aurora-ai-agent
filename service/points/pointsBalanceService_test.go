@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"gorm.io/gorm"
+
+	"aurora-agent/utils/enum"
 )
 
 func TestLegacyBalanceAndCredits(t *testing.T) {
@@ -29,12 +31,12 @@ func TestLegacyBalanceAndCredits(t *testing.T) {
 		t.Fatalf("read must not initialize: %v", err)
 	}
 	for _, amount := range []int{0, -1} {
-		if _, err := Add(user.Id, amount, "invalid"); !errors.Is(err, gorm.ErrInvalidData) {
+		if _, err := Add(user.Id, amount, "invalid", enum.TriggerMode_Register); !errors.Is(err, gorm.ErrInvalidData) {
 			t.Fatalf("invalid credit: %v", err)
 		}
 	}
 	for _, want := range []int{15, 30} {
-		got, err := Add(user.Id, 15, "test credit")
+		got, err := Add(user.Id, 15, "test credit", enum.TriggerMode_Register)
 		if err != nil || got.BalanceAfter != want {
 			t.Fatalf("credit = %+v, %v; want %d", got, err, want)
 		}

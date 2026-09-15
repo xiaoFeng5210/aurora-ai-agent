@@ -5,6 +5,7 @@ import (
 	"aurora-agent/handler/dto"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func CreateCard(card model.Card) (model.Card, error) {
@@ -80,4 +81,18 @@ func SoftDeleteCardByIDAndUserID(id int, userID int) error {
 		return gorm.ErrRecordNotFound
 	}
 	return nil
+}
+
+func UpdateCardByID(id int, updates map[string]any) (model.Card, error) {
+	var card model.Card
+	result := db.Model(&card).Clauses(&clause.Returning{}).Where("id = ?", id).Updates(updates)
+	if result.Error != nil {
+		return card, result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return card, gorm.ErrRecordNotFound
+	}
+
+	return card, nil
 }

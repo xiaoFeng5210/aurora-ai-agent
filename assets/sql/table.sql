@@ -167,6 +167,7 @@ CREATE TABLE IF NOT EXISTS card (
     internal_links TEXT[]       NOT NULL DEFAULT ARRAY[]::TEXT[],
     create_time    TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_time    TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_content_visible BOOLEAN NOT NULL DEFAULT TRUE,
     deleted_at     TIMESTAMPTZ,
 
     CONSTRAINT card_content_not_empty CHECK (content <> '')

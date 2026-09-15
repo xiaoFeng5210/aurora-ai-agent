@@ -128,6 +128,17 @@ func UpdateCard(uid int, id int, req dto.UpdateCardRequest) (dto.CardResponse, e
 	return resp, nil
 }
 
+// 切换卡片内容可见性
+func ChangeCardContentVisibility(id int, visibility bool) (dto.CardResponse, error) {
+	card, err := database.UpdateCardByID(id, map[string]interface{}{
+		"is_content_visible": visibility,
+	})
+	if err != nil {
+		return toCardResponse(card), err
+	}
+	return toCardResponse(card), nil
+}
+
 func DeleteCard(uid int, id int) error {
 	if err := database.SoftDeleteCardByIDAndUserID(id, uid); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

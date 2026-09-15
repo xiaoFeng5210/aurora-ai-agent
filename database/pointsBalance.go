@@ -2,6 +2,7 @@ package database
 
 import (
 	"aurora-agent/database/model"
+	"aurora-agent/utils/enum"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -9,7 +10,7 @@ import (
 
 // IncrementPointsBalance initializes missing rows and increments in one transaction.
 // The unique user_id constraint serializes concurrent first-time credits.
-func IncrementPointsBalance(userID, amount int, remark string, triggerMode string) (model.PointsBalance, error) {
+func IncrementPointsBalance(userID, amount int, remark string, triggerMode enum.TriggerModeEnum) (model.PointsBalance, error) {
 	var balance model.PointsBalance
 	err := db.Transaction(func(tx *gorm.DB) error {
 		initial := model.PointsBalance{UserId: userID, BalanceAfter: 0, Remark: "积分初始化"}
@@ -27,6 +28,7 @@ func IncrementPointsBalance(userID, amount int, remark string, triggerMode strin
 			TriggerMode:  triggerMode,
 		}
 
+		// 这里是记录积分变动，整个行程一个事务
 		if err := tx.Model(&model.PointsRecord{}).Create(&record).Error; err != nil {
 			return err
 		}
