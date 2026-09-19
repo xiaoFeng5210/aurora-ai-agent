@@ -1,0 +1,42 @@
+# 镜像清单，不是运行时编排。
+# 用来：docker compose build / docker compose push
+# 不要在这里 docker compose up。单机运行仍用仓库根目录 docker-compose.yml。
+name: ariadne-images
+
+services:
+  backend:
+    build:
+      context: ../..
+      dockerfile: Dockerfile.backend
+    image: ${ACR_REGISTRY:-registry.cn-hangzhou.aliyuncs.com}/${ACR_NAMESPACE:-ariadne}/ariadne-backend:${IMAGE_TAG:-v0.0.1}
+    platform: linux/amd64
+
+  frontend:
+    build:
+      context: ../../frontend/web
+      dockerfile: Dockerfile
+    image: ${ACR_REGISTRY:-registry.cn-hangzhou.aliyuncs.com}/${ACR_NAMESPACE:-ariadne}/ariadne-frontend:${IMAGE_TAG:-v0.0.1}
+    platform: linux/amd64
+
+  admin:
+    build:
+      context: ../../frontend/admin
+      dockerfile: Dockerfile
+    image: ${ACR_REGISTRY:-registry.cn-hangzhou.aliyuncs.com}/${ACR_NAMESPACE:-ariadne}/ariadne-admin:${IMAGE_TAG:-v0.0.1}
+    platform: linux/amd64
+
+  # 以下为基础镜像，不在本机 build，只同步到 ACR，避免 ACK 直拉 Docker Hub。
+  postgres:
+    profiles: ["base"]
+    image: ${ACR_REGISTRY:-registry.cn-hangzhou.aliyuncs.com}/${ACR_NAMESPACE:-ariadne}/postgres:${POSTGRES_TAG:-16-alpine}
+    platform: linux/amd64
+
+  redis:
+    profiles: ["base"]
+    image: ${ACR_REGISTRY:-registry.cn-hangzhou.aliyuncs.com}/${ACR_NAMESPACE:-ariadne}/redis:${REDIS_TAG:-7-alpine}
+    platform: linux/amd64
+
+  rabbitmq:
+    profiles: ["base"]
+    image: ${ACR_REGISTRY:-registry.cn-hangzhou.aliyuncs.com}/${ACR_NAMESPACE:-ariadne}/rabbitmq:${RABBITMQ_TAG:-3.13-management-alpine}
+    platform: linux/amd64
