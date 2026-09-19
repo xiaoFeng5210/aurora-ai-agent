@@ -11,34 +11,50 @@ import (
 // IncrementPointsBalance initializes missing rows and increments in one transaction.
 // The unique user_id constraint serializes concurrent first-time credits.
 func IncrementPointsBalance(userID, amount int, remark string, triggerMode enum.TriggerModeEnum) (model.PointsBalance, error) {
+	return applyPointsDelta(userID, amount, remark, triggerMode)
+}
+
+// DecrementPointsBalance subtracts points without creating a missing balance row.
+// It fails with gorm.ErrRecordNotFound when the row is missing or the balance is too low.
+func DecrementPointsBalance(userID, amount int, remark string, triggerMode enum.TriggerModeEnum) (model.PointsBalance, error) {
+	return applyPointsDelta(userID, -amount, remark, triggerMode)
+}
+
+func applyPointsDelta(userID, delta int, remark string, triggerMode enum.TriggerModeEnum) (model.PointsBalance, error) {
 	var balance model.PointsBalance
 	err := db.Transaction(func(tx *gorm.DB) error {
-		initial := model.PointsBalance{UserId: userID, BalanceAfter: 0, Remark: "积分初始化"}
-		if err := tx.Clauses(clause.OnConflict{
-			Columns: []clause.Column{{Name: "user_id"}}, DoNothing: true,
-		}).Create(&initial).Error; err != nil {
-			return err
+		if delta > 0 {
+			initial := model.PointsBalance{UserId: userID, BalanceAfter: 0, Remark: "积分初始化"}
+			if err := tx.Clauses(clause.OnConflict{
+				Columns: []clause.Column{{Name: "user_id"}}, DoNothing: true,
+			}).Create(&initial).Error; err != nil {
+				return err
+			}
+		}
+
+		query := tx.Model(&balance).Clauses(clause.Returning{}).Where("user_id = ?", userID)
+		if delta < 0 {
+			query = query.Where("balance_after >= ?", -delta)
+		}
+		result := query.Updates(map[string]any{
+			"balance_after": gorm.Expr("balance_after + ?", delta),
+			"remark":        remark,
+		})
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
 		}
 
 		record := model.PointsRecord{
 			UserId:       userID,
-			Delta:        amount,
+			Delta:        delta,
 			Remark:       remark,
 			BalanceAfter: balance.BalanceAfter,
 			TriggerMode:  triggerMode,
 		}
-
-		// 这里是记录积分变动，整个行程一个事务
-		if err := tx.Model(&model.PointsRecord{}).Create(&record).Error; err != nil {
-			return err
-		}
-
-		return tx.Model(&balance).Clauses(clause.Returning{}).
-			Where("user_id = ?", userID).
-			Updates(map[string]any{
-				"balance_after": gorm.Expr("balance_after + ?", amount),
-				"remark":        remark,
-			}).Error
+		return tx.Model(&model.PointsRecord{}).Create(&record).Error
 	})
 	return balance, err
 }

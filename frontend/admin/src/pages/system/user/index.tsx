@@ -32,6 +32,8 @@ import { useEffect, useMemo, useState } from "react";
 import { createUser, fetchUserDocuments, fetchUsers } from "#src/api/user";
 import { BasicContent } from "#src/components/basic-content";
 
+import { UserPointsPanel } from "./components/user-points-panel";
+
 const { Text, Title } = Typography;
 
 interface UserSearchForm {
@@ -218,7 +220,7 @@ export default function User() {
 					<Flex wrap gap={16} align="center" justify="space-between">
 						<Space direction="vertical" size={2}>
 							<Title level={3} className="mb-1!">用户管理</Title>
-							<Text type="secondary">创建用户，选择用户后查看对应 documents。</Text>
+							<Text type="secondary">创建用户，选择用户后调整积分并查看对应 documents。</Text>
 						</Space>
 						<Space size={24} wrap>
 							<Statistic title="用户数" value={users.length} />
@@ -287,15 +289,17 @@ export default function User() {
 					</Col>
 
 					<Col xs={24} xl={10}>
-						<Card
-							title={(
-								<Space>
-									<FileTextOutlined />
-									<span>用户 Documents</span>
-								</Space>
-							)}
-							extra={selectedUser ? <Tag color="blue">{selectedUser.username}</Tag> : null}
-						>
+						<Space direction="vertical" size={16} className="w-full">
+							<UserPointsPanel user={selectedUser} />
+							<Card
+								title={(
+									<Space>
+										<FileTextOutlined />
+										<span>用户 Documents</span>
+									</Space>
+								)}
+								extra={selectedUser ? <Tag color="blue">{selectedUser.username}</Tag> : null}
+							>
 
 							{selectedUser
 								? (
@@ -338,7 +342,8 @@ export default function User() {
 									</>
 								)
 								: <Empty description="先选择一个用户" />}
-						</Card>
+							</Card>
+						</Space>
 					</Col>
 				</Row>
 			</Space>

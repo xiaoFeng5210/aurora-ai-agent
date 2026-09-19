@@ -31,6 +31,7 @@ var (
 	ErrMessageFeedbackInvalid = errors.New("is_liked must be -1, 0, or 1")
 	ErrNoFieldsToUpdate       = errors.New("no fields to update")
 	ErrUnsupportedFileType    = errors.New("unsupported file type, currently supported: .txt, .md, .csv")
+	ErrInsufficientPoints     = errors.New("insufficient points")
 )
 
 func RespondSuccess(ctx *gin.Context, data any) {
@@ -74,6 +75,7 @@ func RespondWithServiceError(ctx *gin.Context, err error) {
 		errors.Is(err, ErrTagNameRequired),
 		errors.Is(err, ErrTagNameExists),
 		errors.Is(err, ErrNoFieldsToUpdate),
+		errors.Is(err, ErrInsufficientPoints),
 		errors.Is(err, gorm.ErrInvalidData):
 		status = http.StatusBadRequest
 	}

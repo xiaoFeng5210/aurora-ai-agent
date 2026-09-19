@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"aurora-agent/database/model"
+	"aurora-agent/utils/enum"
 
 	"gorm.io/gorm"
 )
@@ -22,6 +23,8 @@ const (
 	testPointsBalanceMissingGetUserID = 910000007
 	testPointsBalanceMissingUpdUserID = 910000008
 	testPointsBalanceMissingDelUserID = 910000009
+	testPointsBalanceDecrementUserID  = 910000010
+	testPointsBalanceOverdraftUserID  = 910000011
 )
 
 func resetPointsBalance(t *testing.T, userID int) {
@@ -172,4 +175,42 @@ func TestDeletePointsBalanceByUserIDNotFound(t *testing.T) {
 		t.Fatalf("expected record not found, got %v", err)
 	}
 	t.Log("delete missing user confirmed not found")
+}
+
+func TestDecrementPointsBalance(t *testing.T) {
+	seedPointsBalance(t, testPointsBalanceDecrementUserID, 20, "before-debit")
+	conn, err := DBConnect()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		conn.Where("user_id = ?", testPointsBalanceDecrementUserID).Delete(&model.PointsRecord{})
+		resetPointsBalance(t, testPointsBalanceDecrementUserID)
+	})
+
+	got, err := DecrementPointsBalance(testPointsBalanceDecrementUserID, 8, "admin deduct", enum.TriggerMode_Admin)
+	if err != nil || got.BalanceAfter != 12 {
+		t.Fatalf("decrement = %+v, %v", got, err)
+	}
+}
+
+func TestDecrementPointsBalanceInsufficient(t *testing.T) {
+	seedPointsBalance(t, testPointsBalanceOverdraftUserID, 5, "low-balance")
+	conn, err := DBConnect()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		conn.Where("user_id = ?", testPointsBalanceOverdraftUserID).Delete(&model.PointsRecord{})
+		resetPointsBalance(t, testPointsBalanceOverdraftUserID)
+	})
+
+	_, err = DecrementPointsBalance(testPointsBalanceOverdraftUserID, 6, "overdraft", enum.TriggerMode_Admin)
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		t.Fatalf("expected insufficient debit to miss the row, got %v", err)
+	}
+	got, err := GetPointsBalanceByUserID(testPointsBalanceOverdraftUserID)
+	if err != nil || got.BalanceAfter != 5 {
+		t.Fatalf("balance mutated on failed debit: %+v, %v", got, err)
+	}
 }

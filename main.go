@@ -14,7 +14,9 @@ import (
 
 func init() {
 	godotenv.Load()
-	database.DBConnect()
+	if _, err := database.DBConnect(); err != nil {
+		panic(err)
+	}
 	if _, err := redis_db.RedisConnect(); err != nil {
 		panic(err)
 	}
