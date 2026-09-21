@@ -1,6 +1,6 @@
 postgres:
-  host: postgres
+  host: ariadne-postgres-17
   port: 5432
   user: aurora
-  password: aurora_postgres_change_me
-  dbname: aurora_ai_agent
+  password: 12345678
+  dbname: ariadne

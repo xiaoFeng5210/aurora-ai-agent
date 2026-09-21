@@ -10,14 +10,16 @@
 
 和根目录 compose 对齐，一共 6 个。前 3 个自己构建，后 3 个从官方镜像同步到 ACR。
 
-| Compose 服务 | 类型 | 构建上下文 | Dockerfile | 推到 ACR 后的仓库名 |
-| --- | --- | --- | --- | --- |
-| `backend` | 自建 | 仓库根目录 | `Dockerfile.backend` | `ariadne-backend` |
-| `frontend` | 自建 | `frontend/web` | `frontend/web/Dockerfile` | `ariadne-frontend` |
-| `admin` | 自建 | `frontend/admin` | `frontend/admin/Dockerfile` | `ariadne-admin` |
-| `postgres` | 同步 | — | 上游 `postgres:16-alpine` | `postgres` |
-| `redis` | 同步 | — | 上游 `redis:7-alpine` | `redis` |
-| `rabbitmq` | 同步 | — | 上游 `rabbitmq:3.13-management-alpine` | `rabbitmq` |
+
+| Compose 服务 | 类型  | 构建上下文            | Dockerfile                           | 推到 ACR 后的仓库名       |
+| ---------- | --- | ---------------- | ------------------------------------ | ------------------ |
+| `backend`  | 自建  | 仓库根目录            | `Dockerfile.backend`                 | `ariadne-backend`  |
+| `frontend` | 自建  | `frontend/web`   | `frontend/web/Dockerfile`            | `ariadne-frontend` |
+| `admin`    | 自建  | `frontend/admin` | `frontend/admin/Dockerfile`          | `ariadne-admin`    |
+| `postgres` | 同步  | —                | 上游 `postgres:16-alpine`              | `postgres`         |
+| `redis`    | 同步  | —                | 上游 `redis:7-alpine`                  | `redis`            |
+| `rabbitmq` | 同步  | —                | 上游 `rabbitmq:3.13-management-alpine` | `rabbitmq`         |
+
 
 Qdrant 继续用外部服务，这里不打包。
 
@@ -55,6 +57,8 @@ registry.cn-hangzhou.aliyuncs.com/ariadne/ariadne-backend:v0.0.1
 - [配置访问凭证](https://help.aliyun.com/zh/acr/user-guide/configure-access-credentials)
 - [ACK 使用私有镜像](https://help.aliyun.com/zh/ack/create-an-application-by-using-a-private-image-repository)
 
+
+
 ## 3. 本机配置
 
 在仓库根目录：
@@ -78,6 +82,8 @@ IMAGE_TAG=v0.0.1
 ```bash
 docker compose -f .k8s/images/docker-compose.yml --env-file .k8s/images/.env config
 ```
+
+
 
 ## 4. 登录 ACR
 
@@ -170,19 +176,21 @@ docker compose -f .k8s/images/docker-compose.yml --env-file .k8s/images/.env --p
 2. **集群内拉取优先用同地域 VPC 域名**，少走公网。个人版一般是 `registry-vpc.cn-<地域>.aliyuncs.com`，企业版是 `<实例名>-registry-vpc.cn-<地域>.cr.aliyuncs.com`。仓库路径和 tag 不变。
 3. **私有仓库 ACK 拉不下来时**，给工作负载配 `imagePullSecrets`，或对企业版安装免密组件。2024-09-09 之后新建的 ACR 个人版不支持免密组件，用 Secret。Secret 必须和工作负载在同一个命名空间。
 
+
+
 ## 8. 常见问题
 
-**`COPY bin/aurora-agent` 失败**  
+`COPY bin/aurora-agent` **失败**  
 先跑 `bash scripts/build-backend.sh`。这个文件被 `.gitignore` 忽略，仓库里不会有。
 
-**`COPY dist` / `COPY build` 失败**  
+`COPY dist` **/** `COPY build` **失败**  
 先跑 `bash scripts/build-frontend.sh`。web 产物在 `frontend/web/dist`，admin 产物在 `frontend/admin/build`。
 
-**ACK 里 `exec format error`**  
+**ACK 里** `exec format error`  
 镜像或后端二进制是 arm64，节点是 amd64。确认 `scripts/build-backend.sh` 没有把 `GOARCH` 改成 `arm64`，并且 compose 构建时带了 `platform: linux/amd64`。
 
-**`denied: requested access to the resource is denied`**  
+`denied: requested access to the resource is denied`  
 没登录、登错实例域名、命名空间不对，或仓库不存在且未打开自动创建。
 
-**`unauthorized: authentication required`**  
+`unauthorized: authentication required`  
 用户名用了主账号 ID，或密码被 Shell 转义。回 ACR 访问凭证页核对 `docker login` 整行命令。

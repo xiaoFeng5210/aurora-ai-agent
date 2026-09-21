@@ -289,4 +289,3 @@ CREATE TABLE IF NOT EXISTS points_record (
 );
 
 
-
