@@ -127,7 +127,7 @@ function CardDialogForm({
   const [content, setContent] = useState(card?.content ?? '')
   const [contentMode, setContentMode] = useState<'write' | 'preview'>('write')
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>(card?.tag_ids ?? [])
-  const [links, setLinks] = useState((card?.external_links ?? []).join('\n'))
+  const [links] = useState((card?.external_links ?? []).join('\n'))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
