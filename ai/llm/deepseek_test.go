@@ -96,6 +96,9 @@ func TestDeepSeekToolRoundTrip(t *testing.T) {
 		if string(body["model"]) != `"deepseek-v4-flash"` || string(body["stream"]) != "true" || string(body["thinking"]) != `{"type":"enabled"}` {
 			t.Error("wrong model/options")
 		}
+		if string(body["stream_options"]) != `{"include_usage":true}` {
+			t.Error("missing usage stream option")
+		}
 		if body["temperature"] != nil || body["top_p"] != nil {
 			t.Error("thinking mode must omit sampling")
 		}
@@ -212,7 +215,8 @@ func TestDeepSeekMultipleToolsAndUsage(t *testing.T) {
 		{Index: 0, Id: "first", Type: "function", Function: ai.FunctionCall{Name: "first", Arguments: `{}`}},
 	}}, "")
 	stream += chunk(map[string]any{"tool_calls": []ai.ToolCall{{Index: 1, Function: ai.FunctionCall{Arguments: `"value"}`}}}}, "")
-	stream += "data: {\"choices\":[{\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"total_tokens\":42}}\n\ndata: [DONE]\n"
+	stream += "data: {\"choices\":[{\"delta\":{},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"total_tokens\":1}}\n\n"
+	stream += "data: {\"choices\":[],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":32,\"total_tokens\":42,\"prompt_cache_hit_tokens\":4,\"prompt_cache_miss_tokens\":6,\"completion_tokens_details\":{\"reasoning_tokens\":7}}}\n\ndata: [DONE]\n"
 	result, err := readDeepSeekStream(strings.NewReader(stream), nil)
 	if err != nil {
 		t.Fatal(err)
@@ -220,6 +224,9 @@ func TestDeepSeekMultipleToolsAndUsage(t *testing.T) {
 	calls := result.Message.ToolCalls
 	if len(calls) != 2 || calls[0].Id != "first" || calls[1].Id != "second" || calls[1].Function.Arguments != `{"q":"value"}` {
 		t.Fatalf("tools out of order or corrupted: %+v", calls)
+	}
+	if result.Usage != (Usage{PromptTokens: 10, CompletionTokens: 32, TotalTokens: 42, PromptCacheHitTokens: 4, PromptCacheMissTokens: 6, ReasoningTokens: 7}) {
+		t.Fatalf("usage: %+v", result.Usage)
 	}
 }
 

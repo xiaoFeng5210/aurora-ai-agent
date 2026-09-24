@@ -27,13 +27,13 @@ func (f *fakeModel) Chat(ctx context.Context, messages []ai.Message, opts llm.Ch
 	if f.calls == 1 {
 		calls := []ai.ToolCall{{Id: "weather", Type: "function", Function: ai.FunctionCall{Name: "get_weather", Arguments: `{"city":"Shanghai"}`}}}
 		emit("tool_call", map[string]any{"tool_calls": calls})
-		return llm.ChatResult{Message: ai.Message{Role: "assistant", ReasoningContent: "continue", ToolCalls: calls}, FinishReason: "tool_calls"}, nil
+		return llm.ChatResult{Message: ai.Message{Role: "assistant", ReasoningContent: "continue", ToolCalls: calls}, FinishReason: "tool_calls", Usage: llm.Usage{PromptTokens: 10, CompletionTokens: 4, TotalTokens: 14, ReasoningTokens: 2}}, nil
 	}
 	if len(messages) != 3 || messages[1].ReasoningContent != "continue" || messages[2].Role != "tool" || *messages[2].ToolCallId != "weather" {
 		f.t.Fatal("lost tool conversation")
 	}
 	emit("delta", map[string]any{"content": "answer"})
-	return llm.ChatResult{Message: ai.Message{Role: "assistant", Content: "answer"}, FinishReason: "stop"}, nil
+	return llm.ChatResult{Message: ai.Message{Role: "assistant", Content: "answer"}, FinishReason: "stop", Usage: llm.Usage{PromptTokens: 20, CompletionTokens: 6, TotalTokens: 26, PromptCacheHitTokens: 8, PromptCacheMissTokens: 12}}, nil
 }
 
 func TestAgentModelBoundary(t *testing.T) {

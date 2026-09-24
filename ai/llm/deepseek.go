@@ -84,7 +84,14 @@ func (d *DeepSeek) Chat(ctx context.Context, messages []ai.Message, opts ChatOpt
 		}
 		wireMessages = append(wireMessages, wire)
 	}
-	body := map[string]any{"model": d.Name(), "messages": wireMessages, "max_tokens": opts.MaxTokens, "stream": true, "thinking": map[string]string{"type": opts.ThinkingType}}
+	body := map[string]any{
+		"model":          d.Name(),
+		"messages":       wireMessages,
+		"max_tokens":     opts.MaxTokens,
+		"stream":         true,
+		"stream_options": map[string]any{"include_usage": true},
+		"thinking":       map[string]string{"type": opts.ThinkingType},
+	}
 	if opts.Tools != nil {
 		body["tools"] = opts.Tools
 	}
@@ -129,6 +136,32 @@ type deepSeekChunk struct {
 		} `json:"delta"`
 		FinishReason string `json:"finish_reason"`
 	} `json:"choices"`
+	Usage *deepSeekUsage `json:"usage"`
+}
+
+type deepSeekUsage struct {
+	PromptTokens            int `json:"prompt_tokens"`
+	CompletionTokens        int `json:"completion_tokens"`
+	TotalTokens             int `json:"total_tokens"`
+	PromptCacheHitTokens    int `json:"prompt_cache_hit_tokens"`
+	PromptCacheMissTokens   int `json:"prompt_cache_miss_tokens"`
+	CompletionTokensDetails *struct {
+		ReasoningTokens int `json:"reasoning_tokens"`
+	} `json:"completion_tokens_details"`
+}
+
+func (u deepSeekUsage) toUsage() Usage {
+	usage := Usage{
+		PromptTokens:          u.PromptTokens,
+		CompletionTokens:      u.CompletionTokens,
+		TotalTokens:           u.TotalTokens,
+		PromptCacheHitTokens:  u.PromptCacheHitTokens,
+		PromptCacheMissTokens: u.PromptCacheMissTokens,
+	}
+	if u.CompletionTokensDetails != nil {
+		usage.ReasoningTokens = u.CompletionTokensDetails.ReasoningTokens
+	}
+	return usage
 }
 
 func readDeepSeekStream(body io.Reader, onEvent StreamEventHandler) (ChatResult, error) {
@@ -157,6 +190,9 @@ func readDeepSeekStream(body io.Reader, onEvent StreamEventHandler) (ChatResult,
 		}
 		if len(chunk.Error) > 0 && string(chunk.Error) != "null" {
 			return ChatResult{}, fmt.Errorf("deepseek stream returned an error")
+		}
+		if chunk.Usage != nil {
+			result.Usage = chunk.Usage.toUsage()
 		}
 		if len(chunk.Choices) == 0 {
 			continue

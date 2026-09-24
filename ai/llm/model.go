@@ -23,6 +23,27 @@ type ChatOptions struct {
 type ChatResult struct {
 	Message      ai.Message
 	FinishReason string
+	Usage        Usage
+}
+
+// Usage is one model request's token accounting. Agent rounds sum these.
+type Usage struct {
+	PromptTokens          int
+	CompletionTokens      int
+	TotalTokens           int
+	PromptCacheHitTokens  int
+	PromptCacheMissTokens int
+	ReasoningTokens       int
+}
+
+func (u Usage) Add(other Usage) Usage {
+	u.PromptTokens += other.PromptTokens
+	u.CompletionTokens += other.CompletionTokens
+	u.TotalTokens += other.TotalTokens
+	u.PromptCacheHitTokens += other.PromptCacheHitTokens
+	u.PromptCacheMissTokens += other.PromptCacheMissTokens
+	u.ReasoningTokens += other.ReasoningTokens
+	return u
 }
 
 type StreamEventHandler func(event string, data any)

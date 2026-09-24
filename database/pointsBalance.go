@@ -82,6 +82,7 @@ func GetPointsBalanceByUserID(userID int) (model.PointsBalance, error) {
 
 func UpdatePointsBalanceByUserID(userID int, updates map[string]any) error {
 	result := db.Model(&model.PointsBalance{}).
+		Clauses(clause.Returning{}).
 		Where("user_id = ?", userID).
 		Updates(updates)
 	if result.Error != nil {

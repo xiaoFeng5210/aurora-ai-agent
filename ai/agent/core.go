@@ -76,6 +76,19 @@ func (a *Agent) RunAgent(ctx *gin.Context, messages []ai.Message, onEvent llm.St
 	}
 
 	a.CurrentLoop = 0
+	var usage llm.Usage
+	defer func() {
+		logger.Info("agent round usage",
+			zap.String("agent_id", a.Id),
+			zap.Int("rounds", a.CurrentLoop),
+			zap.Int("prompt_tokens", usage.PromptTokens),
+			zap.Int("completion_tokens", usage.CompletionTokens),
+			zap.Int("total_tokens", usage.TotalTokens),
+			zap.Int("prompt_cache_hit_tokens", usage.PromptCacheHitTokens),
+			zap.Int("prompt_cache_miss_tokens", usage.PromptCacheMissTokens),
+			zap.Int("reasoning_tokens", usage.ReasoningTokens),
+		)
+	}()
 	conversation := append([]ai.Message{}, messages...)
 	emitAgentEvent(onEvent, "start", map[string]any{
 		"model": a.Llm.Name(),
@@ -95,6 +108,7 @@ func (a *Agent) RunAgent(ctx *gin.Context, messages []ai.Message, onEvent llm.St
 			return AgentResult{Result: AgentResultTypeError, message: err.Error()}, err
 		}
 
+		usage = usage.Add(response.Usage)
 		content, toolCalls := response.Message.Content, response.Message.ToolCalls
 		conversation = append(conversation, response.Message)
 
