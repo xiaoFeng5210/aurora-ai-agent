@@ -1,44 +1,58 @@
 package utils
 
 import (
-	"fmt"
 	"testing"
 )
 
-func TestBase(t *testing.T) {
-	for i := 0; i < 3; i++ {
-		defer func() { println(i) }()
-	}
+// Node 双向链表节点
+type Node struct {
+	Value int
+	Prev  *Node
+	Next  *Node
 }
 
-func JaccardBySorted[T comparable](a, b []float64) float64 {
-	if len(a) <= 0 || len(b) <= 0 {
-		return 0.0
+// Link2Point 双向链表
+type Link2Point struct {
+	List []*Node
+}
+
+func (l *Link2Point) push(value int) *Node {
+	newNode := &Node{
+		Value: value,
 	}
 
-	intersection := 0
-	for i, j := 0, 0; i < len(a) && j < len(b); {
-		if a[i] == b[j] {
-			intersection += 1
-			i += 1
-			j += 1
-		} else if a[i] < b[j] {
-			i += 1
-		} else if a[i] > b[j] {
-			j += 1
+	if len(l.List) != 0 {
+		var firstN *Node
+		for _, n := range l.List {
+			if n.Prev == nil {
+				firstN = n
+				break
+			}
 		}
+
+		currentN := firstN
+		var lastN *Node
+		for {
+			if currentN.Next != nil {
+				currentN = currentN.Next
+			} else {
+				lastN = currentN
+				break
+			}
+		}
+
+		lastN.Next = newNode
+	} else {
+		l.List = append(l.List, newNode)
 	}
 
-	return float64(intersection) / float64(len(a)+len(b)-intersection)
-
+	return newNode
 }
 
-func TestJaccardSimilarity(t *testing.T) {
-	a := []float64{1.0, 2.0, 3.0, 4.0, 5.0}
-	b := []float64{3.0, 4.0, 5.0, 6.0, 7.0}
-
-	similarity := JaccardBySorted[float64](a, b)
-
-	fmt.Println(similarity)
+func TestLink2Point(t *testing.T) {
+	l := &Link2Point{}
+	if got := l.push(1); got == nil || got.Value != 1 {
+		t.Fatalf("push(1) = %+v", got)
+	}
 
 }
