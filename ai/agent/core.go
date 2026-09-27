@@ -4,10 +4,13 @@ import (
 	"aurora-agent/ai"
 	"aurora-agent/ai/llm"
 	functioncall "aurora-agent/ai/llm/function-call"
+	"aurora-agent/utils/enum"
 	"fmt"
 	"strings"
 
 	utils "aurora-agent/utils"
+
+	pointsBalanceService "aurora-agent/service/points"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -67,6 +70,17 @@ func (a *Agent) NewAgentWithOptions(opts llm.ChatOptions) {
 	}
 }
 
+func (a *Agent) deductPoints(ctx *gin.Context, usage llm.Usage) error {
+	if usage.TotalTokens > 0 {
+		costPoints := utils.TokensToPoints(usage.TotalTokens)
+		_, err := pointsBalanceService.Deduct(ctx.GetInt("uid"), costPoints, "agent_cost", enum.TriggerMode_Agent)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (a *Agent) RunAgent(ctx *gin.Context, messages []ai.Message, onEvent llm.StreamEventHandler) (AgentResult, error) {
 	if a.Llm == nil {
 		a.NewAgent()
@@ -88,6 +102,10 @@ func (a *Agent) RunAgent(ctx *gin.Context, messages []ai.Message, onEvent llm.St
 			zap.Int("prompt_cache_miss_tokens", usage.PromptCacheMissTokens),
 			zap.Int("reasoning_tokens", usage.ReasoningTokens),
 		)
+		err := a.deductPoints(ctx, usage)
+		if err != nil {
+			logger.Error("deductPoints failed", zap.Error(err))
+		}
 	}()
 	conversation := append([]ai.Message{}, messages...)
 	emitAgentEvent(onEvent, "start", map[string]any{

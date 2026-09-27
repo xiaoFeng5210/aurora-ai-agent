@@ -63,6 +63,7 @@ func Add(userID, amount int, remark string, triggerMode enum.TriggerModeEnum) (m
 // Deduct is the business entry point for reducing an existing user's points.
 func Deduct(userID, amount int, remark string, triggerMode enum.TriggerModeEnum) (model.PointsBalance, error) {
 	remark = strings.TrimSpace(remark)
+
 	if err := validateChange(userID, amount, remark); err != nil {
 		return model.PointsBalance{}, err
 	}
