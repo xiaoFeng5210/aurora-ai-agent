@@ -267,6 +267,77 @@ body {
   }
 }
 
+/* 骨架屏：墨色底 + 一道纸面反光从左向右扫过，卡片之间按 --skeleton-delay 错开 */
+.ink-skeleton {
+  display: block;
+  background-color: rgb(221 208 180 / 0.55);
+  background-image: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgb(253 250 241 / 0.85) 50%,
+    transparent 70%
+  );
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  background-position: 120% 0;
+  animation: ink-skeleton-sweep 1.6s ease-in-out infinite;
+  animation-delay: var(--skeleton-delay, 0ms);
+}
+
+.postcard-skeleton {
+  animation: postcard-skeleton-in 360ms ease-out both;
+  animation-delay: var(--skeleton-delay, 0ms);
+}
+
+@keyframes ink-skeleton-sweep {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+@keyframes postcard-skeleton-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/* 单列时首屏只需要两三张骨架就能占满视口 */
+@media (max-width: 639px) {
+  .skeleton-grid > .postcard-skeleton:nth-of-type(n + 4) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ink-skeleton {
+    animation: none;
+    background-image: none;
+  }
+
+  .postcard-skeleton {
+    animation: none;
+  }
+}
+
+@supports not (translate: 0 0) {
+  @keyframes postcard-skeleton-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
 /* 卡片编辑：标签选择与新建同一行，给正文腾出高度 */
 .tag-multi-select {
   display: flex;

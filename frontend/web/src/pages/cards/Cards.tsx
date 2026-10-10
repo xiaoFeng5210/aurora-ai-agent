@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useSWR from 'swr'
 import useSWRInfinite from 'swr/infinite'
@@ -6,7 +6,7 @@ import { PenLine, Plus, Search, Sparkles, Trash2, X } from 'lucide-react'
 import { AlertDialog, Button as RTButton, Flex } from '@radix-ui/themes'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { Button } from '@/components/ui/Button'
-import { Postcard } from '@/components/cards/Postcard'
+import { Postcard, PostcardSkeleton } from '@/components/cards/Postcard'
 import { CardDialog } from '@/components/cards/CardDialog'
 import { CardPreview } from '@/components/cards/CardPreview'
 import { TagChip } from '@/components/cards/TagChip'
@@ -270,6 +270,8 @@ export function Cards() {
               />
             ) : null}
           </div>
+        ) : !tagsLoaded ? (
+          <TagBarSkeleton />
         ) : null}
       </div>
 
@@ -295,6 +297,11 @@ export function Cards() {
                   visibilityPending={visibilityPendingId === card.id}
                 />
               ))}
+              {loadingMore
+                ? Array.from({ length: 3 }).map((_, i) => (
+                    <PostcardSkeleton key={`more-${i}`} index={cards.length + i} />
+                  ))
+                : null}
             </div>
 
             {hasMore ? (
@@ -389,11 +396,25 @@ function CardsAiChatPrompt({
 
 function SkeletonGrid() {
   return (
-    <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+    <div role="status" aria-busy="true" className="skeleton-grid grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+      <span className="sr-only">卡片加载中…</span>
       {Array.from({ length: 6 }).map((_, i) => (
-        <div
+        <PostcardSkeleton key={i} index={i} />
+      ))}
+    </div>
+  )
+}
+
+const TAG_SKELETON_WIDTHS = ['3.25rem', '4.5rem', '3.75rem', '5.25rem', '4rem']
+
+function TagBarSkeleton() {
+  return (
+    <div aria-hidden className="mx-auto flex max-w-6xl items-center gap-2 overflow-hidden px-4 pb-3 sm:px-6">
+      {TAG_SKELETON_WIDTHS.map((width, i) => (
+        <span
           key={i}
-          className="h-64 animate-pulse rounded-[14px] border border-ink-200/80 bg-paper-50"
+          className="ink-skeleton h-[30px] shrink-0 rounded-full"
+          style={{ width, '--skeleton-delay': `${i * 70}ms` } as CSSProperties}
         />
       ))}
     </div>

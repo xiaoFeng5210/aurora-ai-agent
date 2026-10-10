@@ -179,6 +179,64 @@ export function Postcard({
   )
 }
 
+const SKELETON_LINE_WIDTHS = [
+  ['92%', '78%', '86%', '54%'],
+  ['84%', '90%', '62%', '74%'],
+  ['88%', '70%', '94%', '48%'],
+]
+
+// 骨架与 Postcard 共享版式，加载完成时卡片原位替换，不会跳动
+export function PostcardSkeleton({ index }: { index: number }) {
+  const rotate = ROTATIONS[index % ROTATIONS.length]
+  const lines = SKELETON_LINE_WIDTHS[index % SKELETON_LINE_WIDTHS.length]
+  const style = { '--skeleton-delay': `${(index % 6) * 90}ms` } as CSSProperties
+
+  return (
+    <div
+      aria-hidden
+      style={style}
+      className={cn(
+        'postcard-skeleton flex flex-col overflow-hidden rounded-[14px] border border-ink-200/80 bg-paper-50 shadow-[0_1px_0_0_rgba(58,46,31,0.04),0_10px_26px_-12px_rgba(58,46,31,0.18)]',
+        rotate,
+      )}
+    >
+      <div className="flex items-center justify-between gap-2 border-b border-dashed border-ink-200 px-4 pb-2.5 pt-3 sm:px-5">
+        <div className="flex h-7 min-w-0 flex-1 items-center">
+          <span className="ink-skeleton h-3.5 w-2/5 rounded-full" />
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <span key={i} className="ink-skeleton h-5 w-5 rounded-md" />
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-1 gap-3 px-4 py-4 sm:px-5 sm:py-5">
+        <div className="min-w-0 flex-1" style={LETTER_LINES}>
+          <div className="flex h-32 flex-col sm:h-36">
+            {lines.map((width, i) => (
+              <div key={i} className="flex h-7 items-end pb-2">
+                <span className="ink-skeleton h-2.5 rounded-full" style={{ width }} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex w-[68px] shrink-0 flex-col items-center justify-center gap-3 border-l border-dashed border-ink-200 pl-3 sm:w-[72px]">
+          <div className="rotate-[4deg]">
+            <div className="relative h-[49px] w-[35px] bg-paper-100" style={STAMP_EDGE}>
+              <span className="ink-skeleton absolute inset-[4px]" />
+            </div>
+          </div>
+          <div className="flex h-12 w-12 rotate-[-8deg] items-center justify-center rounded-full border-[1.5px] border-ink-300/50">
+            <span className="ink-skeleton h-[38px] w-[38px] rounded-full opacity-70" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PostcardDeleteConfirm({
   deleting,
   onConfirm,
