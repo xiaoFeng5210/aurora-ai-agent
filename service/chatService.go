@@ -19,7 +19,13 @@ type ChatStreamEvent struct {
 }
 
 func ChatStream(ctx *gin.Context, documentID int, req dto.ChatRequest, onSSEEvent func(ChatStreamEvent)) error {
+	pm, err := agent.NewPriorMessages(documentID)
+	if err != nil {
+		return err
+	}
 	messages := buildChatMessages(req)
+	pm.Concact(messages)
+
 	chatAgent := agent.Agent{}
 	chatAgent.NewAgentWithOptions(llm.ChatOptions{
 		MaxTokens:    req.MaxTokens,
@@ -28,7 +34,7 @@ func ChatStream(ctx *gin.Context, documentID int, req dto.ChatRequest, onSSEEven
 		ThinkingType: req.Thinking.Type,
 	})
 
-	agentResult, err := chatAgent.RunAgent(ctx, messages, func(event string, data any) {
+	agentResult, err := chatAgent.RunAgent(ctx, pm.HistoryMessages, func(event string, data any) {
 		if onSSEEvent == nil {
 			return
 		}

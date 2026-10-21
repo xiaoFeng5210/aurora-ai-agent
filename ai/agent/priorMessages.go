@@ -23,6 +23,11 @@ func (p *PriorMessages) limitMessages(limit int) []ai.Message {
 	return p.HistoryMessages
 }
 
+func (p *PriorMessages) Concact(messages []ai.Message) []ai.Message {
+	p.HistoryMessages = append(p.HistoryMessages, messages...)
+	return p.HistoryMessages
+}
+
 func (p *PriorMessages) getHistoryMessagesFromDB() ([]ai.Message, error) {
 	messages := make([]ai.Message, 0)
 	documentID := p.DocumentID
